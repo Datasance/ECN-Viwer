@@ -30,7 +30,7 @@ güncelleme olacak kaynaklar:
     API: 
     Support: subscription ve entiltement check yapacak ve ok se support ticket form ekranına yönlendirecek. * Bu konu ilk etapta geçici olarak ele alınabilir, ama ilerleyen dönemde ticket açarken log dosyalarının otomatik olarak eklenmesi vs düşünülebilir. 
 
-8. Anasayfada çıkan ECN bilgilendirme tablosu darcy.cloud ekranında yer alan ayar düğmesiyle daraltılıp genişletilebilecek. darcy.cloud arayüzü birlikte incelenip gözlemler yapıalcak
+8. Anasayfada çıkan ECN bilgilendirme tablosu darcy.cloud ekranında yer alan ayar düğmesiyle daraltılıp genişletilebilecek. darcy.cloud arayüzü birlikte incelenip gözlemler yapıalcak.. center map!
 
 9. Apllication ekrarnı route tablosunda gözüken mikroservislerin koştuğu edgelar arasında harita üzerinde mash oluşturalacak.
 
