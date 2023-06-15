@@ -1,5 +1,7 @@
 *Internal notes: Bu repo npm paketi olarak paketlenip internal registry e aktarılacak ve controllera dependency olarak atanacak. 
 
+!! Keycloak entegrasyonu !!
+
 1. Yaml api version güncellemesi:
 iofog.org/v1 or iofog.org/v2 to datasance.com/v1
 
