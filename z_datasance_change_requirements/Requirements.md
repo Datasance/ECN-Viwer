@@ -39,3 +39,5 @@ güncelleme olacak kaynaklar:
 10. Multi controller clusterlarda, ECN viewerda tüm controllerların gösterilmesi.
 
 PS: Madde Madde 1-7 IETT ilk kuruluma yetiştirilmesi hedeflenen öncelikli maddeler!
+
+cihaz sağlık ve uyarı alarm oluşturma ekranı
