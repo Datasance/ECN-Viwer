@@ -38,8 +38,8 @@ const parseApplication = async (applicationYAML) => {
 }
 
 const parseApplicationTemplate = async (doc) => {
-  if (doc.apiVersion !== 'iofog.org/v2') {
-    return [{}, `Invalid API Version ${doc.apiVersion}, current version is iofog.org/v2`]
+  if (doc.apiVersion !== 'datasance.com/v1') {
+    return [{}, `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v1`]
   }
   if (doc.kind !== 'ApplicationTemplate') {
     return [{}, `Invalid kind ${doc.kind}`]

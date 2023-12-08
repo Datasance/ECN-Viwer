@@ -76,7 +76,7 @@ export default function ApplicationDetails ({ application: selectedApplication, 
 
   const _getApplicationYAMLFromJSON = (app) => {
     return {
-      apiVersion: 'iofog.org/v2',
+      apiVersion: 'datasance.com/v1',
       kind: 'Application',
       metadata: {
         name: app.name

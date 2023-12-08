@@ -86,8 +86,8 @@ const getRegistryIdFromRegistry = (registry) => {
 }
 
 const parseCatalogItem = (doc) => {
-  if (doc.apiVersion !== 'iofog.org/v2') {
-    return [{}, `Invalid API Version ${doc.apiVersion}, current version is iofog.org/v2`]
+  if (doc.apiVersion !== 'datasance.com/v1') {
+    return [{}, `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v1`]
   }
   if (doc.kind !== 'CatalogItem') {
     return [{}, `Invalid kind ${doc.kind}`]

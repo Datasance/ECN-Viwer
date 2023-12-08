@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *   Copyright (c) 2019 Edgeworx, Inc.
+ *   Copyright (c) 2023 Datasance Teknoloji A.S.
  *
  *   This program and the accompanying materials are made available under the
  *   terms of the Eclipse Public License v. 2.0 which is available at
@@ -11,7 +11,7 @@
  */
 
 const express = require('express')
-const ecnViewer = require('@iofog/ecn-viewer')
+const ecnViewer = require('datasance/ecn-viewer')
 const app = express()
 const proxy = require('express-http-proxy')
 const getIP = require('external-ip')()

@@ -7,16 +7,16 @@
 # Import our helper functions
 . scripts/utils.sh
 
-VERSION="2.0.1"
+VERSION="1.0.0"
 
-prettyTitle "Edgeworx ioFog ECN Viewer Packaging"
+prettyTitle "Datasance ioFog ECN Viewer Packaging"
 echoInfo "Beginning packaging process"
 
 # echoInfo "Building application bundle"
 # npm run build
 
 # This is what we want to call our distro
-DISTRO_NAME="eclipse-iofog-ecn-viewer_${VERSION}.tar.gz"
+DISTRO_NAME="datasance-iofog-ecn-viewer_${VERSION}.tar.gz"
 # Clean away any previous distro
 if [ -f ${DISTRO_NAME} ]; then
     echoInfo "Removing old Distro file"
