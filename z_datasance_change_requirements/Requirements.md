@@ -1,5 +1,7 @@
 *Internal notes: Bu repo npm paketi olarak paketlenip internal registry e aktarılacak ve controllera dependency olarak atanacak. 
 
+!! Keycloak entegrasyonu !!
+
 1. Yaml api version güncellemesi:
 iofog.org/v1 or iofog.org/v2 to datasance.com/v1
 
@@ -36,9 +38,15 @@ güncelleme olacak kaynaklar:
 
 10. Multi controller clusterlarda, ECN viewerda tüm controllerların gösterilmesi.
 
+
 Keycloak & user management
 Cihaz sağlık uyarı ve alarm ekranı
 routing schema cluster( controller agent - interior -edge) applicatiın(microservice-microservice)
 API - Docs - customer portal
 
 app templte bulk deployment(select all , env variables and config same with previous click)
+
+PS: Madde Madde 1-7 IETT ilk kuruluma yetiştirilmesi hedeflenen öncelikli maddeler!
+
+cihaz sağlık ve uyarı alarm oluşturma ekranı
+
