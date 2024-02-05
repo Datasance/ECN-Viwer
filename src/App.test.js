@@ -13,13 +13,13 @@ beforeAll(() => {
     switch (url) {
       case 'http://ip-api.com/json/8.8.8.8':
         return Promise.resolve({ status: 'success', country: 'United States', countryCode: 'US', region: 'VA', regionName: 'Virginia', city: 'Ashburn', zip: '20149', lat: 39.0438, lon: -77.4874, timezone: 'America/New_York', isp: 'Level 3', org: 'Google LLC', as: 'AS15169 Google LLC', query: '8.8.8.8' })
-      case getUrl('/api/v3/user/login'):
+      case getUrl('/api/v1/user/login'):
         expect(options.method).toBe('POST')
         return Promise.resolve({ accessToken: 'test' })
-      case getUrl('/api/v3/iofog-list'):
+      case getUrl('/api/v1/iofog-list'):
         expect(options.headers.Authorization).toBe('test')
         return Promise.resolve({ fogs: [] })
-      case getUrl('/api/v3/flow'):
+      case getUrl('/api/v1/flow'):
         expect(options.headers.Authorization).toBe('test')
         return Promise.resolve({ flows: [] })
       default:

@@ -117,13 +117,13 @@ export default function AddMicroservice (props) {
 
   React.useEffect(() => {
     Promise.all([(async () => {
-      const flowRaw = await request('/api/v3/flow')
+      const flowRaw = await request('/api/v1/flow')
       if (flowRaw.ok) {
         const flowsRes = await flowRaw.json()
         setFlows(flowsRes.flows)
       }
     })(), (async () => {
-      const catalogRaw = await request('/api/v3/catalog/microservices')
+      const catalogRaw = await request('/api/v1/catalog/microservices')
       if (catalogRaw.ok) {
         const catalogRes = await catalogRaw.json()
         setCatalog(catalogRes.catalogItems.filter(item => {
@@ -187,7 +187,7 @@ export default function AddMicroservice (props) {
   const addMsvc = async () => {
     try {
       const { name, ports, volumeMappings, rootHostAccess } = msvc
-      const response = await request('/api/v3/microservices', {
+      const response = await request('/api/v1/microservices', {
         method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -220,7 +220,7 @@ export default function AddMicroservice (props) {
   const createFlow = async () => {
     try {
       const { name } = newFlow
-      const response = await request('/api/v3/flow', {
+      const response = await request('/api/v1/flow', {
         method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -251,7 +251,7 @@ export default function AddMicroservice (props) {
         ...newCatalogItem,
         name: randomString()
       }
-      const response = await request('/api/v3/catalog/microservices', {
+      const response = await request('/api/v1/catalog/microservices', {
         method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -280,7 +280,7 @@ export default function AddMicroservice (props) {
     try {
       const from = get(route, 'from.uuid')
       const to = get(route, 'to.uuid')
-      const response = await request(`/api/v3/microservices/${from}/routes/${to}`, {
+      const response = await request(`/api/v1/microservices/${from}/routes/${to}`, {
         method: 'POST',
         headers: {
           Accept: 'application/json',

@@ -92,7 +92,7 @@ export default function Default ({ selectAgent, selectController, selectApplicat
   }
 
   const deployApplication = async (application, newApplication) => {
-    const url = `/api/v3/application${newApplication ? '' : `/${application.name}`}`
+    const url = `/api/v1/application${newApplication ? '' : `/${application.name}`}`
     try {
       const res = await request(url, {
         method: newApplication ? 'POST' : 'PUT',
