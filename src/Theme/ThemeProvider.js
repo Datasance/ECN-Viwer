@@ -24,8 +24,13 @@ export const colors = {
   neutral_0: 'white',
   neutral_1: '#ebedf0',
   neutral_4: '#506279',
-  neutral_5: '#1a2d45'
-
+  neutral_5: '#1a2d45',
+  black: '#000000',
+  datasance_color_0:'#10253dff',
+  datasance_color_1:'#644a92ff',
+  datasance_color_2:'#6abec1ff',
+  datasance_color_3:'#4d3167ff',
+  datasance_color_4:'#e76467ff',
 }
 
 export const theme = createMuiTheme({
