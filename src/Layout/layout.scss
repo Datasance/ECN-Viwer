@@ -30,7 +30,9 @@
 
 .logo {
   grid-area: logo;
-  padding: 13px 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
 }
 
@@ -41,7 +43,7 @@
     display: grid;
     min-height: 100vh;
     grid-gap: 0px;
-    grid-template-columns: 60px 1fr;
+    grid-template-columns: 85px 1fr;
     grid-template-rows: 60px minmax(calc(100vh - 120px), 1fr) 60px;
     grid-row-gap: 0;
     grid-template-areas:

@@ -52,7 +52,7 @@ const useStyles = makeStyles(theme => ({
   wrapper: {
     fontSize: '17px',
     fontWeight: '700',
-    color: theme.colors.neutral
+    color: theme.colors.datasance_color_0
   },
   textColorInherit: {
     opacity: '.51'

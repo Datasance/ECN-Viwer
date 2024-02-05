@@ -13,7 +13,7 @@ import Config from '../Config'
 // import SimpleTabs from '../Utils/Tabs'
 import { ControllerContext } from '../ControllerProvider'
 
-import logomark from '../assets/logomark.svg'
+import logomark from '../assets/datasanceLogoBlue.svg'
 import './layout.scss'
 
 import { makeStyles } from '@material-ui/styles'
@@ -29,11 +29,11 @@ const useStyles = makeStyles(theme => ({
     margin: '15px 0'
   },
   logo: {
-    backgroundColor: theme.colors.purple,
-    color: theme.colors.white
+    backgroundColor: theme.colors.datasance_color_0,
+    color: theme.colors.white,
   },
   latNav: {
-    backgroundColor: theme.colors.carbon
+    backgroundColor: theme.colors.datasance_color_0
   },
   latIcons: {
     margin: 'auto',
@@ -46,7 +46,7 @@ const useStyles = makeStyles(theme => ({
   },
   topIcons: {
     height: '100%',
-    width: '25px',
+    width: '35px',
     marginRight: '25px',
     cursor: 'pointer'
   },
@@ -114,18 +114,18 @@ export default function Layout () {
         <div className={classes.wrapper + ' wrapper'}>
           <div className={classes.logo + ' logo'}>
             <NavLink to='/overview' onClick={() => returnHome()}>
-              <img src={logomark} alt='Edgeworx logomark' />
+              <img src={logomark} style={{marginTop:"1rem"}} width={75} alt='Datasance' />
             </NavLink>
           </div>
           <div className={classes.latNav + ' latnav'}>
             <NavLink to='/overview' onClick={() => returnHome()}>
               <Avatar className={classes.latIcons}>
-                <HomeIcon />
+                <HomeIcon/>
               </Avatar>
             </NavLink>
             <NavLink to='/catalog'>
               <Avatar className={classes.latIcons}>
-                <CatalogIcon />
+                <CatalogIcon/>
               </Avatar>
             </NavLink>
             <Avatar className={classes.latIcons}>
@@ -141,8 +141,17 @@ export default function Layout () {
           </div>
           <div className={`${classes.footerContainer} footer`}>
             <span className={classes.footer}>
-              <span>Controller v{status.versions.controller} - ECN Viewer v{status.versions.ecnViewer}</span>
-              <a style={{ margin: 'auto' }} href='http://www.eclipse.org/legal/copyright.php'>© {new Date().getFullYear()} Eclipse Foundation, Inc.</a>
+              <span>Controller v{status?.versions.controller} - ECN Viewer v{status?.versions.ecnViewer}</span>
+              <div style={{display:"flex", justifyContent:"space-between", textAlign:"center"}}>
+                <div>
+                <a style={{ margin: 'auto', fontWeight:"bold" }} target="_blank" href='http://docs.datasance.com'> DOCS</a>
+                </div>
+              <div>
+              <a style={{ margin: 'auto', fontWeight:"bold" }} target="_blank" href='http://api.datasance.com'> API</a>
+              </div>
+              
+              </div>
+              <a style={{ margin: 'auto' }} href='https://datasance.com/'>© {new Date().getFullYear()} Datasance.</a>
             </span>
           </div>
         </div>

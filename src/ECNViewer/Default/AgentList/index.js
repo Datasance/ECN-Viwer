@@ -62,7 +62,8 @@ const useStyles = makeStyles(theme => ({
   },
   stickyHeader: {
     ...(getSharedStyle(theme).stickyHeaderCell),
-    top: '78px'
+    top: '78px',
+    color: theme.colors.datasance_color_0
   }
 }))
 

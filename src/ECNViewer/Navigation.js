@@ -90,7 +90,7 @@ export default function Navigation ({ view, selectedElement, views, back }) {
       window.document.title = 'ECN Viewer'
       return
     }
-    window.document.title = controllerName
+    // window.document.title = controllerName
   }, [controllerName])
 
   const _getContent = (view) => {
