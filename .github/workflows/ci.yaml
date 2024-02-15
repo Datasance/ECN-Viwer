@@ -45,7 +45,8 @@ jobs:
       with:
         node-version: 14
     - run: npm install
-    - run: npm run standard
+    - run: npm start
+    - run: npm standard
     - run: |
         npm i -g better-npm-audit
         npx better-npm-audit audit -p
@@ -81,6 +82,9 @@ jobs:
         sed -i.back "s|PAT|${PAT}|g" .npmrc
 
     - run: npm install
+    
+    - run: npm start
+
 
     - name: npm version
       id: package-version
