@@ -13,7 +13,7 @@ import Config from '../Config'
 // import SimpleTabs from '../Utils/Tabs'
 import { ControllerContext } from '../ControllerProvider'
 
-import logomark from '../assets/datasanceLogoBlue.svg'
+import logomark from '../assets/potLogoWithWhiteText.svg'
 import './layout.scss'
 
 import { makeStyles } from '@material-ui/styles'
@@ -114,7 +114,7 @@ export default function Layout () {
         <div className={classes.wrapper + ' wrapper'}>
           <div className={classes.logo + ' logo'}>
             <NavLink to='/overview' onClick={() => returnHome()}>
-              <img src={logomark} style={{marginTop:"1rem"}} width={75} alt='Datasance' />
+              <img src={logomark} style={{marginTop:"1rem"}} width={85} alt='Datasance' />
             </NavLink>
           </div>
           <div className={classes.latNav + ' latnav'}>
