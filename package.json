@@ -5,7 +5,6 @@
   "main": "index.js",
   "author": "Emirhan Durmus",
   "contributors": [
-    "Oguzhan Herkiloglu",
     "Alpaslan Dogan"
   ],
   "license": "EPL-2.0",
@@ -13,6 +12,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/Datasance/ECN-viewer"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
   },
   "dependencies": {
     "@material-ui/core": "^4.9.5",

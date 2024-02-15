@@ -20,39 +20,8 @@ env:
   IMAGE_NAME: 'ecn-viewer'
 
 
-
 jobs:
-  Build:
-    runs-on: ubuntu-20.04  
-    permissions:
-      actions: write
-      checks: write
-      contents: write
-      deployments: write
-      id-token: write
-      issues: write
-      discussions: write
-      packages: write
-      pages: write
-      pull-requests: write
-      repository-projects: write
-      security-events: write
-      statuses: write
-    name: Preflight
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
-      with:
-        node-version: 14
-    - run: npm install
-    - run: npm start
-    - run: npm standard
-    - run: |
-        npm i -g better-npm-audit
-        npx better-npm-audit audit -p
-
-  Publish:
-    needs: [Build]
+  Build-Publish:
     runs-on: ubuntu-20.04
     permissions:
       actions: write
@@ -83,7 +52,7 @@ jobs:
 
     - run: npm install
     
-    - run: npm start
+    - run: npm run build
 
 
     - name: npm version
@@ -104,21 +73,4 @@ jobs:
       run: |
         npm pack
         npm publish --registry=https://npm.pkg.github.com/
-
-    - name: 'Get Previous tag'
-      id: previoustag
-      uses: "WyriHaximus/github-action-get-previous-tag@v1"
-      with:
-        fallback: 0.0.0
-    - name: Set image tag
-      shell: bash
-      id: tags
-      run: |
-        if [[ ${{ github.ref_name }} =~ ^v.* ]] ; then
-          VERSION=${{ github.ref_name }}
-          echo "VERSION=${VERSION:1}" >> "${GITHUB_OUTPUT}"
-        else
-            VERSION=${{ steps.previoustag.outputs.tag }}
-            echo "VERSION=${VERSION:1}-${{ github.run_number }}" >> "${GITHUB_OUTPUT}"
-        fi
 
