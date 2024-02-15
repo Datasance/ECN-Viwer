@@ -41,7 +41,9 @@ const useStyles = makeStyles(theme => ({
       textTransform: 'uppercase !important'
       // color: 'white'
     },
-    paddingLeft: '5px'
+    paddingLeft: '5px',
+    backgroundColor:"white",
+    borderRadius:"4px"
   },
   navArrow: {
     cursor: 'pointer',
