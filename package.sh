@@ -31,17 +31,18 @@ cd package && npm version "${VERSION}" --allow-same-version && cd -
 
 echoInfo "Creating ECN Viewer tarball with name '${DISTRO_NAME}''"
 
-cp LICENSE.md package/LICENSE.md
+cp LICENSE package/LICENSE.md
 
 # Build our archive
 tar -czvf ${DISTRO_NAME} \
     --exclude='^#' \
     --exclude="./server/node_modules" \
     --exclude="./node_modules" \
+    --exclude="./.github" \
     -T distro-list.txt
 
-if [[ "$1" == "--publish" ]]; then
-    npm publish ${DISTRO_NAME} --access public
-fi
+
+npm publish ${DISTRO_NAME} --access public
+
 
 echoInfo "Distro packaging complete!"

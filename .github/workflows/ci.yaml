@@ -22,7 +22,7 @@ env:
 
 jobs:
   Build-Publish:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-16.04
     permissions:
       actions: write
       checks: write
@@ -68,9 +68,10 @@ jobs:
         else
            echo "pkg_version=${{ steps.package-version.outputs.current-version}}-${{ github.run_number }}" >> "${GITHUB_OUTPUT}"
         fi
-
-    - name: npm pack with version from package version
-      run: |
+        cp controller_default.json src/ControllerProvider/controller.json
+        npm run build
+        cp -r build package/ && npm version ${{ steps.package-version.outputs.current-version}}
+        cp LICENSE package/LICENSE.md
         npm pack
-        npm publish --registry=https://npm.pkg.github.com/
-
+        npm publish
+                
