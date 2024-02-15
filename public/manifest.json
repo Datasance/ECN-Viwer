@@ -1,9 +1,9 @@
 {
-  "short_name": "ECN Viewer",
+  "short_name": "Datasance Viewer",
   "name": "Edge Cloud Network Viewer",
   "icons": [
     {
-      "src": "favicon.ico",
+      "src": "datasanceLogoBlue.ico",
       "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/x-icon"
     }

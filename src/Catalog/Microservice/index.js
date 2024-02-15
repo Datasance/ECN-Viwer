@@ -86,8 +86,8 @@ const getRegistryIdFromRegistry = (registry) => {
 }
 
 const parseCatalogItem = (doc) => {
-  if (doc.apiVersion !== 'iofog.org/v2') {
-    return [{}, `Invalid API Version ${doc.apiVersion}, current version is iofog.org/v2`]
+  if (doc.apiVersion !== 'datasance.com/v1') {
+    return [{}, `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v1`]
   }
   if (doc.kind !== 'CatalogItem') {
     return [{}, `Invalid kind ${doc.kind}`]
@@ -144,14 +144,14 @@ export default function Catalog () {
   async function fetchCatalog () {
     try {
       setFetching(true)
-      const catalogItemsResponse = await request('/api/v3/catalog/microservices')
+      const catalogItemsResponse = await request('/api/v1/catalog/microservices')
       if (!catalogItemsResponse.ok) {
         pushFeedback({ message: catalogItemsResponse.statusText, type: 'error' })
         setFetching(false)
         return
       }
       let catalogItems = (await catalogItemsResponse.json()).catalogItems
-      const registriesResponse = await request('/api/v3/registries')
+      const registriesResponse = await request('/api/v1/registries')
       if (!registriesResponse.ok) {
         pushFeedback({ message: registriesResponse.statusText, type: 'error' })
         setFetching(false)
@@ -187,7 +187,7 @@ export default function Catalog () {
       newItem.configExample = JSON.stringify(newItem.configExample)
     }
     setLoading(true)
-    const response = await request('/api/v3/catalog/microservices', {
+    const response = await request('/api/v1/catalog/microservices', {
       method: 'POST',
       headers: {
         Accept: 'application/json',
@@ -209,7 +209,7 @@ export default function Catalog () {
   const removeCatalogItem = async (item) => {
     try {
       setLoading(true)
-      const res = await request(`/api/v3/catalog/microservices/${item.id}`, {
+      const res = await request(`/api/v1/catalog/microservices/${item.id}`, {
         method: 'DELETE'
       })
       if (!res.ok) {

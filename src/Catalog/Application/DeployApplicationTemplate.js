@@ -111,7 +111,7 @@ export default function DeployApplicationTemplate ({ template, close }) {
       return
     }
     const newApplication = !data.applications.find(a => a.name === applicationName)
-    const url = `/api/v3/application${newApplication ? '' : `/${applicationName}`}`
+    const url = `/api/v1/application${newApplication ? '' : `/${applicationName}`}`
     try {
       setLoading(true)
       const res = await request(url, {

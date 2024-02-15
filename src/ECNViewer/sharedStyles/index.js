@@ -124,7 +124,7 @@ export default function getStyle (theme) {
     },
     tableCell: {
       fontSize: '16px',
-      color: theme.colors.neutral
+      color: theme.colors.datasance_color_0 
     },
     headerCell: {
       fontSize: '14px',

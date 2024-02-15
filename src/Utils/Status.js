@@ -12,19 +12,19 @@ const convertHexToRGB = hex => {
 }
 
 export const statusColor = {
-  RUNNING: colors.primary,
+  RUNNING: colors.datasance_color_2,
   UNKNOWN: colors.aluminium,
-  ERROR: colors.secondary,
+  ERROR: colors.datasance_color_4,
   OFFLINE: '#7A3BFF'
 }
 
 export const msvcStatusColor = {
-  RUNNING: colors.primary,
-  STARTED: colors.primary,
+  RUNNING: colors.datasance_color_2,
+  STARTED: colors.datasance_color_2,
   PULLING: colors.green,
   UNKNOWN: colors.aluminium,
   QUEUED: colors.green,
-  STARTING: colors.primary,
+  STARTING: colors.datasance_color_2,
   STOPPED: '#7A3BFF',
   STOPPING: '#7A3BFF'
 }

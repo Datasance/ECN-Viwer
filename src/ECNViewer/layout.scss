@@ -61,12 +61,12 @@
 .map-grid-container {
   position: absolute;
   top: 0;
-  left: 60px;
-  width: calc(100% - 60px);
+  left: 85px;
+  width: calc(100% - 85px);
   height: 100%;
   overflow: hidden;
   .map-overlay {
-    background: linear-gradient(to right, rgba(255,255,255,1) 30%, rgba(255,255,255,0) 70%);
+    // background: linear-gradient(to right, rgba(255,255,255,1) 30%, rgba(255,255,255,0) 40%);
     z-index: 1;
     width: 100%;
     height: 100%;

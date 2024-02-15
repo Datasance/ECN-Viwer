@@ -1,4 +1,4 @@
-export const API_VERSIONS = ['iofog.org/v1', 'iofog.org/v2']
+export const API_VERSIONS = ['datasance.com/v1', 'datasance.com/v1']
 export default {
   API_VERSIONS
 }

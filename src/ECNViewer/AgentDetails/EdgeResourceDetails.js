@@ -10,7 +10,7 @@ export default function EdgeResourceDetails ({ edgeResource: _edgeResource }) {
   React.useEffect(() => {
     async function fetchData () {
       try {
-        const res = await request(`/api/v3/edgeResource/${edgeResource.name}/${edgeResource.version}`)
+        const res = await request(`/api/v1/edgeResource/${edgeResource.name}/${edgeResource.version}`)
         if (res.ok) {
           setEdgeResource(await res.json())
         } else {

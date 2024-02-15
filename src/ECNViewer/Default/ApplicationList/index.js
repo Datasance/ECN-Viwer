@@ -90,7 +90,7 @@ export default function ApplicationList ({ applications: unfilteredApplications,
 
   const toggleApplication = async (application) => {
     try {
-      const res = await request(`/api/v3/application/${application.name}`, {
+      const res = await request(`/api/v1/application/${application.name}`, {
         method: 'PATCH',
         headers: {
           'content-type': 'application/json'
@@ -111,7 +111,7 @@ export default function ApplicationList ({ applications: unfilteredApplications,
 
   const deleteApplication = async (application) => {
     try {
-      const res = await request(`/api/v3/application/${application.name}`, {
+      const res = await request(`/api/v1/application/${application.name}`, {
         method: 'DELETE'
       })
       if (res.ok) {

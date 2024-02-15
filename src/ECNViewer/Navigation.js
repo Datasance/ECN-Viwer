@@ -41,7 +41,9 @@ const useStyles = makeStyles(theme => ({
       textTransform: 'uppercase !important'
       // color: 'white'
     },
-    paddingLeft: '5px'
+    paddingLeft: '5px',
+    backgroundColor:"white",
+    borderRadius:"4px"
   },
   navArrow: {
     cursor: 'pointer',
@@ -90,7 +92,7 @@ export default function Navigation ({ view, selectedElement, views, back }) {
       window.document.title = 'ECN Viewer'
       return
     }
-    window.document.title = controllerName
+    // window.document.title = controllerName
   }, [controllerName])
 
   const _getContent = (view) => {

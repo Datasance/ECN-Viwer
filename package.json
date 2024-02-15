@@ -1,17 +1,18 @@
 {
-  "name": "@iofog/ecn-viewer",
-  "version": "0.0.0-dev",
-  "description": "Edgeworx ioFog Edge Cloud Network Viewer project  \\nCopyright (c) 2020 Edgeworx, Inc.",
+  "name": "@datasance/ecn-viewer",
+  "version": "0.0.1",
+  "description": "Datasance ioFog Edge Cloud Network Viewer project  \\nCopyright (c) 2023 Datasance Teknoloji A.S.",
   "main": "index.js",
-  "author": "Alexandre de Wergifosse",
+  "author": "Emirhan Durmus",
   "contributors": [
-    "Serge Radinovic"
+    "Oguzhan Herkiloglu",
+    "Alpaslan Dogan"
   ],
   "license": "EPL-2.0",
-  "homepage": "https://www.edgeworx.org",
+  "homepage": "https://www.datasance.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Edgeworx/ECN-viewer"
+    "url": "https://github.com/Datasance/ECN-viewer"
   },
   "dependencies": {
     "@material-ui/core": "^4.9.5",

@@ -30,7 +30,7 @@ const useStyles = makeStyles(theme => ({
     fontWeight: '400',
     fontSize: '60px',
     marginRight: '15px',
-    color: theme.colors.neutral_3,
+    color: theme.colors.datasance_color_0,
     flex: '2 1 0px',
     '@media (min-width: 1200px)': {
       flex: 'unset'
@@ -49,12 +49,13 @@ const useStyles = makeStyles(theme => ({
   unitType: {
     fontSize: '14px',
     fontWeight: '500',
-    textTransform: 'uppercase'
+    textTransform: 'uppercase',
+    color: theme.colors.datasance_color_2
   },
   detailsText: {
     fontSize: '11px',
     fontWeight: '500',
-    color: `var(--color, ${theme.colors.neutral_3})`,
+    color: theme.colors.datasance_color_1,
     textTransform: 'uppercase'
   },
   errorText: {

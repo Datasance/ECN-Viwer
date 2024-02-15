@@ -60,7 +60,7 @@ const lookUpControllerInfo = async (ip) => {
 }
 
 const getControllerStatus = async (api) => {
-  const response = await await window.fetch(getUrl('/api/v3/status'), {
+  const response = await await window.fetch(getUrl('/api/v1/status'), {
     headers: getHeaders({})
   })
   if (response.ok) {
@@ -110,7 +110,7 @@ export default function Context (props) {
   }, [controllerUser])
 
   const authenticate = async (user) => {
-    const response = await window.fetch(getUrl('/api/v3/user/login'), {
+    const response = await window.fetch(getUrl('/api/v1/user/login'), {
       method: 'POST',
       headers: getHeaders({
         Accept: 'application/json',

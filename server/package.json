@@ -1,23 +1,23 @@
 {
   "name": "ecn-viewer-server",
-  "version": "1.0.0",
-  "description": "Edgeworx ioFog Edge Cloud Network Viewer project  \\nCopyright (c) 2019 Edgeworx, Inc.",
+  "version": "0.0.1",
+  "description": "Datasance ioFog Edge Cloud Network Viewer project  \\nCopyright (c) 2023 Datasance Teknoloji A.S.",
   "main": "./index.js",
   "author": "Alexandre de Wergifosse",
   "contributors": [
     "Serge Radinovic"
   ],
-  "license": "MIT",
-  "homepage": "https://www.edgeworx.org",
+  "license": "EPL 2.0",
+  "homepage": "https://www.datasance.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Edgeworx/ECN-viewer"
+    "url": "https://github.com/Datasance/ECN-viewer"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@iofog/ecn-viewer": "1.0.2",
+    "@datasance/ecn-viewer": "0.0.1",
     "express": "4.17.1",
     "express-http-proxy": "1.5.1",
     "external-ip": "2.1.1"
