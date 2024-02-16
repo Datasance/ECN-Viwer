@@ -25,7 +25,7 @@ fi
 
 echoInfo "Building production app"
 cp controller_default.json src/ControllerProvider/controller.json
-npm run build
+npm run build 
 cp -r build package/
 cd package && npm version "${VERSION}" --allow-same-version && cd -
 
