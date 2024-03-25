@@ -134,7 +134,7 @@ export default function AgentList(props) {
       abstractedHardwareEnabled: a?.abstractedHardwareEnabled,
       fogType: a?.fogType,
       dockerPruningFrequency: a?.dockerPruningFrequency,
-      diskThreshold: a?.diskThreshold,
+      availableDiskThreshold: a?.availableDiskThreshold,
       logLevel: a?.logLevel,
       isSystem: a?.isSystem,
       routerMode: a?.routerMode,
@@ -143,7 +143,7 @@ export default function AgentList(props) {
       edgeRouterPort: a?.edgeRouterPort,
       host: a?.host,
       upstreamRouters: a?.upstreamRouters,
-      networkRouter: a?.networkRouter,
+      networkInterface: a?.networkInterface,
     });
   };
 

@@ -86,7 +86,7 @@ export default function MicroserviceDetails({
   if (!env.length > 0) {
     env.push({});
   }
-  const volumes = microservice.volumeMappings.filter(
+  const volumes = reducedApplications.byName[microservice.application].microservices.find((a) => selectedMicroservice.uuid === a.uuid).volumeMappings.filter(
     (vm) =>
       lget(vm, "hostDestination", "").toLowerCase().includes(volumeFilter) ||
       lget(vm, "containerDestination", "")
@@ -98,7 +98,7 @@ export default function MicroserviceDetails({
   if (volumes.length > 0) {
     volumes.push({});
   }
-  const ports = microservice.ports.length > 0 ? microservice.ports : [];
+  const ports = reducedApplications.byName[microservice.application].microservices.find((a) => selectedMicroservice.uuid === a.uuid).ports.length > 0 ? reducedApplications.byName[microservice.application].microservices.find((a) => selectedMicroservice.uuid === a.uuid).ports : [];
   const extraHosts = microservice.extraHosts.filter(
     (e) =>
       lget(e, "name", "").toLowerCase().includes(hostFilter) ||
@@ -108,12 +108,6 @@ export default function MicroserviceDetails({
   if (!extraHosts.length > 0) {
     extraHosts.push({});
   }
-
-  useEffect(() => {
-    console.log(microservices,"alp")
-    console.log(microservice,"alp")
-  }, [microservices,microservice])
-  
 
   const application = reducedApplications.byName[microservice.application];
 

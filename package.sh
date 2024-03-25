@@ -7,7 +7,7 @@
 # Import our helper functions
 . scripts/utils.sh
 
-VERSION="0.1.0"
+VERSION="0.1.3"
 
 prettyTitle "Datasance ioFog ECN Viewer Packaging"
 echoInfo "Beginning packaging process"
@@ -22,7 +22,7 @@ if [ -f ${DISTRO_NAME} ]; then
     echoInfo "Removing old Distro file"
     rm ${DISTRO_NAME}
 fi
-npm install
+npm install --force
 echoInfo "Building production app"
 npm run build 
 cp -r build package/
