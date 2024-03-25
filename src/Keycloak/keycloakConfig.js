@@ -1,7 +1,6 @@
 import Keycloak from 'keycloak-js'
 const controllerJson = window.controllerConfig
 
-debugger
 let initOptions = {
   url: controllerJson?.keycloakURL,
   realm: controllerJson?.keycloakRealm,

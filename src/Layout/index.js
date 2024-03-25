@@ -21,6 +21,7 @@ import { makeStyles } from '@material-ui/styles'
 import { MapProvider } from '../providers/Map'
 import { useData } from '../providers/Data'
 import { useKeycloak } from "@react-keycloak/web";
+const controllerJson = window.controllerConfig
 
 const useStyles = makeStyles(theme => ({
   wrapper: {
@@ -137,7 +138,7 @@ export default function Layout () {
               </Avatar>
             </NavLink>
             <Avatar className={classes.latIcons}>
-              <AccountBoxIcon onClick={() => {window.open(`${process.env.KC_URL}admin/${process.env.KC_REALM}/console`,"_blank")}} />
+              <AccountBoxIcon onClick={() => {window.open(`${controllerJson?.keycloakURL}admin/${controllerJson?.keycloakRealm}/console`,"_blank")}} />
             </Avatar>
             <Avatar className={classes.latIcons}>
               <ExitToAppIcon onClick={() => {keycloak.logout()}} />
