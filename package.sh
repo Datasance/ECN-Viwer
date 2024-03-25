@@ -22,7 +22,7 @@ if [ -f ${DISTRO_NAME} ]; then
     echoInfo "Removing old Distro file"
     rm ${DISTRO_NAME}
 fi
-
+npm install
 echoInfo "Building production app"
 npm run build 
 cp -r build package/
