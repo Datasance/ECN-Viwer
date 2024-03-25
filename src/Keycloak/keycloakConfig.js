@@ -1,14 +1,14 @@
 import Keycloak from 'keycloak-js'
+const controllerJson = window.controllerConfig
 
-debugger
-let initOptions = {
-  url: `${process.env.KC_URL}`,
-  realm: process.env.KC_REALM,
-  clientId: process.env.KC_VIEWER_CLIENT,
+const initOptions = {
+  url: `${controllerJson.keycloakURL}`,
+  realm: controllerJson.keycloakRealm,
+  clientId: controllerJson.keycloakClientid,
   onLoad: 'login-required',
-  KeycloakResponseType: "code",
-};
+  KeycloakResponseType: 'code'
+}
 
-const keycloak = new Keycloak(initOptions);
+const keycloak = new Keycloak(initOptions)
 
 export default keycloak
