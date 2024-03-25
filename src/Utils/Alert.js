@@ -51,7 +51,7 @@ const useStyles = makeStyles(theme => ({
     flexDirection: 'column',
     position: 'fixed',
     height: '60px',
-    left: '60px',
+    left: '0px',
     right: '0px',
     top: '0px',
     zIndex: '9999'

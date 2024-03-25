@@ -1,3 +1,4 @@
+import { useKeycloak } from '@react-keycloak/web'
 import React from 'react'
 
 const controllerJson = window.controllerConfig
@@ -78,7 +79,7 @@ export default function Context (props) {
   const [controllerStatus, setControllerStatus] = React.useState(initControllerState.status)
   const [error, setError] = React.useState(null)
   const [refresh, setRefresh] = React.useState(window.localStorage.getItem('iofogRefresh') || 3000)
-
+  const { initialized, keycloak } = useKeycloak()
   const setToken = (newToken) => {
     tokenRef.current = newToken
   }
@@ -109,33 +110,30 @@ export default function Context (props) {
     effect()
   }, [controllerUser])
 
-  const authenticate = async (user) => {
-    const response = await window.fetch(getUrl('/api/v1/user/login'), {
-      method: 'POST',
-      headers: getHeaders({
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      }),
-      body: JSON.stringify(user || controllerUser)
-    })
-    if (response.ok) {
-      const token = (await response.json()).accessToken
-      setToken(token)
-      setError(null)
-      return token
-    } else {
-      setToken(null)
-      throw new Error(response.statusText)
-    }
-  }
+  // const authenticate = async (user) => {
+  //   const response = await window.fetch(getUrl('/api/v1/user/login'), {
+  //     method: 'POST',
+  //     headers: getHeaders({
+  //       Accept: 'application/json',
+  //       'Content-Type': 'application/json'
+  //     }),
+  //     body: JSON.stringify(user || controllerUser)
+  //   })
+  //   if (response.ok) {
+  //     const token = (await response.json()).accessToken
+  //     setToken(token)
+  //     setError(null)
+  //     return token
+  //   } else {
+  //     setToken(null)
+  //     throw new Error(response.statusText)
+  //   }
+  // }
 
   // Wrapper around window.fetch to add proxy and authorization headers
   const request = React.useMemo(() => async (path, options = {}) => {
     try {
-      let t = tokenRef.current
-      if (!t) {
-        t = await authenticate()
-      }
+      let t = `${'Bearer '}${keycloak?.token}`
       if (options.body && typeof options.body === typeof {}) {
         options.body = JSON.stringify(options.body)
         options.headers = {
@@ -169,7 +167,7 @@ export default function Context (props) {
     setControllerUser(user)
     setRefresh(refresh)
     try {
-      await authenticate(user)
+      keycloak.login()
     } catch (e) {
       setError(e)
       throw e

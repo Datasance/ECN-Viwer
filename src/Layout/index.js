@@ -3,7 +3,8 @@ import { HashRouter, Route, Switch, NavLink, Redirect, useLocation } from 'react
 import Avatar from '@material-ui/core/Avatar'
 import HomeIcon from '@material-ui/icons/HomeOutlined'
 import CatalogIcon from '@material-ui/icons/GraphicEqOutlined'
-import SettingsIcon from '@material-ui/icons/SettingsOutlined'
+import ExitToAppIcon from '@material-ui/icons/ExitToApp'
+import AccountBoxIcon from '@material-ui/icons/AccountBox';
 
 import ECNViewer from '../ECNViewer'
 import Catalog from '../Catalog'
@@ -19,6 +20,7 @@ import './layout.scss'
 import { makeStyles } from '@material-ui/styles'
 import { MapProvider } from '../providers/Map'
 import { useData } from '../providers/Data'
+import { useKeycloak } from "@react-keycloak/web";
 
 const useStyles = makeStyles(theme => ({
   wrapper: {
@@ -94,6 +96,7 @@ function RouteWatcher ({ children }) {
 }
 
 export default function Layout () {
+  const { initialized, keycloak } = useKeycloak()
   const classes = useStyles()
   const returnHomeCbRef = React.useRef(null)
   const { user, status } = React.useContext(ControllerContext)
@@ -105,6 +108,11 @@ export default function Layout () {
     if (returnHomeCbRef.current) {
       returnHomeCbRef.current()
     }
+  }
+
+  if(!initialized)
+  {
+    return (<></>)
   }
 
   return (
@@ -129,7 +137,10 @@ export default function Layout () {
               </Avatar>
             </NavLink>
             <Avatar className={classes.latIcons}>
-              <SettingsIcon onClick={() => setSettingsOpen(v => !v)} />
+              <AccountBoxIcon onClick={() => {window.open(`${process.env.KC_URL}admin/${process.env.KC_REALM}/console`,"_blank")}} />
+            </Avatar>
+            <Avatar className={classes.latIcons}>
+              <ExitToAppIcon onClick={() => {keycloak.logout()}} />
             </Avatar>
           </div>
           <div className='content'>
@@ -156,7 +167,9 @@ export default function Layout () {
           </div>
         </div>
       </HashRouter>
-      <Modal
+      
+      {/* We removed after keycloak integration*/}
+      {/* <Modal
         {...{
           open: settingsOpen,
           title: 'Configuration',
@@ -167,12 +180,12 @@ export default function Layout () {
             }
           }
         }}
-      >
+      > */}
         {/* <SimpleTabs> */}
-        <Config title='User credentials' {...{ onSave: () => setSettingsOpen(false) }} />
+        {/* <Config title='User credentials' {...{ onSave: () => setSettingsOpen(false) }} /> */}
         {/* <ECNViewerConfig title='ECN Viewer' {...{ onSave: () => setSettingsOpen(false) }} /> */}
         {/* </SimpleTabs> */}
-      </Modal>
+      {/* </Modal> */}
     </>
   )
 }

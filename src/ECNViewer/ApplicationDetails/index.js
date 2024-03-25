@@ -236,6 +236,29 @@ export default function ApplicationDetails({
     </div>
   );
 
+  function unsecuredCopyFunction(textToCopy) {
+    const textarea = document.createElement('textarea');
+    textarea.value = textToCopy;
+
+    // Move the textarea outside the viewport to make it invisible
+    textarea.style.position = 'absolute';
+    textarea.style.left = '-99999999px';
+
+    document.body.prepend(textarea);
+
+    // highlight the content of the textarea element
+    textarea.select();
+
+    try {
+      document.execCommand('copy');
+    } catch (err) {
+      console.log(err);
+    } finally {
+      textarea.remove();
+    }
+    setcopyText("Copy All");
+  }
+
   return (
     <>
       <Paper className={`section first ${classes.multiSections}`}>
@@ -488,11 +511,7 @@ export default function ApplicationDetails({
                   autoFocus
                   onClick={() => {
                     setcopyText("Copied");
-                    navigator.clipboard
-                      .writeText(yamlDump)
-                      .then(() => {
-                        setcopyText("Copy All");
-                      });
+                    unsecuredCopyFunction(yamlDump)
                   }}
                 >
                   {copyText}
@@ -500,6 +519,7 @@ export default function ApplicationDetails({
               </div>
             </div>
           <AceEditor
+            setOptions={{ useWorker: false }}
             mode="yaml"
             theme="monokai"
             defaultValue={yamlDump}

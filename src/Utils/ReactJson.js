@@ -15,13 +15,39 @@ const useStyles = makeStyles((theme) => ({
 export default function ReactJson(props) {
   const classes = useStyles();
   const [copyText, setcopyText] = React.useState("Copy All")
+
+  function unsecuredCopyFunction(textToCopy) {
+    const textarea = document.createElement('textarea');
+    textarea.value = textToCopy;
+    const presentationArea = document.getElementsByClassName('MuiDialog-root')
+    
+    // Move the textarea outside the viewport to make it invisible
+    textarea.style.position = 'absolute';
+    textarea.style.zIndex = '9999';
+    textarea.style.left = '-99999999px';
+    presentationArea[0].prepend(textarea);
+
+    // highlight the content of the textarea element
+    textarea.select();
+    textarea.focus();
+
+    try {
+      document.execCommand('copy');
+    } catch (err) {
+      console.log(err);
+    } finally {
+      textarea.remove();
+    }
+    setcopyText("Copy All");
+  }
+
   return (
     <>
       {
         props?.copyButtonEnable ? 
         <div className={classes.container}>
         <div className={classes.copyButton}>
-        <Button autoFocus onClick={() => {setcopyText("Copied"); navigator.clipboard.writeText(JSON.stringify(props?.src)).then(()=> {setcopyText("Copy All")})}}>
+        <Button autoFocus onClick={() => {setcopyText("Copied"); unsecuredCopyFunction(JSON.stringify(props?.src))}}>
             {copyText}
           </Button>
         </div>

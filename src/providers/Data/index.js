@@ -5,6 +5,7 @@ import useRecursiveTimeout from '../../hooks/useInterval'
 
 import AgentManager from './agent-manager'
 import ApplicationManager from './application-manager'
+import { useKeycloak } from '@react-keycloak/web'
 
 export const DataContext = React.createContext()
 export const useData = () => React.useContext(DataContext)
@@ -112,9 +113,12 @@ export const DataProvider = ({
   const [loading, setLoading] = React.useState(true)
   const timeout = +refresh || 3000
   const [error, setError] = React.useState(false)
+  const { initialized, keycloak } = useKeycloak()
 
   const update = async () => {
-    // List fogs
+    if(initialized)
+    {
+      // List fogs
     let agents = []
     try {
       agents = await AgentManager.listAgents(request)()
@@ -152,6 +156,8 @@ export const DataProvider = ({
     if (loading) {
       setLoading(false)
     }
+    }
+    
   }
 
   useRecursiveTimeout(update, timeout)
