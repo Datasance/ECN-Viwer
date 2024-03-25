@@ -1,12 +1,13 @@
 {
   "name": "@datasance/ecn-viewer",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Eclipse ioFog Edge Cloud Network Viewer project  \nCopyright (c) 2023 Datasance Teknoloji A.S.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "publishConfig": {
+    "registry": "https://npm.pkg.github.com/",
     "access": "public"
   },
   "repository": {

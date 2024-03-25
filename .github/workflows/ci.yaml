@@ -22,7 +22,7 @@ env:
 
 jobs:
   Build-Publish:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     permissions:
       actions: write
       checks: write
@@ -39,38 +39,12 @@ jobs:
       statuses: write 
     name: Publish ECN-Viewer
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
-        node-version: 14
-    - name: Replace values
-      shell: bash
+        node-version: 20
+        registry-url: 'https://npm.pkg.github.com'
+        scope: '@datasance'
+    - run: sh ${GITHUB_WORKSPACE}/package.sh
       env: 
-          PAT: ${{ secrets.PAT }}
-      run: |
-        sed -i.back "s|PAT|${PAT}|g" .npmrc
-
-    - run: npm install
-    
-    - run: npm run build
-
-
-    - name: npm version
-      id: package-version
-      uses: martinbeentjes/npm-get-version-action@v1.3.1
-
-    - name: package version
-      shell: bash
-      id: version
-      run: |
-        if [[ ${{ github.ref_name }} =~ ^v.* ]] ; then
-          echo "pkg_version=${{ steps.package-version.outputs.current-version}}" >> "${GITHUB_OUTPUT}"
-        else
-           echo "pkg_version=${{ steps.package-version.outputs.current-version}}-${{ github.run_number }}" >> "${GITHUB_OUTPUT}"
-        fi
-
-    - name: npm pack with version from package version
-      run: |
-        npm pack
-        npm publish --registry=https://npm.pkg.github.com/
-
+        PAT: ${{ secrets.PAT }}
