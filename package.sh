@@ -7,7 +7,7 @@
 # Import our helper functions
 . scripts/utils.sh
 
-VERSION="0.0.1"
+VERSION="0.0.2"
 
 prettyTitle "Datasance ioFog ECN Viewer Packaging"
 echoInfo "Beginning packaging process"
@@ -24,7 +24,6 @@ if [ -f ${DISTRO_NAME} ]; then
 fi
 
 echoInfo "Building production app"
-cp controller_default.json src/ControllerProvider/controller.json
 npm run build 
 cp -r build package/
 cd package && npm version "${VERSION}" --allow-same-version && cd -
