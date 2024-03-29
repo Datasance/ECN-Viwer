@@ -7,6 +7,7 @@ import DetailsIcon from '@material-ui/icons/ArrowForward'
 import DeleteIcon from '@material-ui/icons/Delete'
 import CodeIcon from '@material-ui/icons/Code'
 import SettingsBackupRestoreIcon from '@material-ui/icons/SettingsBackupRestore';
+import ReplayIcon from '@material-ui/icons/Replay';
 
 import _prettyBytes from 'pretty-bytes'
 import { statusColor as _statusColor, msvcStatusColor as _msvcStatusColor } from '../Utils/Status'
@@ -32,7 +33,8 @@ export const icons = {
   DetailsIcon,
   DeleteIcon,
   CodeIcon,
-  SettingsBackupRestoreIcon
+  SettingsBackupRestoreIcon,
+  ReplayIcon
 }
 
 export const colors = theme.colors
