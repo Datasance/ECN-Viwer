@@ -33,7 +33,6 @@ export const MapProvider = ({
     const bounds = new window.google.maps.LatLngBounds() // need handler incase `google` not yet available
 
     const validAgents = agents.filter(a => hasValidCoordinates([a.latitude, a.longitude]))
-
     if (!validAgents.length) {
       newMap.center = [get(controllerInfo, 'location.lat', 0), get(controllerInfo, 'location.lon', 0)]
       newMap.zoom = 9
@@ -51,7 +50,7 @@ export const MapProvider = ({
     })
 
     if (includeController) {
-      bounds.extend(new window.google.maps.LatLng(get(controllerInfo, 'location.lat', 0), get(controllerInfo, 'location.lon', 0)))
+      bounds.extend(new window.google.maps.LatLng(get(controllerInfo, 'lat', 0), get(controllerInfo, 'lon', 0)))
     }
 
     const newBounds = {
@@ -69,7 +68,6 @@ export const MapProvider = ({
       width: get(mapRef, 'current.offsetWidth', 600),
       height: get(mapRef, 'current.offsetHeight', 800)
     }
-
     const { center } = fitBounds(newBounds, size)
     newMap.center = center
     newMap.zoom = 1

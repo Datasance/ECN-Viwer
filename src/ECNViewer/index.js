@@ -33,10 +33,7 @@ export default function ECNViewer ({ returnHomeCBRef }) {
   const [history, setHistory] = React.useState([])
   const [view, setView] = React.useState(views.DEFAULT)
   const showMap = useMediaQuery('(min-width:992px)') // Bootstrap4 lg
-
-  const location = config.controllerLocationInfo || _location
-  location.lat = +location.lat
-  location.lon = +location.lon
+  const location = _location;
 
   const saveHistory = () => {
     setHistory(h => [...h, { view, selectedElement, map }])

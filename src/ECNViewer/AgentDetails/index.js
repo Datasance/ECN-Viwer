@@ -167,7 +167,7 @@ export default function AgentDetails({
 
   const rebootActions = (
     <div className={classes.actions} style={{ minWidth: "unset", marginRight:"0.3rem" }}>
-      <icons.SettingsBackupRestoreIcon
+      <icons.ReplayIcon
         onClick={() => setOpenRebootAgentDialog(true)}
         className={classes.action}
         title="Reboot Agent"
@@ -554,9 +554,7 @@ export default function AgentDetails({
         <DialogTitle id="alert-dialog-title">Reboot {agent.name}?</DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            <span>Reboot microservices.</span>
-            <br />
-            <span>This is not reversible.</span>
+            <span>Rebooting an agent will stop all its microservices until an agent boots up.</span>
           </DialogContentText>
         </DialogContent>
         <DialogActions>
