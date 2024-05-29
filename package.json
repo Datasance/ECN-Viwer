@@ -46,7 +46,7 @@
   "proxy": "http://localhost:5555",
   "scripts": {
     "start": "npm run build && npm run prod",
-    "start-dev": "cp orange-config.js ./public/controller-config.js && concurrently 'PORT=5555 nodemon server/index.js' 'react-scripts --openssl-legacy-provider start'",
+    "start-dev": "react-scripts --openssl-legacy-provider start",
     "prod": "node server/index.js",
     "build": "cp controller-config.prod.js ./public/controller-config.js && react-scripts build",
     "test": "CI=true react-scripts test",
