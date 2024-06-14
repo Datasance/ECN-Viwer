@@ -188,11 +188,14 @@ export default function AgentDetails({
       );
       if (!res.ok) {
         pushFeedback({ message: res.statusText, type: "error" });
+        setOpenRebootAgentDialog(false);
       } else {
         pushFeedback({ message: "Agent Rebooted", type: "success" });
+        setOpenRebootAgentDialog(false);
       }
     } catch (e) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
+      setOpenRebootAgentDialog(false);
     }
   }
 
@@ -297,21 +300,21 @@ export default function AgentDetails({
           </div>
           <div className={classes.subSection}>
             <span className={classes.subTitle}>Memory Usage</span>
-            <span className={classes.text}>{`${prettyBytes(
+            {agent.memoryUsage !== undefined ? <span className={classes.text}>{`${prettyBytes(
               agent.memoryUsage * MiBFactor
             )} / ${prettyBytes(agent.systemAvailableMemory)} (${(
               ((agent.memoryUsage * MiBFactor) / agent.systemAvailableMemory) *
                 100 || 0
-            ).toFixed(2)}%)`}</span>
-          </div>
+            ).toFixed(2)}%)`}</span>: null}
+          </div> 
           <div className={classes.subSection}>
             <span className={classes.subTitle}>Disk Usage</span>
-            <span className={classes.text}>{`${prettyBytes(
+            {agent.diskUsage !== undefined ? <span className={classes.text}>{`${prettyBytes(
               agent.diskUsage * MiBFactor
             )} / ${prettyBytes(agent.systemAvailableDisk)} (${(
               ((agent.diskUsage * MiBFactor) / agent.systemAvailableDisk) *
                 100 || 0
-            ).toFixed(2)}%)`}</span>
+            ).toFixed(2)}%)`}</span>: null}
           </div>
         </div>
         <div className={classes.sectionDivider} />
@@ -323,7 +326,7 @@ export default function AgentDetails({
             <span>Edge Resources</span>
             {isMediumScreen && detailActions}
           </Typography>
-          {agent.edgeResources.map((er) => (
+          {agent.edgeResources?.map((er) => (
             <div
               key={`${er.name}_${er.version}`}
               className={classes.edgeResource}

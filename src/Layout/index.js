@@ -70,13 +70,13 @@ const useStyles = makeStyles(theme => ({
     padding: '20px 10px 20px 0px'
   },
   footer: {
-    color: theme.colors.neutral,
+    color: theme.colors.white,
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
     fontSize: '9pt',
     '& a': {
-      color: theme.colors.neutral,
+      color: theme.colors.white,
       textDecoration: 'none!important'
     }
   }

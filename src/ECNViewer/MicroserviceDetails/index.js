@@ -17,6 +17,7 @@ import {
   TableBody,
   TableCell,
   useMediaQuery,
+  CircularProgress,
 } from "@material-ui/core";
 
 import { useData } from "../../providers/Data";
@@ -31,6 +32,9 @@ import SearchBar from "../../Utils/SearchBar";
 import Modal from "../../Utils/Modal";
 import { useController } from "../../ControllerProvider";
 import { useFeedback } from "../../Utils/FeedbackContext";
+import AceEditor from "react-ace";
+import yaml from "js-yaml";
+import { API_VERSIONS } from "../../Utils/constants";
 
 const useStyles = makeStyles((theme) => ({
   ...getSharedStyle(theme),
@@ -45,11 +49,16 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     alignItems: "center",
   },
+  container: {
+    display: "flex",
+    justifyContent: "end",
+  },
 }));
 export default function MicroserviceDetails({
   microservice: selectedMicroservice,
   selectApplication,
   selectAgent,
+  back
 }) {
   const { data } = useData();
   const classes = useStyles();
@@ -66,6 +75,13 @@ export default function MicroserviceDetails({
     (microservices || []).find((a) => selectedMicroservice.uuid === a.uuid) ||
     selectedMicroservice; // Get live updates from data
   const agent = reducedAgents.byUUID[microservice.iofogUuid];
+
+  const [editorIsChanged, setEditorIsChanged] = React.useState(false)
+  const [openChangeYamlMicroserviceDialog, setOpenChangeYamlMicroserviceDialog] =
+    React.useState(false);
+  const [copyText, setcopyText] = React.useState("Copy All")
+  const [editorDataChanged, setEditorDataChanged] = React.useState(false)
+  const [fileParsing, setFileParsing] = React.useState(false)
 
   const _getMicroserviceImage = (m) => {
     if (!agent) {
@@ -95,9 +111,7 @@ export default function MicroserviceDetails({
       lget(vm, "accessMode", "").toLowerCase().includes(volumeFilter) ||
       lget(vm, "type", "").toLowerCase().includes(volumeFilter)
   );
-  if (volumes.length > 0) {
-    volumes.push({});
-  }
+
   const ports = reducedApplications.byName[microservice.application].microservices.find((a) => selectedMicroservice.uuid === a.uuid).ports.length > 0 ? reducedApplications.byName[microservice.application].microservices.find((a) => selectedMicroservice.uuid === a.uuid).ports : [];
   const extraHosts = microservice.extraHosts.filter(
     (e) =>
@@ -168,9 +182,37 @@ export default function MicroserviceDetails({
     hostDestination: "/var/dest",
     containerDestination: "/var/dest",
     accessMode: "rw",
+    type: "bind",
   };
   const [VolumeMappingManipulatedData, setVolumeMappingManipulatedData] =
     React.useState(newVolumeMappingArray);
+
+  async function deleteMicroServiceFunction() {
+    if (selectedPortObject !== undefined) {
+      try {
+        const res = await request(
+          `/api/v1/microservices/${selectedMicroservice.uuid}`,
+          {
+            method: "DELETE",
+            headers: {
+              "content-type": "application/json",
+            },
+          }
+        );
+        if (!res.ok) {
+          pushFeedback({ message: res.statusText, type: "error" });
+          setOpenAddPortMicroserviceDialog(false);
+        } else {
+          pushFeedback({ message: "Microservice Deleted", type: "success" });
+          setOpenAddPortMicroserviceDialog(false);
+          back();
+        }
+      } catch (e) {
+        pushFeedback({ message: e.message, type: "error", uuid: "error" });
+        setOpenAddPortMicroserviceDialog(false);
+      }
+    }
+  }
 
   async function addPortFunction() {
     try {
@@ -190,7 +232,6 @@ export default function MicroserviceDetails({
         pushFeedback({ message: "Controller Updated", type: "success" });
         setOpenAddPortMicroserviceDialog(false);
         setPortManipulatedData(newPortArray);
-        //window.location.reload();
       }
     } catch (e) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -214,7 +255,7 @@ export default function MicroserviceDetails({
         } else {
           pushFeedback({ message: "Controller Updated", type: "success" });
           setOpenDeletePortDialog(false);
-          //window.location.reload();
+          back();
         }
       } catch (e) {
         pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -244,7 +285,7 @@ export default function MicroserviceDetails({
         pushFeedback({ message: "Controller Updated", type: "success" });
         setOpenAddVolumeMappingMicroserviceDialog(false);
         setVolumeMappingManipulatedData(newVolumeMappingArray);
-        //window.location.reload();
+        back();
       }
     } catch (e) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -268,13 +309,184 @@ export default function MicroserviceDetails({
         } else {
           pushFeedback({ message: "Controller Updated", type: "success" });
           setOpenDeleteVolumeMappingDialog(false)
-          //window.location.reload();
+          back();
         }
       } catch (e) {
         pushFeedback({ message: e.message, type: "error", uuid: "error" });
       }
     }
   }
+
+  function unsecuredCopyFunction(textToCopy) {
+    const textarea = document.createElement('textarea');
+    textarea.value = textToCopy;
+
+    // Move the textarea outside the viewport to make it invisible
+    textarea.style.position = 'absolute';
+    textarea.style.left = '-99999999px';
+
+    document.body.prepend(textarea);
+
+    // highlight the content of the textarea element
+    textarea.select();
+
+    try {
+      document.execCommand('copy');
+    } catch (err) {
+      console.log(err);
+    } finally {
+      textarea.remove();
+    }
+    setcopyText("Copy All");
+  }
+
+
+  const _getApplicationYAMLFromJSON = (app) => {
+    return {
+      apiVersion: "datasance.com/v1",
+      kind: "Microservice",
+      metadata: {
+        name: app.name,
+        namespace: 'datasance',
+      },
+      spec: {
+          uuid: app?.uuid,
+          config: "{}",
+          name: app.name,
+          applicationId: app?.applicationId,
+          registryId: app?.registryId,
+          iofogUuid: app?.iofogUuid,
+          volumeMappings: app.volumeMappings.map((vm) => {
+            delete vm.id;
+            return vm;
+          }),
+          ports: app.ports.map((p) => {
+            if (p.host) {
+              p.host = (
+                reducedAgents.byUUID[p.host] || { name: p.host }
+              ).name;
+            }
+            return p;
+          }),
+          env: app.env.map((env) => {
+            delete env.id;
+            return env;
+          }),
+          cmd: app.cmd.map((cmd) => {
+            delete cmd.id;
+            return cmd;
+          }),
+          extraHosts: app.extraHosts.map((eH) => {
+            delete eH.id;
+            return eH;
+          }),
+          images: app.images.map(
+            (acc, image) => {
+              switch (image.fogTypeId) {
+                case 1:
+                  acc.containerImage = image.containerImage;
+                  break;
+                case 2:
+                  acc.containerImage = image.containerImage;
+                  break;
+              }
+              return acc;
+            },
+            (acc, image) => {
+              switch (image.fogTypeId) {
+                case 1:
+                  acc.fogTypeId = image.fogTypeId;
+                  break;
+                case 2:
+                  acc.fogTypeId = image.fogTypeId;
+                  break;
+              }
+              return acc;
+            },
+          ),
+          application: app?.application
+      },
+    };
+  };
+
+  const yamlDump = React.useMemo(
+    () => yaml.dump(_getApplicationYAMLFromJSON(microservice)),
+    [microservice]
+  );
+
+  const parseMicroserviceFile = async (doc) => {
+    if (API_VERSIONS.indexOf(doc.apiVersion) === -1) {
+      return [{}, `Invalid API Version ${doc.apiVersion}, current version is ${API_VERSIONS.slice(-1)[0]}`]
+    }
+    if (doc.kind !== 'Microservice') {
+      return [{}, `Invalid kind ${doc.kind}`]
+    }
+    if (!doc.metadata || !doc.spec) {
+      return [{}, 'Invalid YAML format']
+    }
+    const Microservice = {
+      name: lget(doc, 'metadata.name', undefined),
+      ...doc.spec,
+    }
+
+    return [Microservice]
+  }
+
+  async function yamlChangesSave(item) {
+    setFileParsing(true)
+    if (item) {
+      try {
+        const doc = yaml.safeLoad(item)
+        const [MicroserviceData, err] = await parseMicroserviceFile(doc)
+        if (err) {
+          setFileParsing(false)
+          setOpenChangeYamlMicroserviceDialog(false);
+          return pushFeedback({ message: err, type: 'error' })
+        }
+        const newMicroservice = microservice
+        const res = await deployMicroservice(MicroserviceData, newMicroservice)
+        if (!res.ok) {
+          try {
+            const error = await res.json()
+            pushFeedback({ message: error.message, type: 'error' })
+            setFileParsing(false)
+            setOpenChangeYamlMicroserviceDialog(false);
+          } catch (e) {
+            pushFeedback({ message: res.statusText, type: 'error' })
+            setFileParsing(false)
+            setOpenChangeYamlMicroserviceDialog(false);
+          }
+        } else {
+          pushFeedback({ message: 'Microservice updated!', type: 'success' })
+          setFileParsing(false)
+          setOpenChangeYamlMicroserviceDialog(false);
+          back();
+        }
+      } catch (e) {
+        pushFeedback({ message: e.message, type: 'error' })
+        setFileParsing(false)
+        setOpenChangeYamlMicroserviceDialog(false);
+      }
+    }
+  }
+
+  const deployMicroservice = async (microservice, newMicroservice) => {
+    const url = `/api/v1/microservices/${`/${selectedMicroservice.uuid}`}`
+    try {
+      const res = await request(url, {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify(microservice)
+      })
+      return res
+    } catch (e) {
+      pushFeedback({ message: e.message, type: 'error' })
+    }
+  }
+
+
 
   return (
     <>
@@ -401,7 +613,7 @@ export default function MicroserviceDetails({
               microservice.status.memoryUsage || 0 * MiBFactor
             )} / ${prettyBytes(agent.systemAvailableMemory || 0)} (${(
               (microservice.status.memoryUsage / agent.systemAvailableMemory) *
-                100 || 0
+              100 || 0
             ).toFixed(2)}%)`}</span>
           </div>
         </div>
@@ -473,44 +685,44 @@ export default function MicroserviceDetails({
             <TableBody>
               {ports.length > 0
                 ? ports.map((p) => (
-                    <TableRow
-                      key={p.external}
-                      hover
-                      classes={{ hover: classes.tableRowHover }}
-                    >
-                      <TableCell component="th" scope="row">
-                        {p.internal}
-                      </TableCell>
-                      <TableCell>{p.external}</TableCell>
-                      <TableCell>
-                        {p.protocol
-                          ? p.protocol === "udp"
-                            ? p.protocol
-                            : "tcp"
-                          : ""}
-                      </TableCell>
-                      <TableCell>
-                        <a
-                          className={classes.link}
-                          href={p.public?.links?.join(",")}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {p.public?.links?.join(",")}
-                        </a>
-                      </TableCell>
-                      <TableCell>
-                        <icons.DeleteIcon
-                          onClick={() => {
-                            setselectedPortObject(p);
-                            setOpenDeletePortDialog(true);
-                          }}
-                          className={classes.action}
-                          title="Delete application"
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  <TableRow
+                    key={p.external}
+                    hover
+                    classes={{ hover: classes.tableRowHover }}
+                  >
+                    <TableCell component="th" scope="row">
+                      {p.internal}
+                    </TableCell>
+                    <TableCell>{p.external}</TableCell>
+                    <TableCell>
+                      {p.protocol
+                        ? p.protocol === "udp"
+                          ? p.protocol
+                          : "tcp"
+                        : ""}
+                    </TableCell>
+                    <TableCell>
+                      <a
+                        className={classes.link}
+                        href={p.public?.links?.join(",")}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {p.public?.links?.join(",")}
+                      </a>
+                    </TableCell>
+                    <TableCell>
+                      <icons.DeleteIcon
+                        onClick={() => {
+                          setselectedPortObject(p);
+                          setOpenDeletePortDialog(true);
+                        }}
+                        className={classes.action}
+                        title="Delete application"
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))
                 : null}
             </TableBody>
           </Table>
@@ -586,31 +798,31 @@ export default function MicroserviceDetails({
               </TableRow>
             </TableHead>
             <TableBody>
-              {volumes.length > 0
-                ? volumes.map((p) => (
-                    <TableRow
-                      key={p.containerDestination}
-                      hover
-                      classes={{ hover: classes.tableRowHover }}
-                    >
-                      <TableCell component="th" scope="row">
-                        {p.hostDestination}
-                      </TableCell>
-                      <TableCell>{p.containerDestination}</TableCell>
-                      <TableCell>{p.accessMode}</TableCell>
-                      <TableCell>{p.fogTypeId}</TableCell>
-                      <TableCell>
-                        <icons.DeleteIcon
-                          onClick={() => {
-                            setselectedVolumeMappingObject(p);
-                            setOpenDeleteVolumeMappingDialog(true);
-                          }}
-                          className={classes.action}
-                          title="Delete volume"
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))
+              {volumes?.length > 0
+                ? volumes?.map((p) => (
+                  <TableRow
+                    key={p.containerDestination}
+                    hover
+                    classes={{ hover: classes.tableRowHover }}
+                  >
+                    <TableCell component="th" scope="row">
+                      {p.hostDestination}
+                    </TableCell>
+                    <TableCell>{p.containerDestination}</TableCell>
+                    <TableCell>{p.accessMode}</TableCell>
+                    <TableCell>{p.type}</TableCell>
+                    <TableCell>
+                      <icons.DeleteIcon
+                        onClick={() => {
+                          setselectedVolumeMappingObject(p);
+                          setOpenDeleteVolumeMappingDialog(true);
+                        }}
+                        className={classes.action}
+                        title="Delete volume"
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))
                 : null}
             </TableBody>
           </Table>
@@ -742,6 +954,69 @@ export default function MicroserviceDetails({
           </Table>
         </div>
       </Paper>
+      <Paper
+        className="section"
+        style={{ maxHeight: "800px", paddingBottom: "15px" }}
+      >
+        <div
+          className={[
+            classes.section,
+            "paper-container-left",
+            "paper-container-right",
+          ].join(" ")}
+        >
+          <Typography
+            variant="subtitle2"
+            className={classes.title}
+            style={{ zIndex: 5 }}
+          >
+            Microservice YAML
+          </Typography>
+
+          <div className={classes.container}>
+            {editorIsChanged ? <div className={classes.copyButton}>
+              <Button
+                onClick={() => {
+                  setOpenChangeYamlMicroserviceDialog(true);
+                }}
+              >
+                {`Save Changes`}
+              </Button>
+            </div> : null}
+            <div className={classes.copyButton}>
+              <Button
+                autoFocus
+                onClick={() => {
+                  setcopyText("Copied");
+                  unsecuredCopyFunction(!editorDataChanged ? yamlDump : editorDataChanged)
+                }}
+              >
+                {copyText}
+              </Button>
+            </div>
+          </div>
+          <AceEditor
+            setOptions={{ useWorker: false }}
+            mode="yaml"
+            theme="monokai"
+            defaultValue={yamlDump}
+            onLoad={function (editor) {
+              editor.renderer.setPadding(10);
+              editor.renderer.setScrollMargin(10);
+            }}
+            style={{
+              width: "100%",
+              height: "700px",
+              borderRadius: "4px",
+            }}
+            change
+            onChange={function editorChanged(editor) {
+              setEditorIsChanged(true)
+              setEditorDataChanged(editor)
+            }}
+          />
+        </div>
+      </Paper>
       <Dialog
         open={openDeleteMicroserviceDialog}
         onClose={() => {
@@ -761,7 +1036,7 @@ export default function MicroserviceDetails({
             Cancel
           </Button>
           <Button
-            onClick={() => setOpenDeleteMicroserviceDialog(false)}
+            onClick={() => deleteMicroServiceFunction()}
             color="secondary"
             autoFocus
           >
@@ -913,6 +1188,56 @@ export default function MicroserviceDetails({
           >
             Delete
           </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={openChangeYamlMicroserviceDialog}
+        onClose={() => {
+          setOpenChangeYamlMicroserviceDialog(false);
+        }}
+      >
+        <DialogTitle id="alert-dialog-title">
+          Change yaml file for {application.name}?
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            {
+              fileParsing ?
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: "center" }}><CircularProgress color='primary' size={24} /></div>
+                :
+                <>
+                  <span>
+                    Are you sure yaml file will change for this Microservice.
+                  </span>
+                  <br />
+                  <br />
+                  <span>This is not reversible.</span>
+                </>
+            }
+
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <>
+            {
+              fileParsing ? null :
+                <>
+                  <Button onClick={() => setOpenChangeYamlMicroserviceDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      yamlChangesSave(editorDataChanged)
+                    }}
+                    color="primary"
+                    autoFocus
+                  >
+                    Confirm
+                  </Button>
+                </>
+            }
+          </>
+
         </DialogActions>
       </Dialog>
     </>
