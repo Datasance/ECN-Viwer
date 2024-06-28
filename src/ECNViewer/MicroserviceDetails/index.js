@@ -347,18 +347,45 @@ export default function MicroserviceDetails({
       kind: "Microservice",
       metadata: {
         name: app.name,
-        namespace: 'datasance',
       },
       spec: {
-          uuid: app?.uuid,
-          config: "{}",
+        agent: {
           name: app.name,
-          applicationId: app?.applicationId,
-          registryId: app?.registryId,
-          iofogUuid: app?.iofogUuid,
-          volumeMappings: app.volumeMappings.map((vm) => {
+          config: app?.config
+        },
+        images: app.images.map(
+          (acc, image) => {
+            switch (image.fogTypeId) {
+              case 1:
+                acc.containerImage = image.containerImage;
+                break;
+              case 2:
+                acc.containerImage = image.containerImage;
+                break;
+            }
+            return acc;
+          },
+          (acc, image) => {
+            switch (image.fogTypeId) {
+              case 1:
+                acc.fogTypeId = image.fogTypeId;
+                break;
+              case 2:
+                acc.fogTypeId = image.fogTypeId;
+                break;
+            }
+            return acc;
+          },
+        ),
+        container: {
+          rootHostAccess: false,
+          volumes: app.volumeMappings.map((vm) => {
             delete vm.id;
             return vm;
+          }),
+          env: app.env.map((env) => {
+            delete env.id;
+            return env;
           }),
           ports: app.ports.map((p) => {
             if (p.host) {
@@ -368,44 +395,17 @@ export default function MicroserviceDetails({
             }
             return p;
           }),
-          env: app.env.map((env) => {
-            delete env.id;
-            return env;
-          }),
-          cmd: app.cmd.map((cmd) => {
+          commands: app.cmd.map((cmd) => {
             delete cmd.id;
             return cmd;
           }),
-          extraHosts: app.extraHosts.map((eH) => {
-            delete eH.id;
-            return eH;
-          }),
-          images: app.images.map(
-            (acc, image) => {
-              switch (image.fogTypeId) {
-                case 1:
-                  acc.containerImage = image.containerImage;
-                  break;
-                case 2:
-                  acc.containerImage = image.containerImage;
-                  break;
-              }
-              return acc;
-            },
-            (acc, image) => {
-              switch (image.fogTypeId) {
-                case 1:
-                  acc.fogTypeId = image.fogTypeId;
-                  break;
-                case 2:
-                  acc.fogTypeId = image.fogTypeId;
-                  break;
-              }
-              return acc;
-            },
-          ),
-          application: app?.application
-      },
+        },
+        config: {
+          data_label: "test_mode=false_cross_agent_microservice_routing_aug_27",
+          test_mode: true
+        },
+        application: app?.application,
+      }
     };
   };
 
@@ -1197,7 +1197,7 @@ export default function MicroserviceDetails({
         }}
       >
         <DialogTitle id="alert-dialog-title">
-          Change yaml file for {application.name}?
+          Update {microservice.name} deployment yaml?
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
@@ -1207,11 +1207,11 @@ export default function MicroserviceDetails({
                 :
                 <>
                   <span>
-                    Are you sure yaml file will change for this Microservice.
+                    Updating a yaml file will update/reinstall/reconfigure <b>{microservice.name}</b>.
                   </span>
                   <br />
                   <br />
-                  <span>This is not reversible.</span>
+                  <span>Do you want to proceed ?</span>
                 </>
             }
 

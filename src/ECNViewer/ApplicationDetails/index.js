@@ -689,7 +689,7 @@ export default function ApplicationDetails({
         }}
       >
         <DialogTitle id="alert-dialog-title">
-          Change yaml file for {application.name}?
+          Update "{application.name}" deployment yaml?
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
@@ -699,11 +699,11 @@ export default function ApplicationDetails({
                 :
                 <>
                   <span>
-                    Are you sure yaml file will change for this application.
+                    Updating a yaml file will update/reinstall/reconfigure "{application.name}" and related Microservices.
                   </span>
                   <br />
                   <br />
-                  <span>This is not reversible.</span>
+                  <span>Do you want to proceed ?</span>
                 </>
             }
 

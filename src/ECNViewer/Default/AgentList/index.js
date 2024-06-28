@@ -136,7 +136,6 @@ export default function AgentList(props) {
       dockerPruningFrequency: a?.dockerPruningFrequency,
       availableDiskThreshold: a?.availableDiskThreshold,
       logLevel: a?.logLevel,
-      isSystem: a?.isSystem,
       routerMode: a?.routerMode,
       messagingPort: a?.messagingPort,
       interRouterPort: a?.interRouterPort,
@@ -334,7 +333,7 @@ export default function AgentList(props) {
                       })}
                     </TableCell>
                     <TableCell classes={{ root: classes.tableCell }}>
-                      {a?.tags.length > 0 ? a?.tags.join() : `[]` }
+                      {a?.tags.length > 0 ? a?.tags.join() : `` }
                     </TableCell>
                     <TableCell classes={{ root: classes.tableCell }}>
                       <MoreIcon

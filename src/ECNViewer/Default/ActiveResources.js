@@ -87,9 +87,9 @@ export default function ActiveResources () {
     alert: 0
   })
   const microserviceCount = microservices.reduce((acc, a) => {
-    if (a.status.status === 'RUNNING') {
+    if (a?.status?.status === 'RUNNING') {
       acc.running += 1
-    } else if (a.status.status === 'FAILED') {
+    } else if (a?.status?.status === 'FAILED') {
       acc.error += 1
     } else {
       acc.stopped += 1
