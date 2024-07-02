@@ -35,6 +35,7 @@ import { useFeedback } from "../../Utils/FeedbackContext";
 import AceEditor from "react-ace";
 import yaml from "js-yaml";
 import { API_VERSIONS } from "../../Utils/constants";
+import { parseMicroservice } from '../../Utils/ApplicationParser'
 
 const useStyles = makeStyles((theme) => ({
   ...getSharedStyle(theme),
@@ -349,33 +350,26 @@ export default function MicroserviceDetails({
         name: app.name,
       },
       spec: {
+        uuid: app.uuid,
+        name: app.name,
         agent: {
-          name: app.name,
-          config: app?.config
+            name: agent?.name,
         },
-        images: app.images.map(
+        images: app.images.reduce(
           (acc, image) => {
             switch (image.fogTypeId) {
               case 1:
-                acc.containerImage = image.containerImage;
+                acc.x86 = image.containerImage;
                 break;
               case 2:
-                acc.containerImage = image.containerImage;
+                acc.arm = image.containerImage;
                 break;
             }
             return acc;
           },
-          (acc, image) => {
-            switch (image.fogTypeId) {
-              case 1:
-                acc.fogTypeId = image.fogTypeId;
-                break;
-              case 2:
-                acc.fogTypeId = image.fogTypeId;
-                break;
-            }
-            return acc;
-          },
+          {
+            registry: app.registryId,
+          }
         ),
         container: {
           rootHostAccess: false,
@@ -400,11 +394,9 @@ export default function MicroserviceDetails({
             return cmd;
           }),
         },
-        config: {
-          data_label: "test_mode=false_cross_agent_microservice_routing_aug_27",
-          test_mode: true
-        },
+        config: JSON.parse(app?.config),
         application: app?.application,
+        rebuild: app?.rebuild,
       }
     };
   };
@@ -424,27 +416,27 @@ export default function MicroserviceDetails({
     if (!doc.metadata || !doc.spec) {
       return [{}, 'Invalid YAML format']
     }
-    const Microservice = {
+    let tempObject = await parseMicroservice(doc.spec)
+    const microserviceData = {
       name: lget(doc, 'metadata.name', undefined),
-      ...doc.spec,
+      ...tempObject,
     }
-
-    return [Microservice]
+    return [microserviceData]
   }
 
   async function yamlChangesSave(item) {
     setFileParsing(true)
     if (item) {
       try {
-        const doc = yaml.safeLoad(item)
-        const [MicroserviceData, err] = await parseMicroserviceFile(doc)
+        const doc = yaml.load(item)
+        const [microserviceData, err] = await parseMicroserviceFile(doc)
         if (err) {
           setFileParsing(false)
           setOpenChangeYamlMicroserviceDialog(false);
           return pushFeedback({ message: err, type: 'error' })
         }
-        const newMicroservice = microservice
-        const res = await deployMicroservice(MicroserviceData, newMicroservice)
+        const newMicroservice = microserviceData
+        const res = await deployMicroservice(newMicroservice)
         if (!res.ok) {
           try {
             const error = await res.json()
@@ -470,8 +462,8 @@ export default function MicroserviceDetails({
     }
   }
 
-  const deployMicroservice = async (microservice, newMicroservice) => {
-    const url = `/api/v1/microservices/${`/${selectedMicroservice.uuid}`}`
+  const deployMicroservice = async (microservice) => {
+    const url = `/api/v1/microservices/${`${selectedMicroservice.uuid}`}`
     try {
       const res = await request(url, {
         method: 'PATCH',

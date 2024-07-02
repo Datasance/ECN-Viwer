@@ -82,7 +82,7 @@ export default function ApplicationDetails({
   const application =
     (applications || []).find((a) => selectedApplication.name === a.name) ||
     selectedApplication; // Get live updates from data
-  const runningMsvcs = application.microservices.filter(
+  const runningMsvcs = application?.microservices.filter(
     (m) => m.status.status === "RUNNING"
   );
   const [copyText, setcopyText] = React.useState("Copy All")
@@ -294,7 +294,7 @@ export default function ApplicationDetails({
     setFileParsing(true)
     if (item) {
       try {
-        const doc = yaml.safeLoad(item)
+        const doc = yaml.load(item)
         const [applicationData, err] = await parseApplicationFile(doc)
         if (err) {
           setFileParsing(false)

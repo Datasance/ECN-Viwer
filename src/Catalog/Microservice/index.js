@@ -232,7 +232,7 @@ export default function Catalog () {
 
       reader.onload = function (evt) {
         try {
-          const doc = yaml.safeLoad(evt.target.result)
+          const doc = yaml.load(evt.target.result)
           const [catalogItem, err] = parseCatalogItem(doc)
           if (err) {
             return pushFeedback({ message: err, type: 'error' })

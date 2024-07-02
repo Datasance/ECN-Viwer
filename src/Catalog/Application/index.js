@@ -169,7 +169,7 @@ export default function Catalog () {
 
       reader.onload = async function (evt) {
         try {
-          const doc = yaml.safeLoad(evt.target.result)
+          const doc = yaml.load(evt.target.result)
           const [catalogItem, err] = await parseApplicationTemplate(doc)
           if (err) {
             return pushFeedback({ message: err, type: 'error' })
