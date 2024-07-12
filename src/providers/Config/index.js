@@ -76,7 +76,7 @@ export const ConfigProvider = ({
   }
 
   React.useEffect(() => {
-    _fetchConfig()
+    //_fetchConfig()
   }, [])
 
   const isDebug = window.location.search.includes('debug=true')

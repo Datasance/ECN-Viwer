@@ -82,8 +82,8 @@ export default function ApplicationDetails({
   const application =
     (applications || []).find((a) => selectedApplication.name === a.name) ||
     selectedApplication; // Get live updates from data
-  const runningMsvcs = application?.microservices.filter(
-    (m) => m.status.status === "RUNNING"
+  const runningMsvcs = application?.microservices?.filter(
+    (m) => m.status?.status === "RUNNING"
   );
   const [copyText, setcopyText] = React.useState("Copy All")
 
@@ -132,7 +132,7 @@ export default function ApplicationDetails({
         name: app.name,
       },
       spec: {
-        microservices: app.microservices.map((m) => ({
+        microservices: app.microservices?.map((m) => ({
           name: m.name,
           agent: {
             name: (reducedAgents.byUUID[m.iofogUuid] || { name: "__UNKNOWN__" })
@@ -394,19 +394,19 @@ export default function ApplicationDetails({
           <div className={classes.subSection}>
             <span className={classes.subTitle}>Last Active</span>
             <span className={classes.text}>
-              {moment(application.lastStatusTime).format(dateFormat)}
+              {moment(application?.lastStatusTime).format(dateFormat)}
             </span>
           </div>
           <div className={classes.subSection}>
             <span className={classes.subTitle}>Microservices</span>
             <span className={classes.text}>
-              {runningMsvcs.length}/{application.microservices.length}
+              {runningMsvcs?.length}/{application?.microservices?.length}
             </span>
           </div>
           <div className={classes.subSection}>
             <span className={classes.subTitle}>Created at</span>
             <span className={classes.text}>
-              {moment(application.createdAt).format(dateFormat)}
+              {moment(application?.createdAt).format(dateFormat)}
             </span>
           </div>
         </div>

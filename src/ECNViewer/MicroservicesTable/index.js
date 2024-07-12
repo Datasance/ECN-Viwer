@@ -17,13 +17,13 @@ export default function MicroservicesTable ({ application, selectMicroservice, s
 
   const { reducedAgents } = data
 
-  const microservices = application.microservices.filter(m => (
+  const microservices = application.microservices?.filter(m => (
     m.name.toLowerCase().includes(filter) ||
     m.status.status.toLowerCase().includes(filter) ||
     (selectAgent && (reducedAgents.byUUID[m.iofogUuid] || { name: '' }).name.toLowerCase().includes(filter))
   ))
-  if (!microservices.length) {
-    microservices.push({ uuid: 'filler' })
+  if (!microservices?.length) {
+    microservices?.push({ uuid: 'filler' })
   }
 
   return (
@@ -38,7 +38,7 @@ export default function MicroservicesTable ({ application, selectMicroservice, s
         </TableRow>
       </TableHead>
       <TableBody>
-        {microservices.map((row) => {
+        {microservices?.map((row) => {
           if (!row.name) {
             return <TableRow key={row.uuid}><TableCell colSpan={5} /></TableRow>
           }
@@ -46,11 +46,11 @@ export default function MicroservicesTable ({ application, selectMicroservice, s
           return (
             <TableRow key={row.uuid} style={{ verticalAlign: 'baseline' }} hover classes={{ hover: classes.tableRowHover }}>
               <TableCell component='th' scope='row' className={classes.action} onClick={() => selectMicroservice(row)} style={{ width: '200px' }}>
-                <span style={{ display: 'flex', alignItems: 'center' }}><MsvcStatus status={row.status.status} size={10} style={{ marginRight: '5px', '--pulse-size': '5px' }} />{row.name}</span>
+                <span style={{ display: 'flex', alignItems: 'center' }}><MsvcStatus status={row.status?.status} size={10} style={{ marginRight: '5px', '--pulse-size': '5px' }} />{row.name}</span>
               </TableCell>
               <TableCell style={{ width: '200px' }}>
-                <span>{row.status.status}{row.status.status === 'PULLING' && ` (${row.status.percentage.toFixed(2)}%)`}</span>
-                {row.status.errorMessage && <><br /><span>{row.status.errorMessage}</span></>}
+                <span>{row.status?.status}{row.status?.status === 'PULLING' && ` (${row.status?.percentage !== undefined ? row.status?.percentage .toFixed(2): 0}%)`}</span>
+                {row.status?.errorMessage && <><br /><span>{row.status?.errorMessage}</span></>}
               </TableCell>
               {selectAgent &&
                 <TableCell className={classes.action} onClick={() => agent ? selectAgent(agent) : null} style={{ width: '200px' }}>

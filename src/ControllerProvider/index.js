@@ -25,7 +25,9 @@ const initControllerState = (() => {
   }
 })()
 
-const IPLookUp = 'http://ip-api.com/json/'
+const IPLookUp = window.location.protocol === 'https:' 
+  ? 'https://api.ipgeolocation.io/ipgeo?apiKey=f31b457bb2be418fb9e4d14dc92c13a8&ip=' 
+  : 'http://ip-api.com/json/';
 
 // If dev mode, use proxy
 // Otherwise assume you are running on the Controller
@@ -51,8 +53,8 @@ const lookUpControllerInfo = async (ip) => {
     ip = window.location.host.split(':')[0] // Get only ip, not port
   }
   const localhost = new RegExp('(0\.0\.0\.0|localhost|127\.0\.0\.1|192\.168\.)') // eslint-disable-line no-useless-escape
-  const lookupIP = localhost.test(ip) ? '8.8.8.8' : ip
-  const response = await window.fetch(IPLookUp + lookupIP)
+  const lookupIP = localhost.test(ip) ? '8.8.8.8' : ip.slice(-1) === '/' ? ip.substring(0, ip.length - 1): ip
+  const response = await window.fetch(IPLookUp + lookupIP.replace("http://","").replace("https://",""))
   if (response.ok) {
     return response.json()
   } else {

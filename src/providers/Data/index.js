@@ -24,7 +24,8 @@ const initState = {
   activeAgents: [],
   activeMsvcs: [],
   msvcsPerAgent: [],
-  applications: []
+  applications: [],
+  systemApplications: []
 }
 
 export const actions = {
@@ -63,7 +64,9 @@ const updateData = (state, newController) => {
     byUUID: {},
     byName: {}
   })
-  const reducedApplications = newController.applications.reduce((acc, a) => {
+
+  let mergedApplications = [...newController.applications, ...newController?.systemApplications];
+  const reducedApplications = mergedApplications.reduce((acc, a) => {
     acc.byId[a.id] = a
     acc.byName[a.name] = a
     return acc
@@ -82,6 +85,8 @@ const updateData = (state, newController) => {
   if (!state.agent || !state.agent.uuid) {
     state.agent = newController.agents[0] || {}
   }
+  
+  const systemApplications = newController?.systemApplications
 
   return {
     ...state,
@@ -92,7 +97,8 @@ const updateData = (state, newController) => {
     activeMsvcs,
     msvcsPerAgent,
     reducedAgents,
-    reducedApplications
+    reducedApplications,
+    systemApplications
   }
 }
 
@@ -136,6 +142,14 @@ export const DataProvider = ({
       return
     }
 
+    let systemApplications = []
+    try {
+      systemApplications = await ApplicationManager.listSystemApplications(request)()
+    } catch (e) {
+      setError(e)
+      return
+    }
+
     let microservices = []
     for (const application of applications) {
       // We need this to get microservice details like Status
@@ -152,7 +166,7 @@ export const DataProvider = ({
     if (error) {
       setError(false)
     }
-    dispatch({ type: actions.UPDATE, data: { agents, applications, microservices } })
+    dispatch({ type: actions.UPDATE, data: { agents, applications, microservices, systemApplications } })
     if (loading) {
       setLoading(false)
     }

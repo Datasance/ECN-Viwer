@@ -71,7 +71,7 @@ export default function MicroserviceDetails({
   const [hostFilter, sethostFilter] = React.useState("");
   const isMediumScreen = useMediaQuery("(min-width: 768px)");
 
-  const { microservices, reducedAgents, reducedApplications } = data;
+  const { microservices, reducedAgents, reducedApplications, systemApplications } = data;
   const microservice =
     (microservices || []).find((a) => selectedMicroservice.uuid === a.uuid) ||
     selectedMicroservice; // Get live updates from data
@@ -206,7 +206,6 @@ export default function MicroserviceDetails({
         } else {
           pushFeedback({ message: "Microservice Deleted", type: "success" });
           setOpenAddPortMicroserviceDialog(false);
-          back();
         }
       } catch (e) {
         pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -256,7 +255,6 @@ export default function MicroserviceDetails({
         } else {
           pushFeedback({ message: "Controller Updated", type: "success" });
           setOpenDeletePortDialog(false);
-          back();
         }
       } catch (e) {
         pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -265,6 +263,7 @@ export default function MicroserviceDetails({
   }
 
   async function addVolumeMappingFunction() {
+    
     try {
       const res = await request(
         `/api/v1/microservices/${selectedMicroservice.uuid}/volume-mapping`,
@@ -286,7 +285,6 @@ export default function MicroserviceDetails({
         pushFeedback({ message: "Controller Updated", type: "success" });
         setOpenAddVolumeMappingMicroserviceDialog(false);
         setVolumeMappingManipulatedData(newVolumeMappingArray);
-        back();
       }
     } catch (e) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -310,7 +308,6 @@ export default function MicroserviceDetails({
         } else {
           pushFeedback({ message: "Controller Updated", type: "success" });
           setOpenDeleteVolumeMappingDialog(false)
-          back();
         }
       } catch (e) {
         pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -452,7 +449,6 @@ export default function MicroserviceDetails({
           pushFeedback({ message: 'Microservice updated!', type: 'success' })
           setFileParsing(false)
           setOpenChangeYamlMicroserviceDialog(false);
-          back();
         }
       } catch (e) {
         pushFeedback({ message: e.message, type: 'error' })
@@ -463,7 +459,9 @@ export default function MicroserviceDetails({
   }
 
   const deployMicroservice = async (microservice) => {
-    const url = `/api/v1/microservices/${`${selectedMicroservice.uuid}`}`
+    
+    let isSystem = systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application)
+    const url = `/api/v1/microservices/${isSystem ? `system/`:""}${`${selectedMicroservice.uuid}`}`
     try {
       const res = await request(url, {
         method: 'PATCH',

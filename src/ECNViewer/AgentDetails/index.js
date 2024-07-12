@@ -118,6 +118,7 @@ export default function AgentDetails({
   };
 
   const deleteApplication = async (app) => {
+    
     try {
       const response = await _deleteApplication(app);
       if (response.ok) {
@@ -520,7 +521,7 @@ export default function AgentDetails({
             Cancel
           </Button>
           <Button
-            onClick={() => deleteApplication(selectApplication)}
+            onClick={() => deleteApplication(selectedApplication)}
             color="secondary"
             autoFocus
           >

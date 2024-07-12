@@ -21,6 +21,7 @@ import SearchBar from '../../Utils/SearchBar'
 import PublishIcon from '@material-ui/icons/Publish'
 import GetAppIcon from '@material-ui/icons/GetApp'
 import { Search as SearchIcon } from '@material-ui/icons'
+import SystemAppList from './SystemAppList'
 
 const useStyles = makeStyles(theme => ({
   ...getSharedStyles(theme),
@@ -69,7 +70,7 @@ export default function Default ({ selectAgent, selectController, selectApplicat
   const showTabActions = useMediaQuery('(min-width: 576px)')
   const isMediumScreen = useMediaQuery('(min-width: 768px)')
 
-  const { controller, activeAgents, applications, activeMsvcs, msvcsPerAgent } = data
+  const { controller, activeAgents, applications, activeMsvcs, msvcsPerAgent, systemApplications } = data
 
   const parseApplicationFile = async (doc) => {
     if (API_VERSIONS.indexOf(doc.apiVersion) === -1) {
@@ -160,7 +161,7 @@ export default function Default ({ selectAgent, selectController, selectApplicat
       <label for='file' className={classes.link} style={{ marginRight: '5px', textDecoration: 'underline' }}>upload</label>
     </span>
   )
-
+  
   return (
     <>
       <ActiveResources {...{ activeAgents, applications, activeMsvcs, loading }} />
@@ -169,11 +170,15 @@ export default function Default ({ selectAgent, selectController, selectApplicat
         <SimpleTabs
           stickyHeader
           headers={(selectedTab) => {
-            return showTabActions ? (
-              selectedTab === 0 ? (
-                <SearchBar onSearch={setFilter} style={{ marginRight: '5px', position: 'sticky', right: '15px', maxWidth: isMediumScreen ? 'inherit' : '100px' }} />
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', flex: '1 1 0px', justifyContent: 'flex-end', position: 'sticky', right: '15px' }}>
+            switch (selectedTab) {
+              case 0:
+                return(
+                <SearchBar onSearch={setFilter} style={{ marginRight: '5px', position: 'sticky', right: '15px', maxWidth: isMediumScreen ? 'inherit' : '100px' }} />)
+                break;
+                case 1:
+                  return(
+                    <>
+                    <div style={{ display: 'flex', alignItems: 'center', flex: '1 1 0px', justifyContent: 'flex-end', position: 'sticky', right: '15px' }}>
                   <FileDrop {...{
                     onHover:
                       showSearchbar
@@ -200,27 +205,23 @@ export default function Default ({ selectAgent, selectController, selectApplicat
                   {showSearchbar
                     ? <SearchBar onSearch={setFilter} style={{ marginRight: '5px', marginLeft: '15px', maxWidth: actionBarWidth }} />
                     : <div className={[classes.iconContainer, classes.searchIconContainer].join(' ')} onClick={() => setShowSearchbar(true)} style={{ marginLeft: '15px', cursor: 'pointer' }}><SearchIcon /></div>}
-                </div>))
-              : (selectedTab === 1
-                ? (
-                  <FileDrop {...{
-                    onHover: <GetAppIcon style={{ margin: 'auto' }} />,
-                    onDrop: readApplicationFile,
-                    loading: fileParsing,
-                    style: { padding: 0, height: '39px', width: '39px', position: 'sticky', right: '15px' }
-                  }}
-                  >
-                    <>
-                      <input onChange={handleFileInput} class='box__file' type='file' name='files[]' id='file' className={classes.hiddenInput} />
-                      <label for='file'><div className={classes.iconContainer} style={{ cursor: 'pointer' }}><PublishIcon style={{ marginLeft: '-2px' }} /></div></label>
-                    </>
-                  </FileDrop>
-                )
-                : null)
+                </div>
+                </>
+                  )
+                  break;
+                  case 2:
+                    return(
+                      <SearchBar onSearch={setFilter} style={{ marginRight: '5px', position: 'sticky', right: '15px', maxWidth: isMediumScreen ? 'inherit' : '100px' }} />)
+                break;
+              default:
+                break;
+            }
+            
           }}
         >
           <AgentList title='Agents' {...{ deleteAgent, msvcsPerAgent, filter, loading, msvcs: controller.microservices, agents: controller.agents, agent: selectedElement, setAgent: selectAgent, controller: controller.info }} />
           <ApplicationList title={showTabActions ? 'Applications' : 'Apps'} {...{ applications, filter, loading, agents: controller.agents, selectApplication, application: selectedElement }} />
+          <SystemAppList title={'System Apps'} {...{ systemApplications, filter, loading, agents: controller.agents, selectApplication, application: systemApplications, setAgent: selectAgent }} />
         </SimpleTabs>
       </Paper>
     </>
