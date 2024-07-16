@@ -18,8 +18,8 @@ const mapImages = (images) => {
 }
 
 const parseMicroserviceImages = async (fileImages) => {
-  if (fileImages.catalogId) {
-    return { registryId: undefined, images: undefined, catalogItemId: fileImages.catalogId }
+  if (fileImages.catalogItemId) {
+    return { registryId: undefined, images: undefined, catalogItemId: fileImages.catalogItemId }
   }
   const registryByName = {
     remote: 1,
