@@ -221,7 +221,7 @@ export default function Default ({ selectAgent, selectController, selectApplicat
         >
           <AgentList title='Agents' {...{ deleteAgent, msvcsPerAgent, filter, loading, msvcs: controller.microservices, agents: controller.agents, agent: selectedElement, setAgent: selectAgent, controller: controller.info }} />
           <ApplicationList title={showTabActions ? 'Applications' : 'Apps'} {...{ applications, filter, loading, agents: controller.agents, selectApplication, application: selectedElement }} />
-          <SystemAppList title={'System Apps'} {...{ systemApplications, filter, loading, agents: controller.agents, selectApplication, application: systemApplications, setAgent: selectAgent }} />
+          <SystemAppList title={isMediumScreen ? 'System Apps' : 'Sys Apps'} {...{ systemApplications, filter, loading, agents: controller.agents, selectApplication, application: systemApplications, setAgent: selectAgent }} />
         </SimpleTabs>
       </Paper>
     </>

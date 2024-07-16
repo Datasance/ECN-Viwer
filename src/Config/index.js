@@ -174,7 +174,7 @@ export default function Config (props) {
         TabIndicatorProps={{ hidden: true }}
         onChange={(e, value) => setTabValue(value)}
         aria-labelledby={tabs.map((c, idx) => c.id || idx).join(' ')}
-        style={{ flex: '1 1 0px', position: 'sticky', left: 0 }}
+        style={{ flex: '2 1 0px', position: 'sticky', left: 0 }}
       >
         {tabs.map((child, idx) => {
           return (

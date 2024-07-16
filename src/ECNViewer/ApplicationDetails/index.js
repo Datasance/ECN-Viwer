@@ -152,6 +152,7 @@ export default function ApplicationDetails({
             },
             {
               registry: m.registryId,
+              catalogItemId: m.catalogItemId,
             }
           ),
           container: {

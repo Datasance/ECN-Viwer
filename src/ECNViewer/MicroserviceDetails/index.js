@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 
 import ReactJson from "../../Utils/ReactJson";
 import {
@@ -168,7 +168,7 @@ export default function MicroserviceDetails({
     external: 0,
     protocol: "tcp",
     public: {
-      schemes: ["https"],
+      schemes: ["http"],
       protocol: "http",
       router: {
         host: "string",
@@ -190,9 +190,11 @@ export default function MicroserviceDetails({
 
   async function deleteMicroServiceFunction() {
     if (selectedPortObject !== undefined) {
+      let isSystem = systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application)
       try {
         const res = await request(
-          `/api/v1/microservices/${selectedMicroservice.uuid}`,
+          `/api/v1/microservices/${systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application) ? `system/`:""}
+          ${selectedMicroservice.uuid}`,
           {
             method: "DELETE",
             headers: {
@@ -217,7 +219,8 @@ export default function MicroserviceDetails({
   async function addPortFunction() {
     try {
       const res = await request(
-        `/api/v1/microservices/${selectedMicroservice.uuid}/port-mapping`,
+        `/api/v1/microservices/${systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application) ? `system/`:""}
+        ${selectedMicroservice.uuid}/port-mapping`,
         {
           method: "POST",
           headers: {
@@ -242,7 +245,8 @@ export default function MicroserviceDetails({
     if (selectedPortObject !== undefined) {
       try {
         const res = await request(
-          `/api/v1/microservices/${selectedMicroservice.uuid}/port-mapping/${selectedPortObject?.internal}`,
+          `/api/v1/microservices/${systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application) ? `system/`:""}
+          ${selectedMicroservice.uuid}/port-mapping/${selectedPortObject?.internal}`,
           {
             method: "DELETE",
             headers: {
@@ -266,7 +270,8 @@ export default function MicroserviceDetails({
     
     try {
       const res = await request(
-        `/api/v1/microservices/${selectedMicroservice.uuid}/volume-mapping`,
+        `/api/v1/microservices/${systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application) ? `system/`:""}
+        ${selectedMicroservice.uuid}/volume-mapping`,
         {
           method: "POST",
           headers: {
@@ -295,7 +300,8 @@ export default function MicroserviceDetails({
     if (selectedVolumeMappingObject?.id !== undefined) {
       try {
         const res = await request(
-          `/api/v1/microservices/${selectedMicroservice.uuid}/volume-mapping/${selectedVolumeMappingObject?.id}`,
+          `/api/v1/microservices/${systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application) ? `system/`:""}
+          ${selectedMicroservice.uuid}/volume-mapping/${selectedVolumeMappingObject?.id}`,
           {
             method: "DELETE",
             headers: {
@@ -369,7 +375,7 @@ export default function MicroserviceDetails({
           }
         ),
         container: {
-          rootHostAccess: false,
+          rootHostAccess: app.rootHostAccess,
           volumes: app.volumeMappings.map((vm) => {
             delete vm.id;
             return vm;
