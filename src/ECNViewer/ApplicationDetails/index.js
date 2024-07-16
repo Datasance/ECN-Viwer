@@ -156,6 +156,7 @@ export default function ApplicationDetails({
             }
           ),
           container: {
+            rootHostAccess: m.rootHostAccess,
             ports: m.ports.map((p) => {
               if (p.host) {
                 p.host = (
