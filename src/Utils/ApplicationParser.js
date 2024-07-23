@@ -48,7 +48,11 @@ export const parseMicroservice = async (microservice) => {
     env: lget(microservice, 'container.env', []).map(e => ({ key: e.key.toString(), value: e.value.toString() })),
     images,
     extraHosts: lget(microservice, 'container.extraHosts', []),
-    rebuild: microservice.rebuild
+    rebuild: microservice.rebuild,
+    runAsUser: microservice.runAsUser !== null ? microservice.runAsUser : "",
+    platform: microservice.platform,
+    runtime: microservice.runtime,
+    cdiDevices: microservice.cdiDevices,
   }
   _deleteUndefinedFields(microserviceData)
   return microserviceData

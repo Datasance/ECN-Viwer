@@ -352,6 +352,10 @@ export default function MicroserviceDetails({
         agent: {
             name: agent?.name,
         },
+        runAsUser: app?.runAsUser,
+        platform: app?.platform,
+        runtime: app?.runtime,
+        cdiDevices: app?.cdiDevices !== undefined ? app?.cdiDevices : [],
         images: app.images.reduce(
           (acc, image) => {
             switch (image.fogTypeId) {
