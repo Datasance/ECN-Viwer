@@ -138,10 +138,10 @@ export default function ApplicationDetails({
             name: (reducedAgents.byUUID[m.iofogUuid] || { name: "__UNKNOWN__" })
               .name,
           },
-          runAsUser: app?.runAsUser,
-          platform: app?.platform,
-          runtime: app?.runtime,
-          cdiDevices: app?.cdiDevices !== undefined ? app?.cdiDevices : [],
+          runAsUser: m?.runAsUser,
+          platform: m?.platform,
+          runtime: m?.runtime,
+          cdiDevices: m?.cdiDevices !== undefined ? m?.cdiDevices : [],
           images: m.images.reduce(
             (acc, image) => {
               switch (image.fogTypeId) {
