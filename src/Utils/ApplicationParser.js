@@ -50,8 +50,8 @@ export const parseMicroservice = async (microservice) => {
     extraHosts: lget(microservice, 'container.extraHosts', []),
     rebuild: microservice.rebuild,
     runAsUser: microservice.runAsUser !== null ? microservice.runAsUser : "",
-    platform: microservice.platform,
-    runtime: microservice.runtime,
+    platform: microservice.platform !== null ? microservice.platform : "",
+    runtime: microservice.runtime !== null ? microservice.runtime : "",
     cdiDevices: microservice.cdiDevices,
   }
   _deleteUndefinedFields(microserviceData)

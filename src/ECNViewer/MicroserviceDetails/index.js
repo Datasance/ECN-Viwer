@@ -352,10 +352,6 @@ export default function MicroserviceDetails({
         agent: {
             name: agent?.name,
         },
-        runAsUser: app?.runAsUser,
-        platform: app?.platform,
-        runtime: app?.runtime,
-        cdiDevices: app?.cdiDevices !== undefined ? app?.cdiDevices : [],
         images: app.images.reduce(
           (acc, image) => {
             switch (image.fogTypeId) {
@@ -375,6 +371,10 @@ export default function MicroserviceDetails({
         ),
         container: {
           rootHostAccess: app.rootHostAccess,
+          runAsUser: app?.runAsUser,
+          platform: app?.platform,
+          runtime: app?.runtime,
+          cdiDevices: app?.cdiDevices !== undefined ? app?.cdiDevices : [],
           volumes: app.volumeMappings.map((vm) => {
             delete vm.id;
             return vm;
