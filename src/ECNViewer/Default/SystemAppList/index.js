@@ -156,7 +156,7 @@ export default function SystemAppList ({ systemApplications: unfilteredApplicati
                           className={classes.link}
                           style={{ marginLeft: "15px" }}
                         >
-                          {agents[0]?.name}
+                          {agents?.find(x=>x.uuid === a?.microservices[0]?.iofog_uuid).name}
                         </span>
                       </div>
                     </TableCell>
