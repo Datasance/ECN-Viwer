@@ -9,8 +9,8 @@ export const useConfig = () => React.useContext(ConfigContext)
 const _initConfig = {
   tags: {},
   controllerLocationInfo: {
-    lat: '40.701',
-    lon: '28.232',
+    lat: '40.935',
+    lon: '28.97',
     query: ''
   }
 }

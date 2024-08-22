@@ -12,8 +12,8 @@ const initControllerState = (() => {
     ...controllerJson,
     api: `${window.location.protocol}//${controllerJson.ip}:${controllerJson.port || 80}/`,
     location: {
-      lat: '40.701',
-      lon: '28.232',
+      lat: '40.935',
+      lon: '28.97',
       query: controllerJson.ip
     },
     status: {
@@ -91,8 +91,8 @@ export default function Context (props) {
         ipInfo = await lookUpControllerInfo(controllerJson.ip)
       } catch (e) {
         ipInfo = {
-          lat: '40.701',
-          lon: '28.232',
+          lat: '40.935',
+          lon: '28.97',
           query: controllerJson.ip
         }
       }
