@@ -17,6 +17,7 @@ import {
   TableRow,
   TableCell,
   useMediaQuery,
+  CircularProgress,
 } from "@material-ui/core";
 
 import { useData } from "../../providers/Data";
@@ -36,6 +37,10 @@ import { useFeedback } from "../../Utils/FeedbackContext";
 import { MsvcStatus as Status } from "../../Utils/Status";
 import Modal from "../../Utils/Modal";
 import SearchBar from "../../Utils/SearchBar";
+import { useController } from "../../ControllerProvider";
+import { API_VERSIONS } from '../../Utils/constants'
+import { get as lget } from 'lodash'
+import { parseMicroservice } from '../../Utils/ApplicationParser'
 
 const useStyles = makeStyles((theme) => ({
   ...getSharedStyle(theme),
@@ -66,13 +71,19 @@ export default function ApplicationDetails({
   const [openDetailsModal, setOpenDetailsModal] = React.useState(false);
   const [msvcFilter, setMsvcFilter] = React.useState("");
   const isMediumScreen = useMediaQuery("(min-width: 768px)");
+  const [editorIsChanged, setEditorIsChanged] = React.useState(false)
+  const [editorDataChanged, setEditorDataChanged] = React.useState(false)
+  const { request } = useController();
+  const [openChangeYamlApplicationDialog, setOpenChangeYamlApplicationDialog] =
+    React.useState(false);
+  const [fileParsing, setFileParsing] = React.useState(false)
 
   const { applications, reducedAgents } = data;
   const application =
     (applications || []).find((a) => selectedApplication.name === a.name) ||
     selectedApplication; // Get live updates from data
-  const runningMsvcs = application.microservices.filter(
-    (m) => m.status.status === "RUNNING"
+  const runningMsvcs = application?.microservices?.filter(
+    (m) => m.status?.status === "RUNNING"
   );
   const [copyText, setcopyText] = React.useState("Copy All")
 
@@ -121,7 +132,7 @@ export default function ApplicationDetails({
         name: app.name,
       },
       spec: {
-        microservices: app.microservices.map((m) => ({
+        microservices: app.microservices?.map((m) => ({
           name: m.name,
           agent: {
             name: (reducedAgents.byUUID[m.iofogUuid] || { name: "__UNKNOWN__" })
@@ -141,9 +152,15 @@ export default function ApplicationDetails({
             },
             {
               registry: m.registryId,
+              catalogItemId: m.catalogItemId,
             }
           ),
           container: {
+            rootHostAccess: m.rootHostAccess,
+            runAsUser: m?.runAsUser,
+            platform: m?.platform,
+            runtime: m?.runtime,
+            cdiDevices: m?.cdiDevices !== undefined ? m?.cdiDevices : [],
             ports: m.ports.map((p) => {
               if (p.host) {
                 p.host = (
@@ -259,6 +276,80 @@ export default function ApplicationDetails({
     setcopyText("Copy All");
   }
 
+  const parseApplicationFile = async (doc) => {
+    if (API_VERSIONS.indexOf(doc.apiVersion) === -1) {
+      return [{}, `Invalid API Version ${doc.apiVersion}, current version is ${API_VERSIONS.slice(-1)[0]}`]
+    }
+    if (doc.kind !== 'Application') {
+      return [{}, `Invalid kind ${doc.kind}`]
+    }
+    if (!doc.metadata || !doc.spec) {
+      return [{}, 'Invalid YAML format']
+    }
+    const application = {
+      name: lget(doc, 'metadata.name', undefined),
+      ...doc.spec,
+      isActivated: true,
+      microservices: await Promise.all((doc.spec.microservices || []).map(async m => parseMicroservice(m)))
+    }
+
+    return [application]
+  }
+
+  async function yamlChangesSave(item) {
+    setFileParsing(true)
+    if (item) {
+      try {
+        const doc = yaml.load(item)
+        const [applicationData, err] = await parseApplicationFile(doc)
+        if (err) {
+          setFileParsing(false)
+          setOpenChangeYamlApplicationDialog(false);
+          return pushFeedback({ message: err, type: 'error' })
+        }
+        const newApplication = !applications.find(a => a.name === applicationData.name)
+        const res = await deployApplication(applicationData, newApplication)
+        if (!res.ok) {
+          try {
+            const error = await res.json()
+            pushFeedback({ message: error.message, type: 'error' })
+            setFileParsing(false)
+            setOpenChangeYamlApplicationDialog(false);
+          } catch (e) {
+            pushFeedback({ message: res.statusText, type: 'error' })
+            setFileParsing(false)
+            setOpenChangeYamlApplicationDialog(false);
+          }
+        } else {
+          pushFeedback({ message: newApplication ? 'Application deployed!' : 'Application updated!', type: 'success' })
+          setFileParsing(false)
+          setOpenChangeYamlApplicationDialog(false);
+          back();
+        }
+      } catch (e) {
+        pushFeedback({ message: e.message, type: 'error' })
+        setFileParsing(false)
+        setOpenChangeYamlApplicationDialog(false);
+      }
+    }
+  }
+
+  const deployApplication = async (application, newApplication) => {
+    const url = `/api/v1/application${newApplication ? '' : `/${application.name}`}`
+    try {
+      const res = await request(url, {
+        method: newApplication ? 'POST' : 'PUT',
+        headers: {
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify(application)
+      })
+      return res
+    } catch (e) {
+      pushFeedback({ message: e.message, type: 'error' })
+    }
+  }
+
   return (
     <>
       <Paper className={`section first ${classes.multiSections}`}>
@@ -309,19 +400,19 @@ export default function ApplicationDetails({
           <div className={classes.subSection}>
             <span className={classes.subTitle}>Last Active</span>
             <span className={classes.text}>
-              {moment(application.lastStatusTime).format(dateFormat)}
+              {moment(application?.lastStatusTime).format(dateFormat)}
             </span>
           </div>
           <div className={classes.subSection}>
             <span className={classes.subTitle}>Microservices</span>
             <span className={classes.text}>
-              {runningMsvcs.length}/{application.microservices.length}
+              {runningMsvcs?.length}/{application?.microservices?.length}
             </span>
           </div>
           <div className={classes.subSection}>
             <span className={classes.subTitle}>Created at</span>
             <span className={classes.text}>
-              {moment(application.createdAt).format(dateFormat)}
+              {moment(application?.createdAt).format(dateFormat)}
             </span>
           </div>
         </div>
@@ -504,26 +595,34 @@ export default function ApplicationDetails({
           >
             Application YAML
           </Typography>
-          
-            <div className={classes.container}>
-              <div className={classes.copyButton}>
-                <Button
-                  autoFocus
-                  onClick={() => {
-                    setcopyText("Copied");
-                    unsecuredCopyFunction(yamlDump)
-                  }}
-                >
-                  {copyText}
-                </Button>
-              </div>
+
+          <div className={classes.container}>
+            {editorIsChanged ? <div className={classes.copyButton}>
+              <Button
+                onClick={() => {
+                  setOpenChangeYamlApplicationDialog(true);
+                }}
+              >
+                {`Save Changes`}
+              </Button>
+            </div> : null}
+            <div className={classes.copyButton}>
+              <Button
+                autoFocus
+                onClick={() => {
+                  setcopyText("Copied");
+                  unsecuredCopyFunction(!editorDataChanged ? yamlDump : editorDataChanged)
+                }}
+              >
+                {copyText}
+              </Button>
             </div>
+          </div>
           <AceEditor
             setOptions={{ useWorker: false }}
             mode="yaml"
             theme="monokai"
             defaultValue={yamlDump}
-            readOnly
             onLoad={function (editor) {
               editor.renderer.setPadding(10);
               editor.renderer.setScrollMargin(10);
@@ -532,6 +631,11 @@ export default function ApplicationDetails({
               width: "100%",
               height: "700px",
               borderRadius: "4px",
+            }}
+            change
+            onChange={function editorChanged(editor) {
+              setEditorIsChanged(true)
+              setEditorDataChanged(editor)
             }}
           />
         </div>
@@ -584,6 +688,56 @@ export default function ApplicationDetails({
           copyButtonEnable
         />
       </Modal>
+      <Dialog
+        open={openChangeYamlApplicationDialog}
+        onClose={() => {
+          setOpenChangeYamlApplicationDialog(false);
+        }}
+      >
+        <DialogTitle id="alert-dialog-title">
+          Update "{application.name}" deployment yaml?
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            {
+              fileParsing ?
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: "center" }}><CircularProgress color='primary' size={24} /></div>
+                :
+                <>
+                  <span>
+                    Updating a yaml file will update/reinstall/reconfigure "{application.name}" and related Microservices.
+                  </span>
+                  <br />
+                  <br />
+                  <span>Do you want to proceed ?</span>
+                </>
+            }
+
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <>
+            {
+              fileParsing ? null :
+                <>
+                  <Button onClick={() => setOpenChangeYamlApplicationDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      yamlChangesSave(editorDataChanged)
+                    }}
+                    color="primary"
+                    autoFocus
+                  >
+                    Confirm
+                  </Button>
+                </>
+            }
+          </>
+
+        </DialogActions>
+      </Dialog>
     </>
   );
 }

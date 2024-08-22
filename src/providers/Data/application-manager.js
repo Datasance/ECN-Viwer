@@ -10,6 +10,14 @@ const listApplications = (request) => async () => {
   return (await agentsResponse.json()).applications
 }
 
+const listSystemApplications = (request) => async () => {
+  const agentsResponse = await request('/api/v1/application/system')
+  if (!agentsResponse.ok) {
+    throw new Error({ message: agentsResponse.statusText })
+  }
+  return (await agentsResponse.json()).applications
+}
+
 const toggleApplication = (request) => async (app) => {
   const agentsResponse = await request(`/api/v1/application/${app.name}`, {
     method: 'PATCH',
@@ -26,5 +34,6 @@ const toggleApplication = (request) => async (app) => {
 export default {
   deleteApplication,
   listApplications,
-  toggleApplication
+  toggleApplication,
+  listSystemApplications
 }

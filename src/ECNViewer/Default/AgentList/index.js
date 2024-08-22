@@ -136,7 +136,6 @@ export default function AgentList(props) {
       dockerPruningFrequency: a?.dockerPruningFrequency,
       availableDiskThreshold: a?.availableDiskThreshold,
       logLevel: a?.logLevel,
-      isSystem: a?.isSystem,
       routerMode: a?.routerMode,
       messagingPort: a?.messagingPort,
       interRouterPort: a?.interRouterPort,
@@ -144,12 +143,17 @@ export default function AgentList(props) {
       host: a?.host,
       upstreamRouters: a?.upstreamRouters,
       networkInterface: a?.networkInterface,
+      tags: a?.tags,
+      timeZone: a?.timeZone,
     });
   };
 
-  const agents = unfilteredAgents.filter((a) =>
-    a.name.toLowerCase().includes(filter)
-  );
+  const agents = unfilteredAgents.filter((a) => {
+    const nameMatches = a.name.toLowerCase().includes(filter.toLowerCase());
+    const tagsMatches = a.tags && a.tags.some(tag => tag.toLowerCase().includes(filter.toLowerCase()));
+    return nameMatches || tagsMatches;
+  });
+  
   const deleteAgent = async (agent) => {
     try {
       const response = await _deleteAgent(agent);
@@ -252,6 +256,15 @@ export default function AgentList(props) {
                 stickyHeader: classes.stickyHeader,
                 root: classes.headerCell,
               }}
+            >
+              Tags
+            </TableCell>
+            <TableCell
+              className={classes.tableTitle}
+              classes={{
+                stickyHeader: classes.stickyHeader,
+                root: classes.headerCell,
+              }}
             />
           </TableRow>
         </TableHead>
@@ -318,6 +331,9 @@ export default function AgentList(props) {
                           </Icon>
                         ) : null;
                       })}
+                    </TableCell>
+                    <TableCell classes={{ root: classes.tableCell }}>
+                      {a?.tags.length > 0 ? a?.tags.join() : `` }
                     </TableCell>
                     <TableCell classes={{ root: classes.tableCell }}>
                       <MoreIcon

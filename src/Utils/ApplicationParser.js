@@ -18,8 +18,8 @@ const mapImages = (images) => {
 }
 
 const parseMicroserviceImages = async (fileImages) => {
-  if (fileImages.catalogId) {
-    return { registryId: undefined, images: undefined, catalogItemId: fileImages.catalogId }
+  if (fileImages.catalogItemId) {
+    return { registryId: undefined, images: undefined, catalogItemId: fileImages.catalogItemId }
   }
   const registryByName = {
     remote: 1,
@@ -47,7 +47,12 @@ export const parseMicroservice = async (microservice) => {
     cmd: lget(microservice, 'container.commands', []),
     env: lget(microservice, 'container.env', []).map(e => ({ key: e.key.toString(), value: e.value.toString() })),
     images,
-    extraHosts: lget(microservice, 'container.extraHosts', [])
+    extraHosts: lget(microservice, 'container.extraHosts', []),
+    rebuild: microservice.rebuild,
+    runAsUser: microservice.runAsUser !== null ? microservice.runAsUser : "",
+    platform: microservice.platform !== null ? microservice.platform : "",
+    runtime: microservice.runtime !== null ? microservice.runtime : "",
+    cdiDevices: microservice.cdiDevices,
   }
   _deleteUndefinedFields(microserviceData)
   return microserviceData

@@ -86,7 +86,7 @@ export default function SimpleTabs (props) {
                   TabIndicatorProps={{ hidden: true }}
                   onChange={handleChange}
                   aria-labelledby={children.map((c, idx) => c.id || idx).join(' ')}
-                  style={{ flex: '1 1 0px', position: 'sticky', left: 0 }}
+                  style={{ flex: '2 1 0px', position: 'sticky', left: 0 }}
                 >
                   {children.map((child, idx) => {
                     return (
