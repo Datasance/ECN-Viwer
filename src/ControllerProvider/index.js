@@ -26,7 +26,7 @@ const initControllerState = (() => {
 })()
 
 const IPLookUp = window.location.protocol === 'https:' 
-  ? 'https://api.ipgeolocation.io/ipgeo?apiKey=f31b457bb2be418fb9e4d14dc92c13a8&ip=' 
+  ? 'https://api.ipgeolocation.io/ipgeo?apiKey=f31b457bb2be418fb9e4d14dc92c13a8' 
   : 'http://ip-api.com/json/';
 
 // If dev mode, use proxy
