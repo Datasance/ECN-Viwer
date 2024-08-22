@@ -12,8 +12,8 @@ const initControllerState = (() => {
     ...controllerJson,
     api: `${window.location.protocol}//${controllerJson.ip}:${controllerJson.port || 80}/`,
     location: {
-      lat: 'Unknown',
-      lon: 'Unknown',
+      lat: '40.701',
+      lon: '28.232',
       query: controllerJson.ip
     },
     status: {
@@ -25,9 +25,7 @@ const initControllerState = (() => {
   }
 })()
 
-const IPLookUp = window.location.protocol === 'https:' 
-  ? 'https://api.ipgeolocation.io/ipgeo?apiKey=f31b457bb2be418fb9e4d14dc92c13a8' 
-  : 'http://ip-api.com/json/';
+const IPLookUp = "http://ip-api.com/json/"
 
 // If dev mode, use proxy
 // Otherwise assume you are running on the Controller
@@ -93,8 +91,8 @@ export default function Context (props) {
         ipInfo = await lookUpControllerInfo(controllerJson.ip)
       } catch (e) {
         ipInfo = {
-          lat: 'Unknown',
-          lon: 'Unknown',
+          lat: '40.701',
+          lon: '28.232',
           query: controllerJson.ip
         }
       }
