@@ -192,7 +192,7 @@ export default function MicroserviceDetails({
     if (selectedPortObject !== undefined) {
       try {
         const res = await request(
-          `/api/v1/microservices/${systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application) ? `system/`:""}${selectedMicroservice.uuid}`,
+          `/api/v3/microservices/${systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application) ? `system/`:""}${selectedMicroservice.uuid}`,
           {
             method: "DELETE",
             headers: {
@@ -217,7 +217,7 @@ export default function MicroserviceDetails({
   async function addPortFunction() {
     try {
       const res = await request(
-        `/api/v1/microservices/${systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application) ? `system/`:""}${selectedMicroservice.uuid}/port-mapping`,
+        `/api/v3/microservices/${systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application) ? `system/`:""}${selectedMicroservice.uuid}/port-mapping`,
         {
           method: "POST",
           headers: {
@@ -242,7 +242,7 @@ export default function MicroserviceDetails({
     if (selectedPortObject !== undefined) {
       try {
         const res = await request(
-          `/api/v1/microservices/${systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application) ? `system/`:""}${selectedMicroservice.uuid}/port-mapping/${selectedPortObject?.internal}`,
+          `/api/v3/microservices/${systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application) ? `system/`:""}${selectedMicroservice.uuid}/port-mapping/${selectedPortObject?.internal}`,
           {
             method: "DELETE",
             headers: {
@@ -266,7 +266,7 @@ export default function MicroserviceDetails({
     
     try {
       const res = await request(
-        `/api/v1/microservices/${systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application) ? `system/`:""}${selectedMicroservice.uuid}/volume-mapping`,
+        `/api/v3/microservices/${systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application) ? `system/`:""}${selectedMicroservice.uuid}/volume-mapping`,
         {
           method: "POST",
           headers: {
@@ -295,7 +295,7 @@ export default function MicroserviceDetails({
     if (selectedVolumeMappingObject?.id !== undefined) {
       try {
         const res = await request(
-          `/api/v1/microservices/${systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application) ? `system/`:""}${selectedMicroservice.uuid}/volume-mapping/${selectedVolumeMappingObject?.id}`,
+          `/api/v3/microservices/${systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application) ? `system/`:""}${selectedMicroservice.uuid}/volume-mapping/${selectedVolumeMappingObject?.id}`,
           {
             method: "DELETE",
             headers: {
@@ -341,7 +341,7 @@ export default function MicroserviceDetails({
 
   const _getApplicationYAMLFromJSON = (app) => {
     return {
-      apiVersion: "datasance.com/v1",
+      apiVersion: "datasance.com/v3",
       kind: "Microservice",
       metadata: {
         name: app.name,
@@ -466,7 +466,7 @@ export default function MicroserviceDetails({
   const deployMicroservice = async (microservice) => {
     
     let isSystem = systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application)
-    const url = `/api/v1/microservices/${isSystem ? `system/`:""}${`${selectedMicroservice.uuid}`}`
+    const url = `/api/v3/microservices/${isSystem ? `system/`:""}${`${selectedMicroservice.uuid}`}`
     try {
       const res = await request(url, {
         method: 'PATCH',

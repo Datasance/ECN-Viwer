@@ -27,7 +27,7 @@ export const ConfigProvider = ({
 
   const _fetchConfig = async () => {
     try {
-      const res = await request(`/api/v1/config/${ecnViewerConfigKey}`)
+      const res = await request(`/api/v3/config/${ecnViewerConfigKey}`)
       if (res.ok) {
         const { value: stringifiedConfig } = await res.json()
         setConfig(JSON.parse(stringifiedConfig))
@@ -38,7 +38,7 @@ export const ConfigProvider = ({
   }
 
   const saveConfig = async (newConfig) => {
-    const res = await request('/api/v1/config', {
+    const res = await request('/api/v3/config', {
       method: 'PUT',
       headers: {
         'content-type': 'application/json'

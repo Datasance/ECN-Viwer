@@ -172,7 +172,7 @@ export default function AgentList(props) {
 
   async function updateManipulatedDataFunction() {
     try {
-      const res = await request(`/api/v1/iofog/${selectedAgent?.uuid}`, {
+      const res = await request(`/api/v3/iofog/${selectedAgent?.uuid}`, {
         method: "PATCH",
         headers: {
           "content-type": "application/json",

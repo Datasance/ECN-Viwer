@@ -38,8 +38,8 @@ const parseApplication = async (applicationYAML) => {
 }
 
 const parseApplicationTemplate = async (doc) => {
-  if (doc.apiVersion !== 'datasance.com/v1') {
-    return [{}, `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v1`]
+  if (doc.apiVersion !== 'datasance.com/v3') {
+    return [{}, `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v3`]
   }
   if (doc.kind !== 'ApplicationTemplate') {
     return [{}, `Invalid kind ${doc.kind}`]
@@ -102,7 +102,7 @@ export default function Catalog () {
   async function fetchCatalog () {
     try {
       setFetching(true)
-      const catalogItemsResponse = await request('/api/v1/applicationTemplates')
+      const catalogItemsResponse = await request('/api/v3/applicationTemplates')
       if (!catalogItemsResponse.ok) {
         pushFeedback({ message: catalogItemsResponse.statusText, type: 'error' })
         setFetching(false)
@@ -124,7 +124,7 @@ export default function Catalog () {
   const addCatalogItem = async (item) => {
     const newItem = { ...item }
     setLoading(true)
-    const response = await request(`/api/v1/applicationTemplate/${newItem.name}`, {
+    const response = await request(`/api/v3/applicationTemplate/${newItem.name}`, {
       method: 'PUT',
       headers: {
         Accept: 'application/json',
@@ -146,7 +146,7 @@ export default function Catalog () {
   const removeCatalogItem = async (item) => {
     try {
       setLoading(true)
-      const res = await request(`/api/v1/applicationTemplate/${item.name}`, {
+      const res = await request(`/api/v3/applicationTemplate/${item.name}`, {
         method: 'DELETE'
       })
       if (!res.ok) {

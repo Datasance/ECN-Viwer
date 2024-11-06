@@ -47,7 +47,7 @@ export default function RemoveMicroservice (props) {
     try {
       let success = true
       for (const uuid of msvcsToRemove) {
-        const res = request(`/api/v1/microservices/${uuid}`, {
+        const res = request(`/api/v3/microservices/${uuid}`, {
           method: 'DELETE'
         })
         if (!res.ok) {

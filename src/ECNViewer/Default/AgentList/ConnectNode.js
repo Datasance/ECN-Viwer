@@ -31,7 +31,7 @@ export default function ConnectNode (props) {
   }
 
   const createAgent = async (agent) => {
-    const response = await request('/api/v1/iofog', {
+    const response = await request('/api/v3/iofog', {
       method: 'POST',
       headers: {
         Accept: 'application/json',
@@ -48,7 +48,7 @@ export default function ConnectNode (props) {
   }
 
   const getProvisioningKey = async (uuid) => {
-    const response = await request(`/api/v1/iofog/${uuid}/provisioning-key`)
+    const response = await request(`/api/v3/iofog/${uuid}/provisioning-key`)
     if (response.ok) {
       const a = await response.json()
       return a.key
@@ -65,7 +65,7 @@ export default function ConnectNode (props) {
         Authorization: agent.key,
         ioFogApi: `http://${agent.ip}:${agent.port}`
       },
-      body: JSON.stringify({ 'controller-url': `http://${controller.ip}:${controller.port}/api/v1/` })
+      body: JSON.stringify({ 'controller-url': `http://${controller.ip}:${controller.port}/api/v3/` })
     })
     if (response.ok) {
       pushFeedback({ message: 'Agent linked!', type: 'success' })
