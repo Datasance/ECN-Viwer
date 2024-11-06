@@ -179,7 +179,7 @@ export default function AgentDetails({
   async function rebootAgent() {
     try {
       const res = await request(
-        `/api/v1/iofog/${selectedAgent.uuid}/reboot`,
+        `/api/v3/iofog/${selectedAgent.uuid}/reboot`,
         {
           method: "POST",
           headers: {

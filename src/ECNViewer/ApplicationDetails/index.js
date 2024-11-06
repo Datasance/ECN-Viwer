@@ -126,7 +126,7 @@ export default function ApplicationDetails({
 
   const _getApplicationYAMLFromJSON = (app) => {
     return {
-      apiVersion: "datasance.com/v1",
+      apiVersion: "datasance.com/v3",
       kind: "Application",
       metadata: {
         name: app.name,
@@ -335,7 +335,7 @@ export default function ApplicationDetails({
   }
 
   const deployApplication = async (application, newApplication) => {
-    const url = `/api/v1/application${newApplication ? '' : `/${application.name}`}`
+    const url = `/api/v3/application${newApplication ? '' : `/${application.name}`}`
     try {
       const res = await request(url, {
         method: newApplication ? 'POST' : 'PUT',
