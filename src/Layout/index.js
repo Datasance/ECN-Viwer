@@ -159,7 +159,7 @@ export default function Layout () {
                 <a style={{ margin: 'auto', fontWeight:"bold" }} target="_blank" href='http://docs.datasance.com'> DOCS</a>
                 </div>
               <div>
-              <a style={{ margin: 'auto', fontWeight:"bold" }} target="_blank" href={`${controllerJson.ip}docs?userToken=${keycloak?.token}`}> API</a>
+              <a style={{ margin: 'auto', fontWeight:"bold" }} target="_blank" href={`${controllerJson.ip}docs?userToken=${keycloak?.token}&baseUrl=${controllerJson.ip}api/v3`}> API</a>
               </div>
               
               </div>
