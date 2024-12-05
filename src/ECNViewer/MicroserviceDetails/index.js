@@ -383,6 +383,10 @@ export default function MicroserviceDetails({
             delete env.id;
             return env;
           }),
+          extraHosts: app.extraHosts.map((eH) => {
+            delete eH.id;
+            return eH;
+          }),
           ports: app.ports.map((p) => {
             if (p.host) {
               p.host = (

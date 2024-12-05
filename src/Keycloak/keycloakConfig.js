@@ -7,6 +7,7 @@ let initOptions = {
   clientId: controllerJson?.keycloakClientid,
   onLoad: 'login-required',
   KeycloakResponseType: "code",
+  checkLoginIframe: false,
 };
 
 const keycloak = new Keycloak(initOptions);
