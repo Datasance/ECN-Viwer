@@ -19,7 +19,10 @@ const SwaggerDoc = () => {
                     scheme: "bearer",
                     bearerFormat: "JWT",
                 };
-                const queryParams = new URLSearchParams(window.location.search);
+                const href = window.location.href;
+                const hashIndex = href.indexOf("#");
+                const queryString = hashIndex !== -1 ? href.substring(hashIndex + 2) : "";
+                const queryParams = new URLSearchParams(queryString.split("?")[1]);
                 const userToken = queryParams.get("userToken") || "";
                 const baseUrl = queryParams.get("baseUrl") || "http://localhost:51121/api/v3";
                 document.servers = [
@@ -69,14 +72,22 @@ const SwaggerDoc = () => {
                 spec={swaggerDocument}
                 persistAuthorization={true}
                 requestInterceptor={(request) => {
-                    const userToken = new URLSearchParams(window.location.search).get("userToken") || "";
+                    const href = window.location.href;
+                    const hashIndex = href.indexOf("#");
+                    const queryString = hashIndex !== -1 ? href.substring(hashIndex + 1) : "";
+                    const queryParams = new URLSearchParams(queryString.split("?")[1]);
+                    const userToken = queryParams.get("userToken") || "";
                     if (userToken) {
                         request.headers["Authorization"] = `Bearer ${userToken}`;
                     }
                     return request;
                 }}
                 onComplete={(system) => {
-                    const userToken = new URLSearchParams(window.location.search).get("userToken") || "";
+                    const href = window.location.href;
+                    const hashIndex = href.indexOf("#");
+                    const queryString = hashIndex !== -1 ? href.substring(hashIndex + 1) : "";
+                    const queryParams = new URLSearchParams(queryString.split("?")[1]);
+                    const userToken = queryParams.get("userToken") || "";
                     if (userToken) {
                         system.authActions.authorize({
                             userToken: {

@@ -10,6 +10,7 @@ import ECNViewer from '../ECNViewer'
 import Catalog from '../Catalog'
 import Modal from '../Utils/Modal'
 import Config from '../Config'
+import SwaggerDoc from '../swagger/SwaggerDoc'
 // import ECNViewerConfig from '../ECNViewerConfig'
 // import SimpleTabs from '../Utils/Tabs'
 import { ControllerContext } from '../ControllerProvider'
@@ -148,6 +149,7 @@ export default function Layout () {
             <Switch>
               <Route path='/catalog' component={Catalog} />
               <Route path='/overview' component={() => <MapProvider><ECNViewer returnHomeCBRef={returnHomeCbRef} /></MapProvider>} />
+              <Route path='/api' component={SwaggerDoc} />
               <Route component={() => <Redirect to='/overview' />} />
             </Switch>
           </div>
@@ -159,7 +161,7 @@ export default function Layout () {
                 <a style={{ margin: 'auto', fontWeight:"bold", color:"#4d3167ff" }} target="_blank" href='https://docs.datasance.com'> DOCS</a>
                 </div>
               <div>
-              <a style={{ margin: 'auto', fontWeight:"bold", color:"#4d3167ff"  }} target="_blank" href={`/api?userToken=${keycloak?.token}&baseUrl=${localStorage.getItem("lookupIp")}/api/v3`}> API</a>
+              <a style={{ margin: 'auto', fontWeight:"bold", color:"#4d3167ff"  }} target="_parent" href={`/#/api?userToken=${keycloak?.token}&baseUrl=${localStorage.getItem("lookupIp")}/api/v3`}> API</a>
               </div>
               
               </div>
