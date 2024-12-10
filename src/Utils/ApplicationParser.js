@@ -49,10 +49,10 @@ export const parseMicroservice = async (microservice) => {
     images,
     extraHosts: lget(microservice, 'container.extraHosts', []),
     rebuild: microservice.rebuild,
-    runAsUser: microservice.runAsUser !== null ? microservice.runAsUser : "",
-    platform: microservice.platform !== null ? microservice.platform : "",
-    runtime: microservice.runtime !== null ? microservice.runtime : "",
-    cdiDevices: microservice.cdiDevices,
+    runAsUser: microservice.runAsUser !== null || microservice?.container?.runAsUser !== null ? microservice.runAsUser !== undefined ? microservice.runAsUser : microservice?.container?.runAsUser : "",
+    platform: microservice.platform !== null || microservice?.container?.platform !== null ? microservice.platform !== undefined ? microservice.platform : microservice?.container?.platform : "",
+    runtime: microservice.runtime !== null || microservice?.container?.runtime !== null ? microservice.runtime !== undefined ? microservice.runtime : microservice?.container?.runtime : "",
+    cdiDevices: microservice.cdiDevices !== null || microservice?.container?.cdiDevices !== null ? microservice.cdiDevices !== undefined ? microservice.cdiDevices : microservice?.container?.cdiDevices : "",
   }
   _deleteUndefinedFields(microserviceData)
   return microserviceData

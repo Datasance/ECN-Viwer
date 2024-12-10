@@ -43,7 +43,8 @@
     "react-loading-skeleton": "^3.4.0",
     "react-router": "^6.24.0",
     "react-router-dom": "^5.3.4",
-    "sass": "^1.77.6"
+    "sass": "^1.77.6",
+    "swagger-ui-react": "^5.18.2"
   },
   "proxy": "http://localhost:5555",
   "scripts": {
