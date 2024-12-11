@@ -83,7 +83,7 @@ const useStyles = makeStyles(theme => ({
   }
 }))
 
-function RouteWatcher ({ children }) {
+function RouteWatcher({ children }) {
   const { refreshData } = useData()
   const location = useLocation()
 
@@ -97,7 +97,7 @@ function RouteWatcher ({ children }) {
   return null
 }
 
-export default function Layout () {
+export default function Layout() {
   const { initialized, keycloak } = useKeycloak()
   const classes = useStyles()
   const returnHomeCbRef = React.useRef(null)
@@ -112,8 +112,7 @@ export default function Layout () {
     }
   }
 
-  if(!initialized)
-  {
+  if (!initialized) {
     return (<></>)
   }
 
@@ -124,25 +123,25 @@ export default function Layout () {
         <div className={classes.wrapper + ' wrapper'}>
           <div className={classes.logo + ' logo'}>
             <NavLink to='/overview' onClick={() => returnHome()}>
-              <img src={logomark} style={{marginTop:"1rem"}} width={85} alt='Datasance' />
+              <img src={logomark} style={{ marginTop: "1rem" }} width={85} alt='Datasance' />
             </NavLink>
           </div>
           <div className={classes.latNav + ' latnav'}>
             <NavLink to='/overview' onClick={() => returnHome()}>
               <Avatar className={classes.latIcons}>
-                <HomeIcon/>
+                <HomeIcon />
               </Avatar>
             </NavLink>
             <NavLink to='/catalog'>
               <Avatar className={classes.latIcons}>
-                <CatalogIcon/>
+                <CatalogIcon />
               </Avatar>
             </NavLink>
             <Avatar className={classes.latIcons}>
-              <AccountBoxIcon onClick={() => {window.open(`${controllerJson?.keycloakURL}admin/${controllerJson?.keycloakRealm}/console`,"_blank")}} />
+              <AccountBoxIcon onClick={() => { window.open(`${controllerJson?.keycloakURL}admin/${controllerJson?.keycloakRealm}/console`, "_blank") }} />
             </Avatar>
             <Avatar className={classes.latIcons}>
-              <ExitToAppIcon onClick={() => {keycloak.logout()}} />
+              <ExitToAppIcon onClick={() => { keycloak.logout() }} />
             </Avatar>
           </div>
           <div className='content'>
@@ -155,22 +154,31 @@ export default function Layout () {
           </div>
           <div className={`${classes.footerContainer} footer`}>
             <span className={classes.footer}>
-              <span style={{color:"#4d3167ff" }}>Controller v{status?.versions.controller} - ECN Viewer v{status?.versions.ecnViewer}</span>
-              <div style={{display:"flex", justifyContent:"space-between", textAlign:"center"}}>
+              <span style={{ color: "#4d3167ff" }}>Controller v{status?.versions.controller} - ECN Viewer v{status?.versions.ecnViewer}</span>
+              <div style={{ display: "flex", justifyContent: "space-between", textAlign: "center" }}>
                 <div>
-                <a style={{ margin: 'auto', fontWeight:"bold", color:"#4d3167ff" }} target="_blank" href='https://docs.datasance.com'> DOCS</a>
+                  <a style={{ margin: 'auto', fontWeight: "bold", color: "#4d3167ff" }} target="_blank" href='https://docs.datasance.com'> DOCS</a>
                 </div>
-              <div>
-              <a style={{ margin: 'auto', fontWeight:"bold", color:"#4d3167ff"  }} target="_parent" href={`/#/api?userToken=${keycloak?.token}&baseUrl=${localStorage.getItem("lookupIp")}/api/v3`}> API</a>
+                <div>
+                  <a
+                    style={{ margin: 'auto', fontWeight: "bold", color: "#4d3167ff" }}
+                    target="_parent"
+                    href={`/#/api?userToken=${keycloak?.token}&baseUrl=${/^(http:\/\/|https:\/\/)?(\d{1,3}\.){3}\d{1,3}(:\d+)?$/.test(window.location.origin)
+                        ? `${window.location.origin}:${window.controllerConfig.port}/api/v3`
+                        : `${window.location.origin}/api/v3`
+                      }`}
+                  >
+                    API
+                  </a>
+                </div>
+
               </div>
-              
-              </div>
-              <a style={{ margin: 'auto', color:"#4d3167ff" }} href='https://datasance.com/'>© {new Date().getFullYear()} Datasance.</a>
+              <a style={{ margin: 'auto', color: "#4d3167ff" }} href='https://datasance.com/'>© {new Date().getFullYear()} Datasance.</a>
             </span>
           </div>
         </div>
       </HashRouter>
-      
+
       {/* We removed after keycloak integration*/}
       {/* <Modal
         {...{
@@ -184,10 +192,10 @@ export default function Layout () {
           }
         }}
       > */}
-        {/* <SimpleTabs> */}
-        {/* <Config title='User credentials' {...{ onSave: () => setSettingsOpen(false) }} /> */}
-        {/* <ECNViewerConfig title='ECN Viewer' {...{ onSave: () => setSettingsOpen(false) }} /> */}
-        {/* </SimpleTabs> */}
+      {/* <SimpleTabs> */}
+      {/* <Config title='User credentials' {...{ onSave: () => setSettingsOpen(false) }} /> */}
+      {/* <ECNViewerConfig title='ECN Viewer' {...{ onSave: () => setSettingsOpen(false) }} /> */}
+      {/* </SimpleTabs> */}
       {/* </Modal> */}
     </>
   )
