@@ -47,12 +47,12 @@ export const ControllerContext = React.createContext({
 export const useController = () => React.useContext(ControllerContext)
 
 const lookUpControllerInfo = async (ip) => {
+  localStorage.setItem("lookupIp", lookupIP)
   if (!ip) {
     ip = window.location.host.split(':')[0] // Get only ip, not port
   }
   const localhost = new RegExp('(0\.0\.0\.0|localhost|127\.0\.0\.1|192\.168\.)') // eslint-disable-line no-useless-escape
   const lookupIP = localhost.test(ip) ? '8.8.8.8' : ip.slice(-1) === '/' ? ip.substring(0, ip.length - 1): ip
-  localStorage.setItem("lookupIp", lookupIP)
   const response = await window.fetch(IPLookUp + lookupIP.replace("http://","").replace("https://",""))
   if (response.ok) {
     return response.json()
