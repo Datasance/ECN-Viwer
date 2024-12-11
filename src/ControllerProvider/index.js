@@ -47,7 +47,6 @@ export const ControllerContext = React.createContext({
 export const useController = () => React.useContext(ControllerContext)
 
 const lookUpControllerInfo = async (ip) => {
-  localStorage.setItem("lookupIp", lookupIP)
   if (!ip) {
     ip = window.location.host.split(':')[0] // Get only ip, not port
   }

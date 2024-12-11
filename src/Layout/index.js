@@ -161,7 +161,7 @@ export default function Layout () {
                 <a style={{ margin: 'auto', fontWeight:"bold", color:"#4d3167ff" }} target="_blank" href='https://docs.datasance.com'> DOCS</a>
                 </div>
               <div>
-              <a style={{ margin: 'auto', fontWeight:"bold", color:"#4d3167ff"  }} target="_parent" href={`/#/api?userToken=${keycloak?.token}&baseUrl=${localStorage.getItem("lookupIp")}/api/v3`}> API</a>
+              <a style={{ margin: 'auto', fontWeight:"bold", color:"#4d3167ff"  }} target="_parent" href={`/#/api?userToken=${keycloak?.token}&baseUrl=${window.location.origin+":"+window.controllerConfig.port+"/api/v3"}`}> API</a>
               </div>
               
               </div>
