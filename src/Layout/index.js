@@ -164,8 +164,8 @@ export default function Layout() {
                     style={{ margin: 'auto', fontWeight: "bold", color: "#4d3167ff" }}
                     target="_parent"
                     href={`/#/api?userToken=${keycloak?.token}&baseUrl=${
-                      /^(http:\/\/|https:\/\/)?(\d{1,3}\.){3}\d{1,3}(:\d+)?$/.test(window.location.origin)
-                        ? `${window.location.origin.replace(/:\d+$/, '')}:${window.controllerConfig.port}/api/v3`
+                      /^(http:\/\/|https:\/\/)?((\d{1,3}\.){3}\d{1,3}|localhost)(:\d+)?$/.test(window.location.origin)
+                        ? `${window.location.origin.replace(/(:\d+)?$/, `:${window.controllerConfig.port}`)}/api/v3`
                         : `${window.location.origin}/api/v3`
                     }`}
                   >
