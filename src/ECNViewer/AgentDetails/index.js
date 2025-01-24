@@ -558,7 +558,7 @@ export default function AgentDetails({
         <DialogTitle id="alert-dialog-title">Reboot {agent.name}?</DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            <span>Rebooting an agent will stop all its microservices until an agent boots up.</span>
+            <span>Rebooting an agent will stop all its microservices until an host device boots up.Please keep in mind that If you deploy your Agent as a contianer, Reboot will not work.</span>
           </DialogContentText>
         </DialogContent>
         <DialogActions>
