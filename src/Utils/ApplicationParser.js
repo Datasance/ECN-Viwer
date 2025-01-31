@@ -53,6 +53,9 @@ export const parseMicroservice = async (microservice) => {
     platform: microservice.platform !== null || microservice?.container?.platform !== null ? microservice.platform !== undefined ? microservice.platform : microservice?.container?.platform : "",
     runtime: microservice.runtime !== null || microservice?.container?.runtime !== null ? microservice.runtime !== undefined ? microservice.runtime : microservice?.container?.runtime : "",
     cdiDevices: microservice.cdiDevices !== null || microservice?.container?.cdiDevices !== null ? microservice.cdiDevices !== undefined ? microservice.cdiDevices : microservice?.container?.cdiDevices : "",
+    ...microservice.msroutes,
+    pubTags: microservice.pubTags !== null || microservice?.msRoutes?.pubTags !== null ? microservice.pubTags !== undefined ? microservice.pubTags : microservice?.msRoutes?.pubTags : "",
+    subTags: microservice.subTags !== null || microservice?.msRoutes?.subTags !== null ? microservice.subTags !== undefined ? microservice.subTags : microservice?.msRoutes?.subTags : "",
   }
   _deleteUndefinedFields(microserviceData)
   return microserviceData

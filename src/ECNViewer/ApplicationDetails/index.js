@@ -186,6 +186,10 @@ export default function ApplicationDetails({
               return cmd;
             }),
           },
+          msRoutes: {
+            pubTags: m?.pubTags !== undefined ? m?.pubTags : [],
+            subTags: m?.subTags !== undefined ? m?.subTags : [],
+          },
           config: JSON.parse(m.config),
         })),
         routes: app.routes.map((r) => ({

@@ -400,6 +400,10 @@ export default function MicroserviceDetails({
             return cmd;
           }),
         },
+        msRoutes: {
+          pubTags: app?.pubTags !== undefined ? app?.pubTags : [],
+          subTags: app?.subTags !== undefined ? app?.subTags : [],
+        },
         config: JSON.parse(app?.config),
         application: app?.application,
         rebuild: app?.rebuild,
