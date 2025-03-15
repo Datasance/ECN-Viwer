@@ -106,6 +106,7 @@ export default function ApplicationDetails({
 
   const restartApplication = async (app) => {
     await toggleApplication(app);
+    await new Promise(resolve => setTimeout(resolve, 8000));
     await toggleApplication(app);
   };
 
