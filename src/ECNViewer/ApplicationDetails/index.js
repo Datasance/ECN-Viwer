@@ -157,11 +157,14 @@ export default function ApplicationDetails({
             }
           ),
           container: {
+            annotations: JSON.parse(m.annotations),
             rootHostAccess: m.rootHostAccess,
             runAsUser: m?.runAsUser,
             platform: m?.platform,
             runtime: m?.runtime,
             cdiDevices: m?.cdiDevices !== undefined ? m?.cdiDevices : [],
+            capAdd: m?.capAdd !== undefined ? m?.capAdd : [],
+            capDrop: m?.capDrop !== undefined ? m?.capDrop : [],
             ports: m.ports.map((p) => {
               if (p.host) {
                 p.host = (

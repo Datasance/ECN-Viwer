@@ -370,11 +370,14 @@ export default function MicroserviceDetails({
           }
         ),
         container: {
+          annotations: JSON.parse(app?.annotations),
           rootHostAccess: app.rootHostAccess,
           runAsUser: app?.runAsUser,
           platform: app?.platform,
           runtime: app?.runtime,
           cdiDevices: app?.cdiDevices !== undefined ? app?.cdiDevices : [],
+          capAdd: app?.capAdd !== undefined ? app?.capAdd : [],
+          capDrop: app?.capDrop !== undefined ? app?.capDrop : [],
           volumes: app.volumeMappings.map((vm) => {
             delete vm.id;
             return vm;

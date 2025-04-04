@@ -1,6 +1,6 @@
 openapi : "3.0.0"
 info:
-  version: 3.4.10
+  version: 3.4
   title: Datasance PoT Controller
 paths:
   /status:
@@ -2761,6 +2761,8 @@ components:
                 type: string
               config:
                 type: string
+              annotations:
+                type: string
               catalogItemId:
                 type: integer
               registryId:
@@ -2801,6 +2803,14 @@ components:
               runtime:
                 type: string           
               cdiDevices:
+                type: array
+                items:
+                  type: string
+              capAdd:
+                type: array
+                items:
+                  type: string
+              capDrop:
                 type: array
                 items:
                   type: string
@@ -2900,6 +2910,8 @@ components:
                     type: string
                   config:
                     type: string
+                  annotations:
+                    type: string
                   catalogItemId:
                     type: integer
                   registryId:
@@ -2942,6 +2954,14 @@ components:
                   runtime:
                     type: string           
                   cdiDevices:
+                    type: array
+                    items:
+                      type: string
+                  capAdd:
+                    type: array
+                    items:
+                      type: string
+                  capDrop:
                     type: array
                     items:
                       type: string
@@ -3732,6 +3752,8 @@ components:
           type: string
         config:
           type: string
+        annotations:
+          type: string
         rootHostAccess:
           type: boolean
         logLimit:
@@ -3762,6 +3784,14 @@ components:
         runtime:
           type: string           
         cdiDevices:
+          type: array
+          items:
+            type: string
+        capAdd:
+          type: array
+          items:
+            type: string
+        capDrop:
           type: array
           items:
             type: string
@@ -3798,6 +3828,8 @@ components:
         name:
           type: string
         config:
+          type: string
+        annotations:
           type: string
         catalogItemId:
           type: integer
@@ -3837,6 +3869,14 @@ components:
           type: array
           items:
             type: string
+        capAdd:
+          type: array
+          items:
+            type: string
+        capDrop:
+          type: array
+          items:
+            type: string
         cmd:
           type: array
           items:
@@ -3857,6 +3897,8 @@ components:
         name:
           type: string
         config:
+          type: string
+        annotations:
           type: string
         rebuild:
           type: boolean
@@ -3887,6 +3929,14 @@ components:
         runtime:
           type: string           
         cdiDevices:
+          type: array
+          items:
+            type: string
+        capAdd:
+          type: array
+          items:
+            type: string
+        capDrop:
           type: array
           items:
             type: string
