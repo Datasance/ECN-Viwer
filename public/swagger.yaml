@@ -1645,6 +1645,64 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+  "/microservices/system/{uuid}/rebuild":
+    patch:
+      tags:
+        - Microservices
+      summary: Rebuilds a system microservice
+      operationId: rebuildSystemMicroservice
+      parameters:
+        - in: path
+          name: uuid
+          description: Microservice Uuid
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      responses:
+        "204":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+  "/microservices/{uuid}/rebuild":
+    patch:
+      tags:
+        - Microservices
+      summary: Rebuilds a microservice
+      operationId: rebuildMicroservice
+      parameters:
+        - in: path
+          name: uuid
+          description: Microservice Uuid
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      responses:
+        "204":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
   "/microservices/{uuid}/image-snapshot":
     post:
       tags:
