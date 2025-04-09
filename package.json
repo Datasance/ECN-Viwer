@@ -1,6 +1,6 @@
 {
   "name": "@datasance/ecn-viewer",
-  "version": "v0.4.3",
+  "version": "v0.4.4",
   "description": "Datasance ioFog Edge Cloud Network Viewer project  \\nCopyright (c) 2023 Datasance Teknoloji A.S.",
   "main": "index.js",
   "author": "Emirhan Durmus",
@@ -46,7 +46,7 @@
     "react-router": "^6.24.0",
     "react-router-dom": "^5.3.4",
     "sass": "^1.77.6",
-    "swagger-ui-react": "^5.20.5"
+    "swagger-ui-react": "^5.20.7"
   },
   "proxy": "http://localhost:5555",
   "scripts": {
