@@ -123,7 +123,7 @@ export default function Layout() {
         <div className={classes.wrapper + ' wrapper'}>
           <div className={classes.logo + ' logo'}>
             <NavLink to='/overview' onClick={() => returnHome()}>
-              <img src={logomark} style={{ marginTop: "1rem" }} width={85} alt='Datasance' />
+              <img src={logomark} style={{ marginTop: "1rem" }} width={35} alt='Datasance' />
             </NavLink>
           </div>
           <div className={classes.latNav + ' latnav'}>
