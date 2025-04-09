@@ -62,7 +62,9 @@ export default function AgentDetails({
   const classes = useStyles();
   const isMediumScreen = useMediaQuery("(min-width: 768px)");
   const [openRebootAgentDialog, setOpenRebootAgentDialog] =
-  React.useState(false);
+    React.useState(false);
+  const [openRestartApplicationDialog, setRestartApplicationDialog] =
+    React.useState(false);
   const { msvcsPerAgent, controller, applications } = data;
   const agent =
     (controller.agents || []).find((a) => selectedAgent.uuid === a.uuid) ||
@@ -104,6 +106,7 @@ export default function AgentDetails({
           type: "success",
           message: `Application ${app.isActivated ? "Started" : "Stopped"}!`,
         });
+        setRestartApplicationDialog(false)
       } else {
         pushFeedback({ type: "error", message: response.status });
       }
@@ -119,7 +122,7 @@ export default function AgentDetails({
   };
 
   const deleteApplication = async (app) => {
-    
+
     try {
       const response = await _deleteApplication(app);
       if (response.ok) {
@@ -168,7 +171,7 @@ export default function AgentDetails({
   );
 
   const rebootActions = (
-    <div className={classes.actions} style={{ minWidth: "unset", marginRight:"0.3rem" }}>
+    <div className={classes.actions} style={{ minWidth: "unset", marginRight: "0.3rem" }}>
       <icons.ReplayIcon
         onClick={() => setOpenRebootAgentDialog(true)}
         className={classes.action}
@@ -176,6 +179,7 @@ export default function AgentDetails({
       />
     </div>
   );
+
 
   async function rebootAgent() {
     try {
@@ -306,17 +310,17 @@ export default function AgentDetails({
               agent.memoryUsage * MiBFactor
             )} / ${prettyBytes(agent.systemAvailableMemory)} (${(
               ((agent.memoryUsage * MiBFactor) / agent.systemAvailableMemory) *
-                100 || 0
-            ).toFixed(2)}%)`}</span>: null}
-          </div> 
+              100 || 0
+            ).toFixed(2)}%)`}</span> : null}
+          </div>
           <div className={classes.subSection}>
             <span className={classes.subTitle}>Disk Usage</span>
             {agent.diskUsage !== undefined ? <span className={classes.text}>{`${prettyBytes(
               agent.diskUsage * MiBFactor
             )} / ${prettyBytes(agent.systemAvailableDisk)} (${(
               ((agent.diskUsage * MiBFactor) / agent.systemAvailableDisk) *
-                100 || 0
-            ).toFixed(2)}%)`}</span>: null}
+              100 || 0
+            ).toFixed(2)}%)`}</span> : null}
           </div>
         </div>
         <div className={classes.sectionDivider} />
@@ -398,23 +402,18 @@ export default function AgentDetails({
                       setOpenDeleteApplicationDialog(true);
                     }}
                   />
-                  {applicationsByName[applicationName].application
-                    .isActivated ? (
-                    <icons.RestartIcon
-                      className={classes.action}
-                      onClick={() =>
-                        restartApplication(
+                  <div className={classes.actions} style={{ minWidth: "unset", marginRight: "0.3rem" }}>
+                    <icons.ReplayIcon
+                      onClick={() => {
+                        setSelectedApplication(
                           applicationsByName[applicationName].application
-                        )
-                      }
-                      title="Restart application"
+                        );
+                        setRestartApplicationDialog(true)
+                      }}
+                      className={classes.action}
+                      title="Restart Application"
                     />
-                  ) : (
-                    <icons.RestartIcon
-                      className={classes.disabledAction}
-                      title="Restart application"
-                    />
-                  )}
+                  </div>
                   {applicationsByName[applicationName].application
                     .isActivated ? (
                     <icons.StopIcon
@@ -567,6 +566,27 @@ export default function AgentDetails({
             Cancel
           </Button>
           <Button onClick={() => rebootAgent()} color="primary" autoFocus>
+            Reboot
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={openRestartApplicationDialog}
+        onClose={() => {
+          setRestartApplicationDialog(false);
+        }}
+      >
+        <DialogTitle id="alert-dialog-title">Restart {selectedApplication.name}?</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            <span>Do you want to restart your application</span>
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRestartApplicationDialog(false)}>
+            Cancel
+          </Button>
+          <Button onClick={() => restartApplication(selectedApplication)} color="primary" autoFocus>
             Reboot
           </Button>
         </DialogActions>

@@ -77,7 +77,8 @@ export default function ApplicationDetails({
   const [openChangeYamlApplicationDialog, setOpenChangeYamlApplicationDialog] =
     React.useState(false);
   const [fileParsing, setFileParsing] = React.useState(false)
-
+  const [openRebootAgentDialog, setOpenRebootAgentDialog] =
+      React.useState(false);
   const { applications, reducedAgents } = data;
   const application =
     (applications || []).find((a) => selectedApplication.name === a.name) ||
@@ -96,11 +97,14 @@ export default function ApplicationDetails({
           type: "success",
           message: `Application ${app.isActivated ? "Started" : "Stopped"}!`,
         });
+        setOpenRebootAgentDialog(false);
       } else {
         pushFeedback({ type: "error", message: response.status });
+        setOpenRebootAgentDialog(false);
       }
     } catch (e) {
       pushFeedback({ type: "error", message: e.message || e.status });
+      setOpenRebootAgentDialog(false);
     }
   };
 
@@ -226,7 +230,7 @@ export default function ApplicationDetails({
       {application.isActivated ? (
         <icons.RestartIcon
           className={classes.action}
-          onClick={() => restartApplication(application)}
+          onClick={() => setOpenRebootAgentDialog(true)}
           title="Restart application"
         />
       ) : (
@@ -746,6 +750,27 @@ export default function ApplicationDetails({
 
         </DialogActions>
       </Dialog>
+      <Dialog
+              open={openRebootAgentDialog}
+              onClose={() => {
+                setOpenRebootAgentDialog(false);
+              }}
+            >
+              <DialogTitle id="alert-dialog-title">Restart {application.name}?</DialogTitle>
+              <DialogContent>
+                <DialogContentText id="alert-dialog-description">
+                  <span>Do you want to restart your application</span>
+                </DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setOpenRebootAgentDialog(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => restartApplication(application)} color="primary" autoFocus>
+                  Reboot
+                </Button>
+              </DialogActions>
+            </Dialog>
     </>
   );
 }
