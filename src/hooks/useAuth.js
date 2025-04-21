@@ -1,6 +1,9 @@
 import { useKeycloak } from '@react-keycloak/web'
 
 export const useAuth = () => {
+  // Always call the hook first
+  const keycloakState = useKeycloak()
+
   // Check if we should use Keycloak
   const shouldUseKeycloak = !window.controllerConfig?.dev || 
     (window.controllerConfig?.keycloakURL && 
@@ -15,6 +18,6 @@ export const useAuth = () => {
     }
   }
 
-  // Only use real Keycloak when needed
-  return useKeycloak()
+  // Return the real Keycloak state when auth is configured
+  return keycloakState
 }
