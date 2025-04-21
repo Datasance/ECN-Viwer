@@ -18,7 +18,7 @@ function App() {
   // We use Keycloak when:
   // 1. Not in dev mode OR
   // 2. In dev mode with all required Keycloak config
-  const shouldUseKeycloak = !window.controllerConfig?.dev || 
+  const shouldUseKeycloak = !window.controllerConfig?.controllerDevMode || 
     (window.controllerConfig?.keycloakURL && 
      window.controllerConfig?.keycloakRealm && 
      window.controllerConfig?.keycloakClientid)

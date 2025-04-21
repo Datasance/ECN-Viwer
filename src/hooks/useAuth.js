@@ -5,7 +5,7 @@ export const useAuth = () => {
   const keycloakState = useKeycloak()
 
   // Check if we should use Keycloak
-  const shouldUseKeycloak = !window.controllerConfig?.dev || 
+  const shouldUseKeycloak = !window.controllerConfig?.controllerDevMode || 
     (window.controllerConfig?.keycloakURL && 
      window.controllerConfig?.keycloakRealm && 
      window.controllerConfig?.keycloakClientid)
