@@ -1,5 +1,5 @@
 window.controllerConfig = {
-  ip: '0.0.0.0',
+  ip: 'localhost',
   port: '51121',
   refresh: 3000,
   dev: true,
