@@ -1,5 +1,5 @@
-import { useKeycloak } from '@react-keycloak/web'
 import React from 'react'
+import { useAuth } from '../hooks/useAuth'
 
 const controllerJson = window.controllerConfig
 
@@ -25,34 +25,47 @@ const initControllerState = (() => {
   }
 })()
 
-const IPLookUp = "http://ip-api.com/json/"
+const IPLookUp = 'http://ip-api.com/json/'
 
 // If dev mode, use proxy
 // Otherwise assume you are running on the Controller
-const getBaseUrl = () => controllerJson.url || `${window.location.protocol}//${[window.location.hostname, controllerJson.port].join(':')}`;
-const getUrl = (path) => controllerJson.dev ? `/api/controllerApi${path}` : `${getBaseUrl()}${path}`;
-const getHeaders = (headers) => controllerJson.dev
-  ? ({
-    ...headers,
-    'ECN-Api-Destination': controllerJson.dev ? `http://${controllerJson.ip}:${controllerJson.port}/` : ''
-  }) : headers
+const getBaseUrl = () => controllerJson.url || `${window.location.protocol}//${[window.location.hostname, controllerJson.port].join(':')}`
+const getUrl = (path) => controllerJson.dev ? `/api/controllerApi${path}` : `${getBaseUrl()}${path}`
+const getHeaders = (headers) => {
+  if (controllerJson.dev) {
+    return {
+      ...headers,
+      'ECN-Api-Destination': controllerJson.dev ? `http://${controllerJson.ip}:${controllerJson.port}/` : ''
+    }
+  }
+  return headers
+}
 
-export const ControllerContext = React.createContext({
-  controller: {
-    status: {}
-  },
-  updateController: () => {}
-})
-
+export const ControllerContext = React.createContext()
 export const useController = () => React.useContext(ControllerContext)
+
+const initState = {
+  user: null,
+  status: null,
+  refresh: null
+}
+
+const reducer = (state, action) => {
+  switch (action.type) {
+    case 'UPDATE':
+      return { ...state, ...action.data }
+    default:
+      return state
+  }
+}
 
 const lookUpControllerInfo = async (ip) => {
   if (!ip) {
     ip = window.location.host.split(':')[0] // Get only ip, not port
   }
-  const localhost = new RegExp('(0\.0\.0\.0|localhost|127\.0\.0\.1|192\.168\.)') // eslint-disable-line no-useless-escape
-  const lookupIP = localhost.test(ip) ? '8.8.8.8' : ip.slice(-1) === '/' ? ip.substring(0, ip.length - 1): ip
-  const response = await window.fetch(IPLookUp + lookupIP.replace("http://","").replace("https://",""))
+  const localhost = /(0\.0\.0\.0|localhost|127\.0\.0\.1|192\.168\.)/
+  const lookupIP = localhost.test(ip) ? '8.8.8.8' : ip.slice(-1) === '/' ? ip.substring(0, ip.length - 1) : ip
+  const response = await window.fetch(IPLookUp + lookupIP.replace('http://', '').replace('https://', ''))
   if (response.ok) {
     return response.json()
   } else {
@@ -61,7 +74,7 @@ const lookUpControllerInfo = async (ip) => {
 }
 
 const getControllerStatus = async (api) => {
-  const response = await await window.fetch(getUrl('/api/v3/status'), {
+  const response = await window.fetch(getUrl('/api/v3/status'), {
     headers: getHeaders({})
   })
   if (response.ok) {
@@ -71,18 +84,41 @@ const getControllerStatus = async (api) => {
   }
 }
 
-export default function Context (props) {
-  // const [token, setToken] = React.useState(null)
-  const tokenRef = React.useRef(null)
-  const [controllerUser, setControllerUser] = React.useState(initControllerState.user)
-  const [controllerLocation, setControllerLocation] = React.useState(initControllerState.location)
-  const [controllerStatus, setControllerStatus] = React.useState(initControllerState.status)
-  const [error, setError] = React.useState(null)
-  const [refresh, setRefresh] = React.useState(window.localStorage.getItem('iofogRefresh') || 3000)
-  const { initialized, keycloak } = useKeycloak()
-  const setToken = (newToken) => {
-    tokenRef.current = newToken
+export const ControllerProvider = ({ children }) => {
+  const [state, dispatch] = React.useReducer(reducer, initState)
+  const { keycloak, initialized } = useAuth()
+
+  const updateController = (data) => {
+    dispatch({ type: 'UPDATE', data })
   }
+
+  const request = async (path, options = {}) => {
+    const headers = {
+      'Content-Type': 'application/json',
+      ...options.headers
+    }
+
+    // Add Authorization header if we have a token or if we're in mock mode
+    if (keycloak?.token) {
+      headers.Authorization = `Bearer ${keycloak.token}`
+    } else if (!window.controllerConfig?.keycloakURL) {
+      // Mock token for non-auth mode
+      headers.Authorization = 'Bearer mock-token'
+    }
+
+    const response = await fetch(getUrl(path), {
+      ...options,
+      headers,
+      credentials: 'include'
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    return response
+  }
+
   React.useEffect(() => {
     // Grab controller location informations
     const effect = async () => {
@@ -96,7 +132,7 @@ export default function Context (props) {
           query: controllerJson.ip
         }
       }
-      setControllerLocation(ipInfo)
+      dispatch({ type: 'UPDATE', data: { location: ipInfo } })
     }
     effect()
   }, [])
@@ -105,87 +141,20 @@ export default function Context (props) {
     const effect = async () => {
       // Everytime user is updated, try to grab status
       const status = await getControllerStatus()
-      setControllerStatus(status)
+      dispatch({ type: 'UPDATE', data: { status } })
     }
     effect()
-  }, [controllerUser])
-
-  // const authenticate = async (user) => {
-  //   const response = await window.fetch(getUrl('/api/v3/user/login'), {
-  //     method: 'POST',
-  //     headers: getHeaders({
-  //       Accept: 'application/json',
-  //       'Content-Type': 'application/json'
-  //     }),
-  //     body: JSON.stringify(user || controllerUser)
-  //   })
-  //   if (response.ok) {
-  //     const token = (await response.json()).accessToken
-  //     setToken(token)
-  //     setError(null)
-  //     return token
-  //   } else {
-  //     setToken(null)
-  //     throw new Error(response.statusText)
-  //   }
-  // }
-
-  // Wrapper around window.fetch to add proxy and authorization headers
-  const request = React.useMemo(() => async (path, options = {}) => {
-    try {
-      let t = `${'Bearer '}${keycloak?.token}`
-      if (options.body && typeof options.body === typeof {}) {
-        options.body = JSON.stringify(options.body)
-        options.headers = {
-          ...options.headers,
-          'Content-Type': 'application/json'
-        }
-      }
-      const response = await window.fetch(getUrl(path), {
-        ...options,
-        headers: getHeaders({
-          ...options.headers,
-          Authorization: t
-        })
-      })
-      if (error) {
-        setError(null)
-      }
-      return response
-    } catch (err) {
-      setError(err)
-      return ({
-        ok: false,
-        statusText: err.message || 'Could not reach controller'
-      })
-    }
-  }, [tokenRef.current, error])
-
-  const updateController = async ({ user, refresh }) => {
-    window.localStorage.setItem('iofogUser', JSON.stringify(user))
-    window.localStorage.setItem('iofogRefresh', refresh)
-    setControllerUser(user)
-    setRefresh(refresh)
-    try {
-      keycloak.login()
-    } catch (e) {
-      setError(e)
-      throw e
-    }
-  }
+  }, [state.user])
 
   return (
-    <ControllerContext.Provider value={{
-      refresh,
-      location: controllerLocation,
-      status: controllerStatus,
-      user: controllerUser,
-      error,
-      updateController,
-      request
-    }}
+    <ControllerContext.Provider
+      value={{
+        ...state,
+        updateController,
+        request
+      }}
     >
-      {props.children}
+      {children}
     </ControllerContext.Provider>
   )
 }

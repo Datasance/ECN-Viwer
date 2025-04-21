@@ -4,24 +4,21 @@ import Avatar from '@material-ui/core/Avatar'
 import HomeIcon from '@material-ui/icons/HomeOutlined'
 import CatalogIcon from '@material-ui/icons/GraphicEqOutlined'
 import ExitToAppIcon from '@material-ui/icons/ExitToApp'
-import AccountBoxIcon from '@material-ui/icons/AccountBox';
+import AccountBoxIcon from '@material-ui/icons/AccountBox'
+import { makeStyles } from '@material-ui/styles'
+import { MapProvider } from '../providers/Map'
+import { useData } from '../providers/Data'
+import { useController } from '../ControllerProvider'
+import { useAuth } from '../hooks/useAuth'
 
 import ECNViewer from '../ECNViewer'
 import Catalog from '../Catalog'
 import Modal from '../Utils/Modal'
 import Config from '../Config'
 import SwaggerDoc from '../swagger/SwaggerDoc'
-// import ECNViewerConfig from '../ECNViewerConfig'
-// import SimpleTabs from '../Utils/Tabs'
-import { ControllerContext } from '../ControllerProvider'
-
 import logomark from '../assets/potLogoWithWhiteText.svg'
 import './layout.scss'
 
-import { makeStyles } from '@material-ui/styles'
-import { MapProvider } from '../providers/Map'
-import { useData } from '../providers/Data'
-import { useKeycloak } from "@react-keycloak/web";
 const controllerJson = window.controllerConfig
 
 const useStyles = makeStyles(theme => ({
@@ -98,13 +95,15 @@ function RouteWatcher({ children }) {
 }
 
 export default function Layout() {
-  const { initialized, keycloak } = useKeycloak()
+  const { keycloak, initialized } = useAuth()
   const classes = useStyles()
   const returnHomeCbRef = React.useRef(null)
-  const { user, status } = React.useContext(ControllerContext)
-  const [settingsOpen, setSettingsOpen] = React.useState(!(user.email && user.password))
+  const { user, status, updateController } = useController()
+  // const [settingsOpen, setSettingsOpen] = React.useState(!(user.email && user.password))
 
-  console.log(' ====> Rendering layout')
+  // Check if we're in mock mode
+  const isMockMode = !window.controllerConfig?.keycloakURL || window.controllerConfig?.dev === true
+  console.log('Layout - isMockMode:', isMockMode, 'config:', window.controllerConfig)
 
   const returnHome = () => {
     if (returnHomeCbRef.current) {
@@ -112,8 +111,23 @@ export default function Layout() {
     }
   }
 
-  if (!initialized) {
-    return (<></>)
+  const handleLogout = async () => {
+    try {
+      if (keycloak) {
+        // If we have keycloak, use its logout
+        await keycloak.logout()
+      } else {
+        // If no keycloak, just clear user data and redirect
+        updateController({ user: null })
+        window.location.href = '/'
+      }
+    } catch (error) {
+      console.error('Error during logout:', error)
+    }
+  }
+
+  if (!initialized && keycloak) {
+    return null
   }
 
   return (
@@ -137,11 +151,13 @@ export default function Layout() {
                 <CatalogIcon />
               </Avatar>
             </NavLink>
+            {keycloak && (
+              <Avatar className={classes.latIcons}>
+                <AccountBoxIcon onClick={() => { window.open(`${controllerJson?.keycloakURL}admin/${controllerJson?.keycloakRealm}/console`, "_blank") }} />
+              </Avatar>
+            )}
             <Avatar className={classes.latIcons}>
-              <AccountBoxIcon onClick={() => { window.open(`${controllerJson?.keycloakURL}admin/${controllerJson?.keycloakRealm}/console`, "_blank") }} />
-            </Avatar>
-            <Avatar className={classes.latIcons}>
-              <ExitToAppIcon onClick={() => { keycloak.logout() }} />
+              <ExitToAppIcon onClick={handleLogout} />
             </Avatar>
           </div>
           <div className='content'>
@@ -172,32 +188,12 @@ export default function Layout() {
                     API
                   </a>
                 </div>
-
               </div>
               <a style={{ margin: 'auto', color: "#4d3167ff" }} href='https://datasance.com/'>© {new Date().getFullYear()} Datasance.</a>
             </span>
           </div>
         </div>
       </HashRouter>
-
-      {/* We removed after keycloak integration*/}
-      {/* <Modal
-        {...{
-          open: settingsOpen,
-          title: 'Configuration',
-          onClose: () => setSettingsOpen(false),
-          style: {
-            modalContent: {
-              paddingTop: 0
-            }
-          }
-        }}
-      > */}
-      {/* <SimpleTabs> */}
-      {/* <Config title='User credentials' {...{ onSave: () => setSettingsOpen(false) }} /> */}
-      {/* <ECNViewerConfig title='ECN Viewer' {...{ onSave: () => setSettingsOpen(false) }} /> */}
-      {/* </SimpleTabs> */}
-      {/* </Modal> */}
     </>
   )
 }

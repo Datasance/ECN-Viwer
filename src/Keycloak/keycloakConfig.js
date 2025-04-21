@@ -1,15 +1,25 @@
 import Keycloak from 'keycloak-js'
+
+// Get controller configuration
 const controllerJson = window.controllerConfig
 
-let initOptions = {
-  url: controllerJson?.keycloakURL,
-  realm: controllerJson?.keycloakRealm,
-  clientId: controllerJson?.keycloakClientid,
-  onLoad: 'login-required',
-  KeycloakResponseType: "code",
-  checkLoginIframe: false,
-};
+let keycloak
 
-const keycloak = new Keycloak(initOptions);
+// Only initialize real Keycloak if we have all required config
+if (controllerJson?.keycloakURL && 
+    controllerJson?.keycloakRealm && 
+    controllerJson?.keycloakClientid) {
+  const initOptions = {
+    url: controllerJson.keycloakURL,
+    realm: controllerJson.keycloakRealm,
+    clientId: controllerJson.keycloakClientid,
+    initOptions: {
+      KeycloakResponseType: 'code',
+      pkceMethod: 'S256'
+    }
+  }
+  console.log('Initializing Keycloak with config:', initOptions)
+  keycloak = new Keycloak(initOptions)
+}
 
 export default keycloak
