@@ -16,7 +16,7 @@ const app = express()
 const proxy = require('express-http-proxy')
 const getIP = require('external-ip')()
 
-const PORT = process.env.PORT || 80
+const PORT = process.env.PORT || 8008
 
 const runServer = async () => {
   app.use('/api/controllerAPI', (req, res, next) => {

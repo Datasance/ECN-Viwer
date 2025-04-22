@@ -102,7 +102,7 @@ export default function Layout() {
   // const [settingsOpen, setSettingsOpen] = React.useState(!(user.email && user.password))
 
   // Check if we're in mock mode
-  const isMockMode = !window.controllerConfig?.keycloakURL || window.controllerConfig?.dev === true
+  const isMockMode = !window.controllerConfig?.keycloakURL && window.controllerConfig?.dev === true
   console.log('Layout - isMockMode:', isMockMode, 'config:', window.controllerConfig)
 
   const returnHome = () => {

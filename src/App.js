@@ -13,15 +13,12 @@ import ThemeContext from "./Theme/ThemeProvider";
 import { ConfigProvider } from "./providers/Config";
 import keycloak from "./Keycloak/keycloakConfig";
 
-function App() {
+function App () {
   // Check if we should use Keycloak
   // We use Keycloak when:
-  // 1. Not in dev mode OR
-  // 2. In dev mode with all required Keycloak config
-  const shouldUseKeycloak = !window.controllerConfig?.controllerDevMode || 
-    (window.controllerConfig?.keycloakURL && 
-     window.controllerConfig?.keycloakRealm && 
-     window.controllerConfig?.keycloakClientid)
+  const shouldUseKeycloak = window.controllerConfig?.keycloakURL &&
+     window.controllerConfig?.keycloakRealm &&
+     window.controllerConfig?.keycloakClientid
 
   console.log('App - Using Keycloak:', shouldUseKeycloak, 'config:', window.controllerConfig)
 
@@ -45,8 +42,8 @@ function App() {
     </>
   )
 
-  // Only wrap with Keycloak provider when needed
-  if (shouldUseKeycloak) {
+  // Only wrap with Keycloak provider when we have a valid keycloak instance
+  if (shouldUseKeycloak && keycloak) {
     return (
       <ReactKeycloakProvider
         authClient={keycloak}
