@@ -108,8 +108,7 @@ export const ControllerProvider = ({ children }) => {
 
     const response = await fetch(getUrl(path), {
       ...options,
-      headers,
-      credentials: 'include'
+      headers
     })
 
     if (!response.ok) {
