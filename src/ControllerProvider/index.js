@@ -1,30 +1,7 @@
 import React from 'react'
-import { useAuth } from '../hooks/useAuth'
+import { useAuth } from '../auth'
 
 const controllerJson = window.controllerConfig
-
-const initControllerState = (() => {
-  const localUser = window.localStorage.getItem('iofogUser')
-  if ((!controllerJson.user || !controllerJson.user.email) && localUser) {
-    controllerJson.user = JSON.parse(localUser)
-  }
-  return {
-    ...controllerJson,
-    api: `${window.location.protocol}//${controllerJson.ip}:${controllerJson.port || 80}/`,
-    location: {
-      lat: '40.935',
-      lon: '28.97',
-      query: controllerJson.ip
-    },
-    status: {
-      versions: {
-        controller: '',
-        ecnViewer: ''
-      }
-    }
-  }
-})()
-
 const IPLookUp = 'http://ip-api.com/json/'
 
 // If dev mode, use proxy
@@ -86,7 +63,7 @@ const getControllerStatus = async (api) => {
 
 export const ControllerProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initState)
-  const { keycloak, initialized } = useAuth()
+  const { token } = useAuth()
 
   const updateController = (data) => {
     dispatch({ type: 'UPDATE', data })
@@ -98,13 +75,12 @@ export const ControllerProvider = ({ children }) => {
       ...options.headers
     }
 
-    // Add Authorization header if we have a token or if we're in mock mode
-    if (keycloak?.token) {
-      headers.Authorization = `Bearer ${keycloak.token}`
-    } else if (!window.controllerConfig?.keycloakURL) {
-      // Mock token for non-auth mode
-      headers.Authorization = 'Bearer mock-token'
+    // Add Authorization header with token from auth
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
     }
+
+    // console.log('Request headers:', headers) // Debug log
 
     const response = await fetch(getUrl(path), {
       ...options,

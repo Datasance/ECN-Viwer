@@ -9,12 +9,12 @@ import { makeStyles } from '@material-ui/styles'
 import { MapProvider } from '../providers/Map'
 import { useData } from '../providers/Data'
 import { useController } from '../ControllerProvider'
-import { useAuth } from '../hooks/useAuth'
+import { useAuth } from '../auth'
 
 import ECNViewer from '../ECNViewer'
 import Catalog from '../Catalog'
-import Modal from '../Utils/Modal'
-import Config from '../Config'
+// import Modal from '../Utils/Modal'
+// import Config from '../Config'
 import SwaggerDoc from '../swagger/SwaggerDoc'
 import logomark from '../assets/potLogoWithWhiteText.svg'
 import './layout.scss'
@@ -101,9 +101,9 @@ export default function Layout() {
   const { user, status, updateController } = useController()
   // const [settingsOpen, setSettingsOpen] = React.useState(!(user.email && user.password))
 
-  // Check if we're in mock mode
-  const isMockMode = !window.controllerConfig?.keycloakURL && window.controllerConfig?.dev === true
-  console.log('Layout - isMockMode:', isMockMode, 'config:', window.controllerConfig)
+  // // Check if we're in mock mode
+  // const isMockMode = !window.controllerConfig?.keycloakURL && window.controllerConfig?.dev === true
+  // // console.log('Layout - isMockMode:', isMockMode, 'config:', window.controllerConfig)
 
   const returnHome = () => {
     if (returnHomeCbRef.current) {

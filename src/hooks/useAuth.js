@@ -1,22 +1,27 @@
 import { useKeycloak } from '@react-keycloak/web'
 
+// Check if we should use Keycloak
+const shouldUseKeycloak = window.controllerConfig?.keycloakURL &&
+  window.controllerConfig?.keycloakRealm &&
+  window.controllerConfig?.keycloakClientid
+
 export const useAuth = () => {
-  // Always call the hook first
-  const keycloakState = useKeycloak()
+  // Use the real Keycloak hook
+  const { keycloak, initialized } = useKeycloak()
 
-  // Check if we should use Keycloak
-  const shouldUseKeycloak = window.controllerConfig?.keycloakURL &&
-    window.controllerConfig?.keycloakRealm &&
-    window.controllerConfig?.keycloakClientid
-
-  // If we shouldn't use Keycloak, return mock values
+  // If Keycloak isn't configured or initialized, return mock values
   if (!shouldUseKeycloak) {
     return {
       keycloak: null,
-      initialized: true
+      initialized: true,
+      token: 'mock-token'
     }
   }
 
-  // Return the real Keycloak state when auth is configured
-  return keycloakState
+  // Return the real Keycloak state with an easily accessible token property
+  return {
+    keycloak,
+    initialized,
+    token: keycloak?.token
+  }
 }

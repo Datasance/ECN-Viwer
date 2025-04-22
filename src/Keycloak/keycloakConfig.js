@@ -21,7 +21,7 @@ if (shouldUseKeycloak) {
       pkceMethod: 'S256'
     }
   }
-  console.log('Initializing Keycloak with config:', initOptions)
+  // console.log('Initializing Keycloak with config:', initOptions)
   keycloak = new Keycloak(initOptions)
 }
 

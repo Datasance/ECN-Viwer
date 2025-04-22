@@ -2,7 +2,7 @@ import React from 'react'
 import { useController } from '../../ControllerProvider'
 import { find, groupBy, get } from 'lodash'
 import useRecursiveTimeout from '../../hooks/useInterval'
-import { useAuth } from '../../hooks/useAuth'
+import { useAuth } from '../../auth'
 
 import AgentManager from './agent-manager'
 import ApplicationManager from './application-manager'
@@ -123,7 +123,7 @@ export const DataProvider = ({
 
   const update = async () => {
     // Only update if we're initialized or not using auth
-    if (initialized || !keycloak) {
+    if (!keycloak || initialized) {
       // List fogs
       let agents = []
       try {

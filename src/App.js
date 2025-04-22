@@ -2,7 +2,6 @@ import CssBaseline from "@material-ui/core/CssBaseline";
 import Backend from "react-dnd-html5-backend";
 import { DndProvider } from "react-dnd";
 import React from 'react'
-import { ReactKeycloakProvider } from '@react-keycloak/web'
 import { ControllerProvider } from './ControllerProvider'
 import { DataProvider } from './providers/Data'
 import Layout from './Layout'
@@ -11,20 +10,11 @@ import './App.scss'
 import FeedbackContext from "./Utils/FeedbackContext";
 import ThemeContext from "./Theme/ThemeProvider";
 import { ConfigProvider } from "./providers/Config";
-import keycloak from "./Keycloak/keycloakConfig";
+import { AuthProvider } from './auth'
 
 function App () {
-  // Check if we should use Keycloak
-  // We use Keycloak when:
-  const shouldUseKeycloak = window.controllerConfig?.keycloakURL &&
-     window.controllerConfig?.keycloakRealm &&
-     window.controllerConfig?.keycloakClientid
-
-  console.log('App - Using Keycloak:', shouldUseKeycloak, 'config:', window.controllerConfig)
-
-  // Base app structure
-  const appContent = (
-    <>
+  return (
+    <AuthProvider>
       <CssBaseline />
       <ThemeContext>
         <DndProvider backend={Backend}>
@@ -39,29 +29,8 @@ function App () {
           </ControllerProvider>
         </DndProvider>
       </ThemeContext>
-    </>
+    </AuthProvider>
   )
-
-  // Only wrap with Keycloak provider when we have a valid keycloak instance
-  if (shouldUseKeycloak && keycloak) {
-    return (
-      <ReactKeycloakProvider
-        authClient={keycloak}
-        initOptions={{
-          onLoad: "login-required",
-          KeycloakResponseType: "code",
-          pkceMethod: "S256",
-          inAppBrowserOptions: {},
-        }}
-        LoadingComponent={<div>Loading...</div>}
-      >
-        {appContent}
-      </ReactKeycloakProvider>
-    )
-  }
-
-  // Return app content directly when not using Keycloak
-  return appContent
 }
 
-export default App;
+export default App
