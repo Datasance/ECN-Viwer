@@ -71,7 +71,6 @@ export const ControllerProvider = ({ children }) => {
 
   const request = async (path, options = {}) => {
     const headers = {
-      'Content-Type': 'application/json',
       ...options.headers
     }
 
