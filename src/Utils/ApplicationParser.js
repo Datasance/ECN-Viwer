@@ -42,7 +42,7 @@ export const parseMicroservice = async (microservice) => {
     agentName: lget(microservice, 'agent.name'),
     registryId,
     ...microservice.container,
-    annotations: microservice.annotations ? JSON.stringify(microservice.annotations) : undefined,
+    annotations: microservice.container.annotations ? JSON.stringify(microservice.container.annotations) : undefined,
     ports: lget(microservice, 'container.ports', []).map(p => ({ ...p, publicPort: p.public })),
     volumeMappings: lget(microservice, 'container.volumes', []),
     cmd: lget(microservice, 'container.commands', []),
