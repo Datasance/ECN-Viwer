@@ -49,7 +49,7 @@ export default function MicroservicesTable ({ application, selectMicroservice, s
                 <span style={{ display: 'flex', alignItems: 'center' }}><MsvcStatus status={row.status?.status} size={10} style={{ marginRight: '5px', '--pulse-size': '5px' }} />{row.name}</span>
               </TableCell>
               <TableCell style={{ width: '200px' }}>
-                <span>{row.status?.status}{row.status?.status === 'PULLING' && ` (${row.status?.percentage !== undefined ? row.status?.percentage .toFixed(2): 0}%)`}</span>
+                <span>{row.status?.status}{row.status?.status === 'PULLING' && ` (${row.status?.percentage !== undefined ? row.status?.percentage.toFixed(2): 0}%)`}</span>
                 {row.status?.errorMessage && <><br /><span>{row.status?.errorMessage}</span></>}
               </TableCell>
               {selectAgent &&

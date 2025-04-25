@@ -13,11 +13,13 @@ import { useAuth } from '../auth'
 
 import ECNViewer from '../ECNViewer'
 import Catalog from '../Catalog'
+import Dashboard from '../Dashboard'
 // import Modal from '../Utils/Modal'
 // import Config from '../Config'
 import SwaggerDoc from '../swagger/SwaggerDoc'
 import logomark from '../assets/potLogoWithWhiteText.svg'
 import './layout.scss'
+import DashboardIcon from '@material-ui/icons/Dashboard';
 
 const controllerJson = window.controllerConfig
 
@@ -85,7 +87,7 @@ function RouteWatcher({ children }) {
   const location = useLocation()
 
   React.useEffect(() => {
-    if (location.pathname === '/overview') {
+    if (location.pathname === '/overview' || location.pathname === '/dashboard') {
       console.log('Refreshing data')
       refreshData()
     }
@@ -136,11 +138,16 @@ export default function Layout() {
         <RouteWatcher />
         <div className={classes.wrapper + ' wrapper'}>
           <div className={classes.logo + ' logo'}>
-            <NavLink to='/overview' onClick={() => returnHome()}>
+            <NavLink to='/dashboard' onClick={() => returnHome()}>
               <img src={logomark} style={{ marginTop: "1rem" }} width={35} alt='Datasance' />
             </NavLink>
           </div>
           <div className={classes.latNav + ' latnav'}>
+            <NavLink to='/dashboard'>
+              <Avatar className={classes.latIcons}>
+                <DashboardIcon />
+              </Avatar>
+            </NavLink>
             <NavLink to='/overview' onClick={() => returnHome()}>
               <Avatar className={classes.latIcons}>
                 <HomeIcon />
@@ -162,10 +169,11 @@ export default function Layout() {
           </div>
           <div className='content'>
             <Switch>
+              <Route path='/dashboard' component={Dashboard} />
               <Route path='/catalog' component={Catalog} />
               <Route path='/overview' component={() => <MapProvider><ECNViewer returnHomeCBRef={returnHomeCbRef} /></MapProvider>} />
               <Route path='/api' component={SwaggerDoc} />
-              <Route component={() => <Redirect to='/overview' />} />
+              <Route component={() => <Redirect to='/dashboard' />} />
             </Switch>
           </div>
           <div className={`${classes.footerContainer} footer`}>
@@ -179,11 +187,10 @@ export default function Layout() {
                   <a
                     style={{ margin: 'auto', fontWeight: "bold", color: "#4d3167ff" }}
                     target="_parent"
-                    href={`/#/api?userToken=${keycloak?.token}&baseUrl=${
-                      /^(http:\/\/|https:\/\/)?((\d{1,3}\.){3}\d{1,3}|localhost)(:\d+)?$/.test(window.location.origin)
-                        ? `${window.location.origin.replace(/(:\d+)?$/, `:${window.controllerConfig.port}`)}/api/v3`
-                        : `${window.location.origin}/api/v3`
-                    }`}
+                    href={`/#/api?userToken=${keycloak?.token}&baseUrl=${/^(http:\/\/|https:\/\/)?((\d{1,3}\.){3}\d{1,3}|localhost)(:\d+)?$/.test(window.location.origin)
+                      ? `${window.location.origin.replace(/(:\d+)?$/, `:${window.controllerConfig.port}`)}/api/v3`
+                      : `${window.location.origin}/api/v3`
+                      }`}
                   >
                     API
                   </a>

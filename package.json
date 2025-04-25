@@ -25,6 +25,7 @@
     "@types/leaflet": "^1.9.12",
     "ajv": "^8.17.1",
     "ajv-keywords": "^5.1.0",
+    "apexcharts": "^4.6.0",
     "downshift": "9.0.6",
     "google-map-react": "1.1.6",
     "http-proxy-middleware": "3.0.3",
@@ -38,6 +39,7 @@
     "pretty-bytes": "^6.1.1",
     "react": "^18.3.1",
     "react-ace": "^12.0.0",
+    "react-apexcharts": "^1.7.0",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^10.0.2",
     "react-dom": "^18.3.1",
@@ -79,17 +81,26 @@
   "devDependencies": {
     "@babel/preset-env": "^7.24.7",
     "@babel/preset-react": "^7.24.7",
+    "@tailwindcss/postcss7-compat": "^2.2.17",
     "@testing-library/jest-dom": "^6.4.6",
     "@testing-library/react": "^16.0.0",
+    "autoprefixer": "^10.4.21",
     "concurrently": "^8.2.2",
+    "css-loader": "^7.1.2",
     "enzyme": "^3.11.0",
     "enzyme-adapter-react-16": "^1.15.8",
     "jest-enzyme": "^4.2.0",
     "nodemon": "^3.1.4",
+    "postcss": "^8.5.3",
+    "postcss-loader": "^8.1.1",
     "react-scripts": "^5.0.1",
     "react-test-renderer": "^18.3.1",
     "sass-loader": "^14.2.1",
     "sinon": "^18.0.0",
-    "standard": "^17.1.0"
+    "standard": "^17.1.0",
+    "style-loader": "^4.0.0",
+    "tailwindcss": "^4.1.4",
+    "webpack": "^5.99.6",
+    "webpack-cli": "^6.0.1"
   }
 }

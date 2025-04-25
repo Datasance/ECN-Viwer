@@ -1,3 +1,4 @@
+/* eslint-disable import/no-anonymous-default-export */
 const deleteApplication = (request) => async (app) => {
   return request('/api/v3/application/' + app.name, { method: 'DELETE' })
 }

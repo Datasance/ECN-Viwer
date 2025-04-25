@@ -11,6 +11,7 @@ import FeedbackContext from "./Utils/FeedbackContext";
 import ThemeContext from "./Theme/ThemeProvider";
 import { ConfigProvider } from "./providers/Config";
 import { AuthProvider } from './auth'
+import './styles/tailwind.css';
 
 function App () {
   return (

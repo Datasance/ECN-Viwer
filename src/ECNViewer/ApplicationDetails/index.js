@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable default-case */
 import React from "react";
 
 import ReactJson from "../../Utils/ReactJson";
