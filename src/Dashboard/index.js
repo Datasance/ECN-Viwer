@@ -5,6 +5,8 @@ import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import CustomProgressBar from '../CustomComponent/CustomProgressBar';
 import CustomAgentsCard from '../CustomComponent/CustomAgentsCard';
 import CustomStatusBadge from '../CustomComponent/CustomStatusBadge';
+import CustomApplicationsCard from '../CustomComponent/CustomApplicationsCard';
+import CustomSystemApplicationsCard from '../CustomComponent/CustomSystemApplicationsCard';
 
 const Dashboard = () => {
   const { data } = useData();
@@ -14,7 +16,6 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (!data?.activeAgents) return;
-    debugger
     const rows = data.activeAgents.map(agent => ({
       ipAddress: agent.ipAddress,
       uuid: agent.uuid,
@@ -61,6 +62,15 @@ const Dashboard = () => {
             {tab.title === "Agents" && <CustomAgentsCard
               cardTitle={tab.title}
               dataArray={data?.activeAgents}
+            />}
+            {tab.title === "Applications" && <CustomApplicationsCard
+              cardTitle={tab.title}
+              applications={data?.applications}
+            />}
+            {tab.title === "System Applications" && <CustomSystemApplicationsCard
+              cardTitle={tab.title}
+              activeAgents={data?.activeAgents}
+              systemApplications={data?.systemApplications}
             />}
           </div>
         ))}
@@ -114,8 +124,8 @@ const Dashboard = () => {
                       </tr>
 
                       {row.microservices?.length > 0 && expandedRows.has(row.uuid) && (
-                        <tr>
-                          <td colSpan={8} className="bg-gray-700 p-4">
+                        <tr className='w-full h-full'>
+                          <td colSpan={12} className="bg-gray-700 p-4 w-full h-full">
                             <h3 className="text-lg font-normal mb-2 text-start">
                               Microservices for <span className="font-bold">{row.name}</span>
                             </h3>

@@ -79,7 +79,7 @@ const CustomStatCard = ({ dataArray = [], cardTitle }) => {
     };
 
     return (
-        <div className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-2xl p-6 shadow-md hover:shadow-xl transition-all min-h-[250px] flex flex-col justify-between">
+        <div className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-2xl p-6 shadow-md hover:shadow-xl transition-all w-full h-full flex flex-col justify-between">
             <div>
                 <div className='flex'>
                     <div className="text-xl font-bold text-white mb-2 mr-2">{dataArray.length || ''}</div>
