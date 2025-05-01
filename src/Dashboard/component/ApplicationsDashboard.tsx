@@ -4,9 +4,8 @@ import ApexCharts from "react-apexcharts";
 const ApplicationDashboard = ({ applications, title }: any) => {
     const [chartData, setChartData] = useState<any>({});
 
-    // Fonksiyon: Bayt cinsinden veriyi daha okunabilir bir formata dönüştür
     const convertBytesToGB = (bytes: number) => {
-        return (bytes / (1024 ** 3)).toFixed(2); // GB cinsine dönüştürüp iki ondalıklı sayıya yuvarla
+        return (bytes / (1024 ** 3)).toFixed(2);
     };
 
     useEffect(() => {
@@ -122,7 +121,6 @@ const ApplicationDashboard = ({ applications, title }: any) => {
 
     if (applications && applications.length === 0) return <div>Loading...</div>;
 
-    // Çart verisi henüz yüklenmemişse, bir uyarı mesajı gösterelim
     if (!chartData.cpuUsage || !chartData.memoryUsage) return <div>Loading charts...</div>;
 
     return (
