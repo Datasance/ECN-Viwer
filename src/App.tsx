@@ -1,6 +1,6 @@
 import CssBaseline from "@material-ui/core/CssBaseline";
-import Backend from "react-dnd-html5-backend";
-import { DndProvider } from "react-dnd";
+import { HTML5Backend } from 'react-dnd-html5-backend'
+import { DndProvider } from 'react-dnd'
 import React from 'react'
 import { ControllerProvider } from './ControllerProvider'
 import { DataProvider } from './providers/Data'
@@ -13,12 +13,12 @@ import { ConfigProvider } from "./providers/Config";
 import { AuthProvider } from './auth'
 import './styles/tailwind.css';
 
-function App () {
+function App() {
   return (
     <AuthProvider>
       <CssBaseline />
       <ThemeContext>
-        <DndProvider backend={Backend}>
+        <DndProvider backend={HTML5Backend}>
           <ControllerProvider>
             <ConfigProvider>
               <DataProvider>
