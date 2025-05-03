@@ -92,7 +92,6 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({ agentData }) => {
     const daemonStatusChartOptions = {
         chart: {
             type: 'donut' as 'donut',
-            height: 350,
             background: '#333',
         },
         labels: ['RUNNING', 'UNKNOWN'],
@@ -105,12 +104,12 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({ agentData }) => {
                 formatter: function (val: number, opts: any) {
                     const isRunning = opts.seriesIndex === 0;
                     const status = isRunning ? 'RUNNING' : 'NOT RUNNING';
-    
+
                     const agentNames = agentData
                         .filter(agent => agent.daemonStatus === status)
                         .map(agent => `- ${agent.name}`)
                         .join('<br />');
-    
+
                     return `${agentNames}`;
                 },
             },
@@ -126,7 +125,7 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({ agentData }) => {
             mode: 'dark' as 'dark',
             palette: 'palette1',
         },
-    };    
+    };
 
     const daemonStatusChartSeries = [runningCount, notRunningCount];
 
@@ -134,7 +133,6 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({ agentData }) => {
         chart: {
             type: 'bar' as 'bar',
             stacked: true,
-            height: 350,
             background: '#333',
         },
         plotOptions: {
@@ -189,24 +187,30 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({ agentData }) => {
             <h1 className="text-3xl font-bold text-white mb-6 text-start">
                 {`${agentData?.length} Agents`}
             </h1>
-            <div className="flex justify-between w-full p-4 gap-6">
-                <div className="flex-1">
+
+            <div className="flex flex-col md:flex-row justify-between w-full gap-6">
+                <div className="md:basis-1/4 w-full">
                     <h2 className="text-white text-xl mb-4">Daemon Status</h2>
-                    <ApexCharts
-                        options={daemonStatusChartOptions}
-                        series={daemonStatusChartSeries}
-                        type="donut"
-                        height={300}
-                    />
+                    <div className="h-[200px]">
+                        <ApexCharts
+                            options={daemonStatusChartOptions}
+                            series={daemonStatusChartSeries}
+                            type="donut"
+                            height={200}
+                        />
+                    </div>
                 </div>
-                <div className="flex-1">
+
+                <div className="md:basis-3/4 w-full">
                     <h2 className="text-white text-xl mb-4">Agents Resource Usage</h2>
-                    <ApexCharts
-                        options={barChartOptions}
-                        series={barChartSeries}
-                        type="bar"
-                        height={308}
-                    />
+                    <div className="h-[200px]">
+                        <ApexCharts
+                            options={barChartOptions}
+                            series={barChartSeries}
+                            type="bar"
+                            height={200}
+                        />
+                    </div>
                 </div>
             </div>
         </div>

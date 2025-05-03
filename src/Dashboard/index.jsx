@@ -2,16 +2,16 @@ import { useData } from '../providers/Data';
 import AgentDashboard from './component/AgentDashboard';
 import { useEffect } from 'react';
 import ApplicationDashboard from './component/ApplicationsDashboard';
+import MicroservicesDashboard from './component/MicroservicesDashboard';
 
 const Dashboard = () => {
   const { data } = useData();
   useEffect(() => {
-    console.log(data)
   }, [data])
 
 
   return (
-    <div className="min-h-screen max-h-screen  bg-gray-900 text-white p-6 space-y-8 overflow-auto">
+    <div className="min-h-screen max-h-screen  bg-gray-900 text-white p-6 overflow-auto">
       <h1 className="text-3xl font-bold">Dashboard</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -27,6 +27,10 @@ const Dashboard = () => {
         <ApplicationDashboard
           applications={data?.systemApplications}
           title={"System Application"}
+        />
+        <MicroservicesDashboard
+          activeMsvcs={data?.activeMsvcs}
+          title={"Microservice"}
         />
       </div>
 

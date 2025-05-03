@@ -125,30 +125,31 @@ const ApplicationDashboard = ({ applications, title }: any) => {
 
     return (
         <div className="bg-gray-800 p-6 rounded-xl">
-            <h1 className="text-3xl font-bold text-white mb-6 text-start">
-                {`${applications?.length} ${title}${applications?.length > 1 ? "s" : ""}`}
-            </h1>
+    <h1 className="text-3xl font-bold text-white mb-6 text-start">
+        {`${applications?.length} ${title}${applications?.length > 1 ? "s" : ""}`}
+    </h1>
 
-            <div className="chart-container flex justify-between gap-6">
-                <div id="cpu-usage-chart" className="w-full md:w-1/2">
-                    <ApexCharts
-                        options={chartData.cpuUsage.options}
-                        series={chartData.cpuUsage.series}
-                        type="bar"
-                        height={350}
-                    />
-                </div>
-
-                <div id="memory-usage-chart" className="w-full md:w-1/2">
-                    <ApexCharts
-                        options={chartData.memoryUsage.options}
-                        series={chartData.memoryUsage.series}
-                        type="bar"
-                        height={350}
-                    />
-                </div>
-            </div>
+    <div className="flex flex-col md:flex-row justify-between gap-6">
+        <div id="cpu-usage-chart" className="w-full md:basis-1/2">
+            <ApexCharts
+                options={chartData.cpuUsage.options}
+                series={chartData.cpuUsage.series}
+                type="bar"
+                height={200}
+            />
         </div>
+
+        <div id="memory-usage-chart" className="w-full md:basis-1/2">
+            <ApexCharts
+                options={chartData.memoryUsage.options}
+                series={chartData.memoryUsage.series}
+                type="bar"
+                height={200}
+            />
+        </div>
+    </div>
+</div>
+
     );
 
 };
