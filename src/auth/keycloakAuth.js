@@ -10,7 +10,6 @@ const TokenRefresh = () => {
   const { keycloak } = useKeycloak()
 
   useEffect(() => {
-    debugger
     const refreshInterval = setInterval(() => {
       if (keycloak?.token) {
         // Attempt to refresh the token if it's about to expire
