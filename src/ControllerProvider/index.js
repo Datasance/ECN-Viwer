@@ -1,5 +1,6 @@
 import React from 'react'
 import { useAuth } from '../auth'
+import { useKeycloak } from '@react-keycloak/web'
 
 const controllerJson = window.controllerConfig
 const IPLookUp = 'http://ip-api.com/json/'
@@ -63,7 +64,7 @@ const getControllerStatus = async (api) => {
 
 export const ControllerProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initState)
-  const { token } = useAuth()
+  const { keycloak } = useKeycloak()
 
   const updateController = (data) => {
     dispatch({ type: 'UPDATE', data })
@@ -74,9 +75,10 @@ export const ControllerProvider = ({ children }) => {
       ...options.headers
     }
 
-    // Add Authorization header with token from auth
-    if (token) {
-      headers.Authorization = `Bearer ${token}`
+    const currentToken = keycloak?.token;
+
+    if (currentToken) {
+      headers.Authorization = `Bearer ${currentToken}`
     }
 
     // console.log('Request headers:', headers) // Debug log
