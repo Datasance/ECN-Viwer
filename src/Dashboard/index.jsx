@@ -3,6 +3,7 @@ import AgentDashboard from './component/AgentDashboard';
 import { useEffect } from 'react';
 import ApplicationDashboard from './component/ApplicationsDashboard';
 import MicroservicesDashboard from './component/MicroservicesDashboard';
+import SystemMicroservicesDashboard from './component/SystemMicroservicesDashboard';
 
 const Dashboard = () => {
   const { data } = useData();
@@ -31,6 +32,10 @@ const Dashboard = () => {
         <MicroservicesDashboard
           activeMsvcs={data?.activeMsvcs}
           title={"Microservice"}
+        />
+        <SystemMicroservicesDashboard
+          systemApplications={data?.systemApplications}
+          title={"System Microservice"}
         />
       </div>
 

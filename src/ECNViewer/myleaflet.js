@@ -5,7 +5,7 @@ import './myleaflet.css'
 import "leaflet/dist/leaflet.css";
 L.Icon.Default.imagePath = "/";
 const mymapcss = {
-  height: "93.4%"
+  height: "98.4%"
 }
 export function MapContainer(props) {
   // const [posation,setPosation] = useState([]);

@@ -67,7 +67,8 @@ const SwaggerDoc = () => {
     }
 
     return (
-        <div id="swagger-container">
+        <div className="max-h-[82vh] min-h-[82vh]">
+        <div id="swagger-container" className="bg-white">
             <SwaggerUI
                 spec={swaggerDocument}
                 persistAuthorization={true}
@@ -104,6 +105,7 @@ const SwaggerDoc = () => {
                     }
                 }}
             />
+        </div>
         </div>
     );
 };

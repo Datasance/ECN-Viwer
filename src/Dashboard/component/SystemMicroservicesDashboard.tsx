@@ -1,21 +1,22 @@
 import React from 'react';
 import ApexCharts from 'react-apexcharts';
 
-interface MicroservicesDashboardProps {
-    activeMsvcs: any[];
+interface SystemMicroservicesDashboardProps {
+    systemApplications: any[];
     title: string;
 }
 
-const MicroservicesDashboard: React.FC<MicroservicesDashboardProps> = ({ activeMsvcs, title }) => {
-    if (!activeMsvcs) return <div>Loading...</div>;
-    
+const SystemMicroservicesDashboard: React.FC<SystemMicroservicesDashboardProps> = ({ systemApplications, title }) => {
+    if (!systemApplications) return <div>Loading...</div>;
+
+    // Uygulama adına göre microservice'leri grupla
     const groupedByApplication: Record<string, any[]> = {};
-    activeMsvcs.forEach(msvc => {
-        const app = msvc.application || 'Unknown';
-        if (!groupedByApplication[app]) {
-            groupedByApplication[app] = [];
+    systemApplications.forEach(app => {
+        const appName = app.name || 'Unknown';
+        if (!groupedByApplication[appName]) {
+            groupedByApplication[appName] = [];
         }
-        groupedByApplication[app].push(msvc);
+        groupedByApplication[appName].push(...(app.microservices || []));
     });
 
     const applicationNames = Object.keys(groupedByApplication);
@@ -95,14 +96,16 @@ const MicroservicesDashboard: React.FC<MicroservicesDashboardProps> = ({ activeM
         },
     ];
 
+    // Toplam microservice sayısını hesapla
+    const totalMicroservices = Object.values(groupedByApplication).reduce((acc, val) => acc + val.length, 0);
+
     return (
         <div className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-2xl p-4 md:p-6 shadow-md w-full h-full flex flex-col">
             <h1 className="text-2xl md:text-3xl font-bold text-white mb-4 md:mb-6 text-start">
-                {`${activeMsvcs?.length} ${title}${activeMsvcs?.length > 1 ? 's' : ''}`}
+                {`${totalMicroservices} ${title}${totalMicroservices > 1 ? 's' : ''}`}
             </h1>
             <div className="w-full">
                 <ApexCharts
-                    key={JSON.stringify(barChartSeries)}
                     options={barChartOptions}
                     series={barChartSeries}
                     type="bar"
@@ -110,8 +113,7 @@ const MicroservicesDashboard: React.FC<MicroservicesDashboardProps> = ({ activeM
                 />
             </div>
         </div>
-
     );
 };
 
-export default MicroservicesDashboard;
+export default SystemMicroservicesDashboard;

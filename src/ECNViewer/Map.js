@@ -37,7 +37,7 @@ const useStyles = makeStyles(theme => ({
   },
   mapWrapper: {
     width: '172%',
-    height: '100%',
+    height: '96%',
     position: 'fixed',
     top: 0,
     '@media (min-width: 1200px)': {
