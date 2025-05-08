@@ -1,15 +1,29 @@
 import React, { useState } from 'react';
 
-export default function CustomDataTable({
+type Column<T> = {
+  key: string;
+  header: string;
+  className?: string;
+  render?: (row: T) => React.ReactNode;
+};
+
+type CustomDataTableProps<T> = {
+  columns: Column<T>[];
+  data: T[];
+  expandableRowRender?: (row: T) => React.ReactNode;
+  getRowKey: (row: T) => string | number;
+};
+
+export default function CustomDataTable<T>({
   columns,
   data,
   expandableRowRender,
   getRowKey,
-}) {
-  const [expandedRows, setExpandedRows] = useState(new Set());
+}: CustomDataTableProps<T>) {
+  const [expandedRows, setExpandedRows] = useState<Set<string | number>>(new Set());
   const [filterText, setFilterText] = useState('');
 
-  const toggleRow = (key) => {
+  const toggleRow = (key: string | number) => {
     const newSet = new Set(expandedRows);
     if (newSet.has(key)) {
       newSet.delete(key);
@@ -19,8 +33,8 @@ export default function CustomDataTable({
     setExpandedRows(newSet);
   };
 
-  const filteredData = data.filter(row =>
-    Object.values(row).some(value =>
+  const filteredData = data?.filter(row =>
+    Object.values(row as Record<string, any>).some(value =>
       String(value).toLowerCase().includes(filterText.toLowerCase())
     )
   );
@@ -53,15 +67,16 @@ export default function CustomDataTable({
             {filteredData.map(row => {
               const rowKey = getRowKey(row);
               const isExpanded = expandedRows.has(rowKey);
+
               return (
-                <React.Fragment key={rowKey}>
+                <React.Fragment key={String(rowKey)}>
                   <tr
                     className="border-b border-gray-700 hover:bg-gray-700/50 cursor-pointer"
                     onClick={expandableRowRender ? () => toggleRow(rowKey) : undefined}
                   >
                     {columns.map(col => (
                       <td key={col.key} className={`px-4 py-2 text-center ${col.className || ''}`}>
-                        {col.render ? col.render(row) : row[col.key]}
+                        {col.render ? col.render(row) : (row as any)[col.key]}
                       </td>
                     ))}
                     {expandableRowRender && (

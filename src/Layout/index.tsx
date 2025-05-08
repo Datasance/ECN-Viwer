@@ -1,6 +1,5 @@
 import React from 'react'
 import { HashRouter, Route, NavLink, useLocation, Routes, Navigate } from 'react-router-dom'
-import Avatar from '@material-ui/core/Avatar'
 import HomeIcon from '@material-ui/icons/HomeOutlined'
 import CatalogIcon from '@material-ui/icons/GraphicEqOutlined'
 import ExitToAppIcon from '@material-ui/icons/ExitToApp'
@@ -8,12 +7,12 @@ import AccountBoxIcon from '@material-ui/icons/AccountBox'
 import DashboardIcon from '@material-ui/icons/Dashboard'
 import ChevronLeftSharp from '@material-ui/icons/ChevronLeftSharp';
 import ChevronRightSharp from '@material-ui/icons/ChevronRightSharp';
-import AppsOutlined from '@material-ui/icons/AppsOutlined'
-import MapOutlined from '@material-ui/icons/MapOutlined'
 import SettingsEthernetOutlined from '@material-ui/icons/SettingsEthernetOutlined'
-import BuildOutlined from '@material-ui/icons/BuildOutlined'
-import ExtensionOutlined from '@material-ui/icons/ExtensionOutlined'
 import NetworkCell from '@material-ui/icons/NetworkCell'
+import StorageRounded from '@material-ui/icons/StorageRounded'
+import ListAltRounded from '@material-ui/icons/ListAltRounded'
+import MapRounded from '@material-ui/icons/MapRounded'
+import LayersRounded from '@material-ui/icons/LayersRounded'
 
 import { MapProvider } from '../providers/Map'
 import { useData } from '../providers/Data'
@@ -26,8 +25,13 @@ import Dashboard from '../Dashboard'
 import SwaggerDoc from '../swagger/SwaggerDoc'
 import logomark from '../assets/potLogoWithWhiteText.svg'
 
-import { Sidebar, Menu, MenuItem, SubMenu, useProSidebar } from 'react-pro-sidebar';
+import { Sidebar, Menu, MenuItem, SubMenu } from 'react-pro-sidebar';
 import { ProSidebarProvider } from 'react-pro-sidebar';
+import NodesList from '../Nodes/List'
+import MicroservicesList from '../Workloads/Microservices'
+import SystemMicroservicesList from '../Workloads/SystemMicroservices'
+import ApplicationList from '../Workloads/Applications'
+import SystemApplicationList from '../Workloads/SystemApplications'
 
 const controllerJson = window.controllerConfig || null
 
@@ -51,7 +55,6 @@ export default function Layout() {
   const { status, updateController } = useController()
   const [collapsed, setCollapsed] = React.useState(true);
   const [isPinned, setIsPinned] = React.useState(false)
-  const { data } = useData()
   const returnHome = () => {
     if (returnHomeCbRef.current) {
       returnHomeCbRef.current()
@@ -96,133 +99,114 @@ export default function Layout() {
 
                 <div className="flex-grow">
                   <Menu>
-                    <MenuItem
-                      icon={<DashboardIcon />}
-                      component={<NavLink to="/dashboard" />}
-                      className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
-                    >
-                      Dashboard
+                    <MenuItem icon={<DashboardIcon />}>
+                      <NavLink
+                        to="/dashboard"
+                        className={({ isActive }) =>
+                          `w-full h-full block ${isActive ? "bg-gray-700 text-white" : ""}`
+                        }
+                      >
+                        Overview
+                      </NavLink>
                     </MenuItem>
 
                     <SubMenu
                       label="Nodes"
-                      icon={<AppsOutlined />}
+                      icon={<StorageRounded />}
                       className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
                     >
-                      <SubMenu
-                        icon={<HomeIcon />}
-                        label="List"
-                        className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
-                      >
-                        {
-                          data?.activeAgents?.map((x: any) => (
-                            <MenuItem
-                              key={x.uuid}
-                              icon={<BuildOutlined />}
-                              component={<NavLink to={`/overview/${x.uuid}`} />}
-                              className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
-                            >
-                              {x.name}
-                            </MenuItem>
-                          ))
-                        }
-                      </SubMenu>
                       <MenuItem
-                        icon={<HomeIcon />}
-                        component={<NavLink to="/overview" />}
+                        icon={<ListAltRounded />}
                         className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
                       >
-                        Map
+                        <NavLink
+                          to="/nodes/list"
+                          className={({ isActive }) =>
+                            `w-full h-full block ${isActive ? "bg-gray-700 text-white" : ""}`
+                          }
+                        >
+                          List
+                        </NavLink>
                       </MenuItem>
-
+                      <MenuItem
+                        icon={<MapRounded />}
+                        className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
+                      >
+                        <NavLink
+                          to="/overview"
+                          className={({ isActive }) =>
+                            `w-full h-full block ${isActive ? "bg-gray-700 text-white" : ""}`
+                          }
+                        >
+                          Map
+                        </NavLink>
+                      </MenuItem>
                     </SubMenu>
+
                     <SubMenu
                       label="Workloads"
-                      icon={<AppsOutlined />}
+                      icon={<LayersRounded />}
                       className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
                     >
                       <MenuItem
                         icon={<HomeIcon />}
-                        component={<NavLink to="/overview" />}
                         className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
+                        disabled
                       >
                         Overview
                       </MenuItem>
-                      <SubMenu
-                        label="Microservices"
+                      <MenuItem
                         icon={<SettingsEthernetOutlined />}
                         className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
                       >
-                        {
-                          data?.activeMsvcs?.map((x: any) => (
-                            <MenuItem
-                              key={x.uuid}
-                              icon={<BuildOutlined />}
-                              component={<NavLink to={`/overview/${x.uuid}`} />}
-                              className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
-                            >
-                              {x.name}
-                            </MenuItem>
-                          ))
-                        }
-                      </SubMenu>
-                      <SubMenu
-                        label="System Microservices"
+                        <NavLink
+                          to="/Workloads/MicroservicesList"
+                          className={({ isActive }) =>
+                            `w-full h-full block ${isActive ? "bg-gray-700 text-white" : ""}`
+                          }
+                        >
+                          Microservices
+                        </NavLink>
+                      </MenuItem>
+                      <MenuItem
                         icon={<SettingsEthernetOutlined />}
                         className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
                       >
-                        {data?.systemApplications?.flatMap((app: any) =>
-                          app.microservices.map((ms: any) => (
-                            <MenuItem
-                              key={ms.uuid}
-                              icon={<BuildOutlined />}
-                              component={<NavLink to={`/overview/${ms.uuid}`} />}
-                              className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
-                            >
-                              {ms.name}
-                            </MenuItem>
-                          ))
-                        )}
-                      </SubMenu>
-
-                      <SubMenu
-                        label="Application"
+                        <NavLink
+                          to="/Workloads/SystemMicroservicesList"
+                          className={({ isActive }) =>
+                            `w-full h-full block ${isActive ? "bg-gray-700 text-white" : ""}`
+                          }
+                        >
+                          System Microservices
+                        </NavLink>
+                      </MenuItem>
+                      <MenuItem
                         icon={<SettingsEthernetOutlined />}
                         className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
                       >
-                        {
-                          data?.applications?.map((x: any) => (
-                            <MenuItem
-                              key={x.uuid}
-                              icon={<BuildOutlined />}
-                              component={<NavLink to={`/overview/${x.uuid}`} />}
-                              className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
-                            >
-                              {x.name}
-                            </MenuItem>
-                          ))
-                        }
-                      </SubMenu>
-
-                      <SubMenu
-                        label="System Application"
+                        <NavLink
+                          to="/Workloads/ApplicationList"
+                          className={({ isActive }) =>
+                            `w-full h-full block ${isActive ? "bg-gray-700 text-white" : ""}`
+                          }
+                        >
+                          Application
+                        </NavLink>
+                      </MenuItem>
+                      <MenuItem
                         icon={<SettingsEthernetOutlined />}
                         className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
                       >
-                        {
-                          data?.systemApplications?.map((x: any) => (
-                            <MenuItem
-                              key={x.uuid}
-                              icon={<BuildOutlined />}
-                              component={<NavLink to={`/overview/${x.uuid}`} />}
-                              className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
-                            >
-                              {x.name}
-                            </MenuItem>
-                          ))
-                        }
-                      </SubMenu>
-
+                        <NavLink
+                          to="/Workloads/SystemApplicationList"
+                          className={({ isActive }) =>
+                            `w-full h-full block ${isActive ? "bg-gray-700 text-white" : ""}`
+                          }
+                        >
+                          System Application
+                        </NavLink>
+                      </MenuItem>
                     </SubMenu>
 
                     <SubMenu
@@ -231,22 +215,36 @@ export default function Layout() {
                       className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
                     >
                       <MenuItem
-                        component={<NavLink to="/catalog" />}
                         className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
                       >
-                        App Templates
+                        <NavLink
+                          to="/catalog"
+                          className={({ isActive }) =>
+                            `w-full h-full block ${isActive ? "bg-gray-700 text-white" : ""}`
+                          }
+                        >
+                          App Templates
+                        </NavLink>
                       </MenuItem>
                       <MenuItem
-                        component={<NavLink to="/catalog/microservice" />}
                         className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
                       >
-                        Catalog Microservices
+                        <NavLink
+                          to="/catalog/microservice"
+                          className={({ isActive }) =>
+                            `w-full h-full block ${isActive ? "bg-gray-700 text-white" : ""}`
+                          }
+                        >
+                          Catalog Microservices
+                        </NavLink>
                       </MenuItem>
                     </SubMenu>
+
                     <MenuItem
                       icon={<NetworkCell />}
                       onClick={handleLogout}
                       className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
+                      disabled
                     >
                       Network
                     </MenuItem>
@@ -287,16 +285,16 @@ export default function Layout() {
                       <span className="mr-2">{isPinned ? 'Unpin Sidebar' : 'Pin Sidebar'}</span>
                     )}
                     {isPinned ? <ChevronLeftSharp /> : <ChevronRightSharp />}
-
                   </button>
                 </div>
               </Sidebar>
+
             </div>
           </ProSidebarProvider>
 
 
           {/* Content Area */}
-          <div className="flex-1 p-6 overflow-auto">
+          <div className="flex-1 px-5 pt-6 overflow-auto">
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" Component={Dashboard} />
@@ -304,7 +302,7 @@ export default function Layout() {
               <Route
                 path="/overview"
                 element={
-                  <div className='max-h-[88vh] min-h-[88vh] overflow-auto'>
+                  <div className='max-h-[90.8vh] min-h-[90.8vh] overflow-auto'>
                     <MapProvider>
                       <ECNViewer returnHomeCBRef={returnHomeCbRef} />
                     </MapProvider>
@@ -313,17 +311,27 @@ export default function Layout() {
               />
 
               <Route path="/api" Component={SwaggerDoc} />
+              <Route path="/nodes/list" Component={NodesList} />
+              <Route path="/Workloads/MicroservicesList" Component={MicroservicesList} />
+              <Route path="/Workloads/SystemMicroservicesList" Component={SystemMicroservicesList} />
+              <Route path="/Workloads/ApplicationList" Component={ApplicationList} />
+              <Route path="/Workloads/SystemApplicationList" Component={SystemApplicationList} />
               <Route Component={() => <Navigate to="/dashboard" />} />
             </Routes>
           </div>
         </div>
 
         {/* Footer */}
-        <footer className="text-xs text-center py-4 border-t border-gray-700 flex justify-between p-4">
-          <div className="text-white mb-2">
-            Controller v{status?.versions.controller} - ECN Viewer v{status?.versions.ecnViewer}
+        <footer className="text-xs text-center border-t border-gray-700 flex justify-between p-3">
+          <div className="text-white">
+            <p>
+              Controller v{status?.versions.controller}
+            </p>
+            <p>
+              ECN Viewer v{status?.versions.ecnViewer}
+            </p>
           </div>
-          <div className="flex justify-center space-x-6 mb-2">
+          <div className="flex justify-center space-x-6">
             <span className="text-white font-bold"></span>
             <a
               className="text-white font-black"
