@@ -89,7 +89,7 @@ export const ControllerProvider = ({ children }) => {
     })
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+      throw new Error(`HTTP error! status: ${response?.status}`)
     }
 
     return response

@@ -98,154 +98,102 @@ export default function Layout() {
                 </div>
 
                 <div className="flex-grow">
-                  <Menu>
-                    <MenuItem icon={<DashboardIcon />}>
-                      <NavLink
-                        to="/dashboard"
-                        className={({ isActive }) =>
-                          `w-full h-full block ${isActive ? "bg-gray-700 text-white" : ""}`
-                        }
-                      >
-                        Overview
+                  <Menu
+                    menuItemStyles={{
+                      button: ({ active, disabled }) => ({
+                        backgroundColor: active ? '#374151' : '#2c3e50',
+                        color: disabled ? '#5e5e5e' : active ? '#ffffff' : '#d1d5db',
+                        cursor: disabled ? 'not-allowed' : 'pointer',
+                        '&:hover': {
+                          backgroundColor: disabled ? '#2c3e50' : '#1a2633',
+                          color: disabled ? '#9ca3af' : '#ffffff',
+                        },
+                      }),
+                      icon: ({ active, disabled }) => ({
+                        color: disabled ? '#5e5e5e' : active ? '#ffffff' : '#95a5a6',
+                      }),
+                      label: ({ active, disabled }) => ({
+                        fontWeight: active && !disabled ? 600 : 400,
+                      }),
+                    }}
+                  >
+                    <NavLink to="/dashboard">
+                      {({ isActive }) => (
+                        <MenuItem icon={<DashboardIcon />} active={isActive}>
+                          Overview
+                        </MenuItem>
+                      )}
+                    </NavLink>
+
+                    <SubMenu label="Nodes" icon={<StorageRounded />}>
+                      <NavLink to="/nodes/list">
+                        {({ isActive }) => (
+                          <MenuItem icon={<ListAltRounded />} active={isActive}>
+                            List
+                          </MenuItem>
+                        )}
                       </NavLink>
-                    </MenuItem>
-
-                    <SubMenu
-                      label="Nodes"
-                      icon={<StorageRounded />}
-                      className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
-                    >
-                      <MenuItem
-                        icon={<ListAltRounded />}
-                        className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
-                      >
-                        <NavLink
-                          to="/nodes/list"
-                          className={({ isActive }) =>
-                            `w-full h-full block ${isActive ? "bg-gray-700 text-white" : ""}`
-                          }
-                        >
-                          List
-                        </NavLink>
-                      </MenuItem>
-                      <MenuItem
-                        icon={<MapRounded />}
-                        className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
-                      >
-                        <NavLink
-                          to="/overview"
-                          className={({ isActive }) =>
-                            `w-full h-full block ${isActive ? "bg-gray-700 text-white" : ""}`
-                          }
-                        >
-                          Map
-                        </NavLink>
-                      </MenuItem>
+                      <NavLink to="/overview">
+                        {({ isActive }) => (
+                          <MenuItem icon={<MapRounded />} active={isActive}>
+                            Map
+                          </MenuItem>
+                        )}
+                      </NavLink>
                     </SubMenu>
 
-                    <SubMenu
-                      label="Workloads"
-                      icon={<LayersRounded />}
-                      className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
-                    >
-                      <MenuItem
-                        icon={<HomeIcon />}
-                        className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
-                        disabled
-                      >
+                    <SubMenu label="Workloads" icon={<LayersRounded />}>
+                      <MenuItem icon={<HomeIcon />} disabled>
                         Overview
                       </MenuItem>
-                      <MenuItem
-                        icon={<SettingsEthernetOutlined />}
-                        className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
-                      >
-                        <NavLink
-                          to="/Workloads/MicroservicesList"
-                          className={({ isActive }) =>
-                            `w-full h-full block ${isActive ? "bg-gray-700 text-white" : ""}`
-                          }
-                        >
-                          Microservices
-                        </NavLink>
-                      </MenuItem>
-                      <MenuItem
-                        icon={<SettingsEthernetOutlined />}
-                        className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
-                      >
-                        <NavLink
-                          to="/Workloads/SystemMicroservicesList"
-                          className={({ isActive }) =>
-                            `w-full h-full block ${isActive ? "bg-gray-700 text-white" : ""}`
-                          }
-                        >
-                          System Microservices
-                        </NavLink>
-                      </MenuItem>
-                      <MenuItem
-                        icon={<SettingsEthernetOutlined />}
-                        className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
-                      >
-                        <NavLink
-                          to="/Workloads/ApplicationList"
-                          className={({ isActive }) =>
-                            `w-full h-full block ${isActive ? "bg-gray-700 text-white" : ""}`
-                          }
-                        >
-                          Application
-                        </NavLink>
-                      </MenuItem>
-                      <MenuItem
-                        icon={<SettingsEthernetOutlined />}
-                        className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
-                      >
-                        <NavLink
-                          to="/Workloads/SystemApplicationList"
-                          className={({ isActive }) =>
-                            `w-full h-full block ${isActive ? "bg-gray-700 text-white" : ""}`
-                          }
-                        >
-                          System Application
-                        </NavLink>
-                      </MenuItem>
+                      <NavLink to="/Workloads/MicroservicesList">
+                        {({ isActive }) => (
+                          <MenuItem icon={<SettingsEthernetOutlined />} active={isActive}>
+                            Microservices
+                          </MenuItem>
+                        )}
+                      </NavLink>
+                      <NavLink to="/Workloads/SystemMicroservicesList">
+                        {({ isActive }) => (
+                          <MenuItem icon={<SettingsEthernetOutlined />} active={isActive}>
+                            System Microservices
+                          </MenuItem>
+                        )}
+                      </NavLink>
+                      <NavLink to="/Workloads/ApplicationList">
+                        {({ isActive }) => (
+                          <MenuItem icon={<SettingsEthernetOutlined />} active={isActive}>
+                            Application
+                          </MenuItem>
+                        )}
+                      </NavLink>
+                      <NavLink to="/Workloads/SystemApplicationList">
+                        {({ isActive }) => (
+                          <MenuItem icon={<SettingsEthernetOutlined />} active={isActive}>
+                            System Application
+                          </MenuItem>
+                        )}
+                      </NavLink>
                     </SubMenu>
 
-                    <SubMenu
-                      label="Config"
-                      icon={<CatalogIcon />}
-                      className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
-                    >
-                      <MenuItem
-                        className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
-                      >
-                        <NavLink
-                          to="/catalog"
-                          className={({ isActive }) =>
-                            `w-full h-full block ${isActive ? "bg-gray-700 text-white" : ""}`
-                          }
-                        >
-                          App Templates
-                        </NavLink>
-                      </MenuItem>
-                      <MenuItem
-                        className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
-                      >
-                        <NavLink
-                          to="/catalog/microservice"
-                          className={({ isActive }) =>
-                            `w-full h-full block ${isActive ? "bg-gray-700 text-white" : ""}`
-                          }
-                        >
-                          Catalog Microservices
-                        </NavLink>
-                      </MenuItem>
+                    <SubMenu label="Config" icon={<CatalogIcon />}>
+                      <NavLink to="/catalog">
+                        {({ isActive }) => (
+                          <MenuItem icon={<></>} active={isActive}>
+                            App Templates
+                          </MenuItem>
+                        )}
+                      </NavLink>
+                      <NavLink to="/catalog/microservice">
+                        {({ isActive }) => (
+                          <MenuItem icon={<></>} active={isActive}>
+                            Catalog Microservices
+                          </MenuItem>
+                        )}
+                      </NavLink>
                     </SubMenu>
 
-                    <MenuItem
-                      icon={<NetworkCell />}
-                      onClick={handleLogout}
-                      className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
-                      disabled
-                    >
+                    <MenuItem icon={<NetworkCell />} disabled>
                       Network
                     </MenuItem>
 
@@ -258,16 +206,12 @@ export default function Layout() {
                             '_blank'
                           )
                         }
-                        className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
                       >
                         IAM
                       </MenuItem>
                     )}
-                    <MenuItem
-                      icon={<ExitToAppIcon />}
-                      onClick={handleLogout}
-                      className="bg-[#2c3e50] transition-colors duration-300 hover:bg-[#1a2a35] hover:text-gray-600"
-                    >
+
+                    <MenuItem icon={<ExitToAppIcon />} onClick={handleLogout}>
                       Logout
                     </MenuItem>
                   </Menu>
@@ -277,8 +221,8 @@ export default function Layout() {
                   <button
                     className="w-full text-xs bg-gray-700 text-white py-2 rounded hover:bg-gray-600 transition flex items-center justify-center"
                     onClick={() => {
-                      setIsPinned(!isPinned);
-                      setCollapsed(false);
+                      setIsPinned(!isPinned)
+                      setCollapsed(false)
                     }}
                   >
                     {!collapsed && (
@@ -288,6 +232,8 @@ export default function Layout() {
                   </button>
                 </div>
               </Sidebar>
+
+
 
             </div>
           </ProSidebarProvider>
