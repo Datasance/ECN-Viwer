@@ -94,26 +94,27 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({ agentData }) => {
             type: 'donut' as 'donut',
             background: '#333',
         },
-        labels: ['RUNNING', 'UNKNOWN'],
+        labels: ['RUNNING', 'NOT RUNNING'],
         colors: ['#00E396', '#FF4560'], // RUNNING (green), UNKNOWN (red)
         dataLabels: {
-            enabled: true,
+            enabled: false,
         },
         tooltip: {
             y: {
-                formatter: function (val: number, opts: any) {
-                    const isRunning = opts.seriesIndex === 0;
-                    const status = isRunning ? 'RUNNING' : 'NOT RUNNING';
-
-                    const agentNames = agentData
-                        .filter(agent => agent.daemonStatus === status)
-                        .map(agent => `- ${agent.name}`)
-                        .join('<br />');
-
-                    return `${agentNames}`;
-                },
+              formatter: function (_val: number, opts: any) {
+                const isRunning = opts.seriesIndex === 0;
+          
+                const agentNames = agentData
+                  .filter(agent =>
+                    isRunning ? agent.daemonStatus === 'RUNNING' : agent.daemonStatus !== 'RUNNING'
+                  )
+                  .map(agent => `- ${agent.name}`)
+                  .join('<br />');
+          
+                return agentNames || 'No agents';
+              },
             },
-        },
+          },          
         legend: {
             position: 'top' as 'top',
             horizontalAlign: 'left' as 'left',

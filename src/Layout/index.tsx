@@ -13,6 +13,8 @@ import StorageRounded from '@material-ui/icons/StorageRounded'
 import ListAltRounded from '@material-ui/icons/ListAltRounded'
 import MapRounded from '@material-ui/icons/MapRounded'
 import LayersRounded from '@material-ui/icons/LayersRounded'
+import FileCopyOutlined from '@material-ui/icons/FileCopyOutlined'
+import CategoryOutlined from '@material-ui/icons/CategoryOutlined'
 
 import { MapProvider } from '../providers/Map'
 import { useData } from '../providers/Data'
@@ -90,7 +92,13 @@ export default function Layout() {
               onMouseEnter={() => !isPinned && setCollapsed(false)}
               onMouseLeave={() => !isPinned && setCollapsed(true)}
             >
-              <Sidebar collapsed={collapsed} backgroundColor="#2c3e50" className="h-full flex flex-col">
+              <Sidebar
+                collapsed={collapsed}
+                backgroundColor="#2c3e50"
+                className="h-full flex flex-col"
+                rootStyles={{
+                  border: 'none !important',
+                }}>
                 <div className="flex justify-center py-4">
                   <NavLink to="/dashboard" onClick={returnHome}>
                     <img src={logomark} className="w-9 mt-2" alt="Datasance" />
@@ -179,14 +187,14 @@ export default function Layout() {
                     <SubMenu label="Config" icon={<CatalogIcon />}>
                       <NavLink to="/catalog">
                         {({ isActive }) => (
-                          <MenuItem icon={<></>} active={isActive}>
+                          <MenuItem icon={<FileCopyOutlined />} active={isActive}>
                             App Templates
                           </MenuItem>
                         )}
                       </NavLink>
                       <NavLink to="/catalog/microservice">
                         {({ isActive }) => (
-                          <MenuItem icon={<></>} active={isActive}>
+                          <MenuItem icon={<CategoryOutlined />} active={isActive}>
                             Catalog Microservices
                           </MenuItem>
                         )}
@@ -217,7 +225,7 @@ export default function Layout() {
                   </Menu>
                 </div>
 
-                <div className="flex-shrink-0 p-3">
+                <div className="sticky flex-shrink-0 p-3 ">
                   <button
                     className="w-full text-xs bg-gray-700 text-white py-2 rounded hover:bg-gray-600 transition flex items-center justify-center"
                     onClick={() => {

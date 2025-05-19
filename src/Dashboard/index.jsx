@@ -8,6 +8,7 @@ import SystemMicroservicesDashboard from './component/SystemMicroservicesDashboa
 const Dashboard = () => {
   const { data } = useData();
   useEffect(() => {
+    console.log(data)
   }, [data])
 
 
@@ -18,7 +19,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="col-span-1 md:col-span-2">
           <AgentDashboard
-            agentData={data?.activeAgents}
+            agentData={Object.values(data?.reducedAgents?.byName || [])}
           />
         </div>
         <ApplicationDashboard

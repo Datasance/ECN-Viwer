@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import KeyboardArrowDown from '@material-ui/icons/KeyboardArrowDownOutlined';
+import KeyboardArrowUpOutlined from '@material-ui/icons/KeyboardArrowUpOutlined';
 
 type Column<T> = {
   key: string;
@@ -34,10 +36,12 @@ export default function CustomDataTable<T>({
   };
 
   const filteredData = data?.filter(row =>
-    Object.values(row as Record<string, any>).some(value =>
-      String(value).toLowerCase().includes(filterText.toLowerCase())
-    )
+    columns.some(col => {
+      const value = (row as any)[col.key];
+      return value !== undefined && value !== null && String(value).toLowerCase().includes(filterText.toLowerCase());
+    })
   );
+
 
   return (
     <div className="w-full">
@@ -56,51 +60,63 @@ export default function CustomDataTable<T>({
           <thead className="bg-gray-700 text-xs uppercase">
             <tr>
               {columns.map(col => (
-                <th key={col.key} className={`px-4 py-2 text-center ${col.className || ''}`}>
+                <th key={col.key} className={`px-4 py-2 text-start ${col.className || ''}`}>
                   {col.header}
                 </th>
               ))}
-              {expandableRowRender && <th className="px-4 py-2 text-center"></th>}
+              {expandableRowRender && <th className="px-4 py-2 text-start">Actions</th>}
             </tr>
           </thead>
           <tbody>
-            {filteredData.map(row => {
-              const rowKey = getRowKey(row);
-              const isExpanded = expandedRows.has(rowKey);
+            {filteredData.length > 0 ? (
+              filteredData.map(row => {
+                const rowKey = getRowKey(row);
+                const isExpanded = expandedRows.has(rowKey);
 
-              return (
-                <React.Fragment key={String(rowKey)}>
-                  <tr
-                    className="border-b border-gray-700 hover:bg-gray-700/50 cursor-pointer"
-                    onClick={expandableRowRender ? () => toggleRow(rowKey) : undefined}
-                  >
-                    {columns.map(col => (
-                      <td key={col.key} className={`px-4 py-2 text-center ${col.className || ''}`}>
-                        {col.render ? col.render(row) : (row as any)[col.key]}
-                      </td>
-                    ))}
-                    {expandableRowRender && (
-                      <td className="px-4 py-2 text-center">
-                        {isExpanded ? (
-                          <span className="text-gray-300">▴</span>
-                        ) : (
-                          <span className="text-gray-300">▾</span>
-                        )}
-                      </td>
-                    )}
-                  </tr>
-
-                  {expandableRowRender && isExpanded && (
-                    <tr>
-                      <td colSpan={columns.length + 1} className="bg-gray-700 p-4">
-                        {expandableRowRender(row)}
-                      </td>
+                return (
+                  <React.Fragment key={String(rowKey)}>
+                    <tr className="border-b border-gray-700 hover:bg-gray-700/50">
+                      {columns.map(col => (
+                        <td key={col.key} className={`px-4 py-2 text-start ${col.className || ''}`}>
+                          {col.render ? col.render(row) : (row as any)[col.key]}
+                        </td>
+                      ))}
+                      {expandableRowRender && (
+                        <td className="px-4 py-2 text-start cursor-pointer" onClick={() => toggleRow(rowKey)}>
+                          {isExpanded ? (
+                            <span className="text-gray-300"><KeyboardArrowUpOutlined fontSize="default" /></span>
+                          ) : (
+                            <span className="text-gray-300"><KeyboardArrowDown fontSize="default" /></span>
+                          )}
+                        </td>
+                      )}
                     </tr>
-                  )}
-                </React.Fragment>
-              );
-            })}
+
+                    {expandableRowRender && isExpanded && (
+                      <tr>
+                        <td
+                          colSpan={columns.length + 1}
+                          className="bg-gray-700 p-4"
+                        >
+                          {expandableRowRender(row)}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })
+            ) : (
+              <tr>
+                <td
+                  colSpan={columns.length + (expandableRowRender ? 1 : 0)}
+                  className="text-center py-6 text-white-400 text-2xl"
+                >
+                  No records found
+                </td>
+              </tr>
+            )}
           </tbody>
+
         </table>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { Typography, Chip, Tooltip, Input } from '@material-ui/core'
+import { Typography, Chip, Tooltip, Input, colors } from '@material-ui/core'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 
 import { makeStyles, useTheme } from '@material-ui/styles'
@@ -43,7 +43,8 @@ const useStyles = makeStyles(theme => ({
     },
     paddingLeft: '5px',
     backgroundColor:"white",
-    borderRadius:"4px"
+    borderRadius:"4px",
+    color:"#506279"
   },
   navArrow: {
     cursor: 'pointer',
