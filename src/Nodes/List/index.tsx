@@ -13,7 +13,6 @@ function NodesList() {
     const { pushFeedback } = useFeedback();
     const [selectedNode, setSelectedNode] = useState<any | null>(null);
     const [isOpen, setIsOpen] = useState(false);
-
     const handleRowClick = (row: any) => {
         setSelectedNode(row);
         setIsOpen(true);
@@ -26,6 +25,7 @@ function NodesList() {
     const handleDelete = () => {
         deleteAgent();
     };
+
 
     const rebootAgent = async () => {
         try {
@@ -61,6 +61,8 @@ function NodesList() {
             pushFeedback({ message: e.message || e.status, type: "error" });
         }
     };
+
+
 
     const columns = [
         {
@@ -142,7 +144,12 @@ function NodesList() {
         },
         {
             label: 'Description',
-            render: () => 'Agent Details',
+            render: (node: any) => { return node.description && 'N/A' },
+        },
+        {
+            label: 'Agent Details',
+            render: () => '',
+            isSectionHeader: true,
         },
         {
             label: 'Version',
@@ -202,6 +209,43 @@ function NodesList() {
                 return `${(Number(node.diskUsage) || 0).toFixed(2)}%`;
             },
         },
+        {
+            label: 'Applications',
+            render: () => '',
+            isSectionHeader: true,
+        },
+        {
+            label: '',
+            isFullSection: true,
+            render: (node: any) => {
+                const agentApplications = data?.applications?.filter(
+                    (app: any) =>
+                        app.microservices?.some((msvc: any) => msvc.iofogUuid === node.uuid)
+                );
+        
+                if (!agentApplications || agentApplications.length === 0) {
+                    return <div className="text-sm text-gray-400">No applications found for this agent.</div>;
+                }
+        
+                const localColumns = [
+                    {
+                        key: 'name',
+                        header: 'Application Name',
+                        formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
+                    },
+                ];
+        
+                return (
+                    <CustomDataTable
+                        columns={localColumns}
+                        data={agentApplications}
+                        getRowKey={(row: any) => row.uuid}
+                    />
+                );
+            },
+        },
+        
+        
     ];
 
     return (
@@ -218,6 +262,7 @@ function NodesList() {
                 onRestart={handleRestart}
                 onDelete={handleDelete}
             />
+
         </div>
     );
 }

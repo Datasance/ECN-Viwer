@@ -46,6 +46,9 @@ const SystemMicroservicesDashboard: React.FC<SystemMicroservicesDashboardProps> 
                 style: {
                     colors: '#fff',
                 },
+                formatter: (value: string) => {
+                    return value.length > 10 ? value.substring(0, 10) + '...' : value;
+                },
             },
         },
         yaxis: {

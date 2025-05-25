@@ -22,22 +22,30 @@ const Dashboard = () => {
             agentData={Object.values(data?.reducedAgents?.byName || [])}
           />
         </div>
-        <ApplicationDashboard
-          applications={data?.applications}
-          title={"Application"}
-        />
-        <ApplicationDashboard
-          applications={data?.systemApplications}
-          title={"System Application"}
-        />
-        <MicroservicesDashboard
-          activeMsvcs={data?.activeMsvcs}
-          title={"Microservice"}
-        />
-        <SystemMicroservicesDashboard
-          systemApplications={data?.systemApplications}
-          title={"System Microservice"}
-        />
+        <div className="col-span-1 md:col-span-2">
+          <ApplicationDashboard
+            applications={data?.applications}
+            title={"Application"}
+          />
+        </div>
+        <div className="col-span-1 md:col-span-2">
+          <ApplicationDashboard
+            applications={data?.systemApplications}
+            title={"System Application"}
+          />
+        </div>
+        <div className="col-span-1 md:col-span-2">
+          <MicroservicesDashboard
+            activeMsvcs={data?.activeMsvcs}
+            title={"Microservice"}
+          />
+        </div>
+        <div className="col-span-1 md:col-span-2">
+          <SystemMicroservicesDashboard
+            systemApplications={data?.systemApplications}
+            title={"System Microservice"}
+          />
+        </div>
       </div>
 
     </div>

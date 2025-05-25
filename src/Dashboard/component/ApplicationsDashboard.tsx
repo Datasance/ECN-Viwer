@@ -2,7 +2,9 @@ import React, { useEffect, useState } from "react";
 import ApexCharts from "react-apexcharts";
 
 const ApplicationDashboard = ({ applications, title }: any) => {
-    const [chartData, setChartData] = useState<any>({});
+    const [chartDataCpu, setChartDataCpu] = useState<any>({});
+    const [chartDataMemory, setChartDataMemory] = useState<any>({});
+
 
     const convertBytesToGB = (bytes: number) => {
         return (bytes / (1024 ** 3)).toFixed(2);
@@ -28,7 +30,7 @@ const ApplicationDashboard = ({ applications, title }: any) => {
             name: app.name,
             data: uniqueMicroservices.map((msName) => {
                 const micro = app.microservices.find((m: any) => m.name === msName);
-                return micro ? micro.status.cpuUsage : 0;
+                return micro ? micro.status.cpuUsage : null;
             }),
         }));
     
@@ -36,11 +38,11 @@ const ApplicationDashboard = ({ applications, title }: any) => {
             name: app.name,
             data: uniqueMicroservices.map((msName) => {
                 const micro = app.microservices.find((m: any) => m.name === msName);
-                return micro ? convertBytesToGB(micro.status.memoryUsage) : 0;
+                return micro ? convertBytesToGB(micro.status.memoryUsage) : null;
             }),
         }));
     
-        setChartData({
+        setChartDataCpu({
             cpuUsage: {
                 series: cpuUsageData,
                 options: {
@@ -78,6 +80,8 @@ const ApplicationDashboard = ({ applications, title }: any) => {
                     },
                 },
             },
+        });
+        setChartDataMemory({
             memoryUsage: {
                 series: memoryUsageData,
                 options: {
@@ -121,7 +125,7 @@ const ApplicationDashboard = ({ applications, title }: any) => {
 
     if (applications && applications.length === 0) return <div>Loading...</div>;
 
-    if (!chartData.cpuUsage || !chartData.memoryUsage) return <div>Loading charts...</div>;
+    if (!chartDataCpu.cpuUsage || !chartDataMemory.memoryUsage) return <div>Loading charts...</div>;
 
     return (
         <div className="bg-gray-800 p-6 rounded-xl">
@@ -132,8 +136,8 @@ const ApplicationDashboard = ({ applications, title }: any) => {
     <div className="flex flex-col md:flex-row justify-between gap-6">
         <div id="cpu-usage-chart" className="w-full md:basis-1/2">
             <ApexCharts
-                options={chartData.cpuUsage.options}
-                series={chartData.cpuUsage.series}
+                options={chartDataCpu.cpuUsage.options}
+                series={chartDataCpu.cpuUsage.series}
                 type="bar"
                 height={200}
             />
@@ -141,8 +145,8 @@ const ApplicationDashboard = ({ applications, title }: any) => {
 
         <div id="memory-usage-chart" className="w-full md:basis-1/2">
             <ApexCharts
-                options={chartData.memoryUsage.options}
-                series={chartData.memoryUsage.series}
+                options={chartDataMemory.memoryUsage.options}
+                series={chartDataMemory.memoryUsage.series}
                 type="bar"
                 height={200}
             />

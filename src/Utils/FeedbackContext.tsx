@@ -5,11 +5,11 @@ import Alert from './Alert';
 type FeedbackType = 'success' | 'error' | 'warning' | 'info';
 
 interface Feedback {
-  id?: number;
+  id: number;
   message: string;
   type: FeedbackType;
-  timeout?: NodeJS.Timeout;
-  [key: string]: any; // extra props like `uuid`
+  timeout: number;
+  [key: string]: any;
 }
 
 interface FeedbackContextType {
@@ -52,15 +52,18 @@ const initState: State = {
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case actions.ADD: {
+      const { message, type, ...rest } = action.data;
+
       const newFeedback: Feedback = {
-        ...action.data,
-        timeout: setTimeout(() => {
+        id: state.nextId,
+        message,
+        type,
+        timeout: window.setTimeout(() => {
           action.dispatch({ type: actions.REMOVE, data: { id: state.nextId } });
         }, AUTO_HIDE),
-        id: state.nextId,
-        message: '',
-        type: 'success'
+        ...rest,
       };
+
       return {
         feedbacks: [...state.feedbacks, newFeedback],
         nextId: state.nextId + 1
@@ -69,6 +72,8 @@ const reducer = (state: State, action: Action): State => {
     case actions.REMOVE: {
       const idxToRemove = findIndex(state.feedbacks, f => f.id === action.data.id);
       if (idxToRemove === -1) return state;
+      clearTimeout(state.feedbacks[idxToRemove].timeout);
+
       return {
         ...state,
         feedbacks: [
@@ -86,7 +91,6 @@ const reducer = (state: State, action: Action): State => {
       return state;
   }
 };
-
 
 interface FeedbackProviderProps {
   children: ReactNode;
@@ -107,10 +111,10 @@ export default function FeedbackProvider({ children }: FeedbackProviderProps) {
     <FeedbackContext.Provider value={{ feedbacks: state.feedbacks, setFeedbacks, pushFeedback }}>
       {children}
       <Alert
-        open={!!state.feedbacks.length}
+        open={state.feedbacks.length > 0}
         alerts={state.feedbacks.map((f) => ({
           ...f,
-          onClose: () => dispatch({ type: actions.REMOVE, data: { id: f.id! } })
+          onClose: () => dispatch({ type: actions.REMOVE, data: { id: f.id } })
         }))}
       />
     </FeedbackContext.Provider>
