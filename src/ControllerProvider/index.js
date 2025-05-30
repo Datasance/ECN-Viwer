@@ -73,27 +73,32 @@ export const ControllerProvider = ({ children }) => {
   const request = async (path, options = {}) => {
     const headers = {
       ...options.headers
-    }
-
+    };
+  
     const currentToken = keycloak?.token;
-
+  
     if (currentToken) {
-      headers.Authorization = `Bearer ${currentToken}`
+      headers.Authorization = `Bearer ${currentToken}`;
     }
-
-    // console.log('Request headers:', headers) // Debug log
-
-    const response = await fetch(getUrl(path), {
-      ...options,
-      headers
-    })
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response?.status}`)
+  
+    try {
+      const response = await fetch(getUrl(path), {
+        ...options,
+        headers
+      });
+  
+      if (!response.ok) {
+        console.error(`HTTP error! status: ${response.status}`);
+        return null;
+      }
+  
+      return response;
+    } catch (error) {
+      console.error('Request failed:', error);
+      return null;
     }
-
-    return response
-  }
+  };
+  
 
   React.useEffect(() => {
     // Grab controller location informations

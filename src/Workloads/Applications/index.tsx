@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useData } from '../../providers/Data';
 import CustomDataTable from '../../CustomComponent/CustomDataTable';
-import CustomProgressBar from '../../CustomComponent/CustomProgressBar';
 import SlideOver from '../../CustomComponent/SlideOver';
 import { format, formatDistanceToNow } from 'date-fns';
 import { useController } from '../../ControllerProvider';
 import { useFeedback } from '../../Utils/FeedbackContext';
+import AceEditor from "react-ace";
+import ResizableBottomDrawer from '../../CustomComponent/ResizableBottomDrawer';
+import { dumpApplicationYAML } from '../../Utils/applicationYAML';
 
 function ApplicationList() {
   const { data } = useData();
@@ -13,6 +15,9 @@ function ApplicationList() {
   const { pushFeedback } = useFeedback();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState<any | null>(null);
+  const [isBottomDrawerOpen, setIsBottomDrawerOpen] = useState(false);
+  const [editorIsChanged, setEditorIsChanged] = React.useState(false);
+  const [editorDataChanged, setEditorDataChanged] = React.useState<any>()
 
   const handleRowClick = (row: any) => {
     setSelectedApplication(row);
@@ -53,6 +58,34 @@ function ApplicationList() {
     }
   };
 
+  const handleYamlUpdate = async () => {
+    const url = `/api/v3/microservices/${selectedApplication.uuid}`
+    try {
+      const res = await request(url, {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify(editorDataChanged)
+      })
+      return res
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: 'error' })
+    }
+  };
+
+  const yamlDump = React.useMemo(() => {
+    return dumpApplicationYAML({
+      application: selectedApplication,
+      activeAgents: data?.activeAgents,
+      reducedAgents: data?.reducedAgents,
+    });
+  }, [selectedApplication, data]);
+
+  const handleEditYaml = () => {
+    setIsBottomDrawerOpen(true);
+  };
+
   const columns = [
     {
       key: 'name',
@@ -89,36 +122,6 @@ function ApplicationList() {
     },
   ];
 
-  const expandedRowRender = (row: any) => (
-    <div className="p-4 bg-gray-800">
-      <h3 className="text-lg font-semibold mb-2">Microservices Details</h3>
-      <CustomDataTable
-        columns={[
-          {
-            key: 'name',
-            header: 'Microservice Name',
-          },
-          {
-            key: 'cpuUsage',
-            header: 'CPU Usage',
-            render: (ms: any) => (
-              <CustomProgressBar value={ms.status.cpuUsage.toFixed(2)} max={ms.status.percentage} unit="%" />
-            ),
-          },
-          {
-            key: 'memoryUsage',
-            header: 'Memory Usage',
-            render: (ms: any) => (
-              <CustomProgressBar value={(ms.status.memoryUsage / 1048576).toFixed(2)} max={1024} unit="MB" />
-            ),
-          },
-        ]}
-        data={row.microservices}
-        getRowKey={(ms) => ms.uuid}
-      />
-    </div>
-  );
-
   const slideOverFields = [
     {
       label: 'Application Name',
@@ -132,7 +135,7 @@ function ApplicationList() {
       label: 'Activated',
       render: (row: any) => (
         <span
-          className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${row.isActivated ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          className={`px-2 py-1 rounded-full text-xs font-semibold ${row.isActivated ? 'bg-green-600 text-white' : 'bg-gray-600 text-white'
             }`}
         >
           {row.isActivated ? 'Active' : 'Inactive'}
@@ -176,6 +179,119 @@ function ApplicationList() {
         );
       },
     },
+    {
+      label: 'Microservices',
+      render: () => '',
+      isSectionHeader: true,
+    },
+    {
+      label: '',
+      isFullSection: true,
+      render: (node: any) => {
+        const microservices = node?.microservices || [];
+
+        if (!Array.isArray(microservices) || microservices.length === 0) {
+          return <div className="text-sm text-gray-400">No microservices available.</div>;
+        }
+        const tableData = microservices.map((ms: any, index: number) => ({
+          key: `${ms.uuid}-${index}`,
+          name: ms.name || '-',
+          status: ms.status?.status || '-',
+          agent: data.activeAgents?.find((a:any) => a.uuid === ms.iofogUuid)?.name ?? '-',
+          ports: Array.isArray(ms.ports) ? (
+            ms.ports.map((p: any, i: number) => (
+              <div key={i}>
+                {`${p.internal}:${p.external}/${p.protocol}`}
+              </div>
+            ))
+          ) : (
+            '-'
+          )
+        }));
+
+        const columns = [
+          {
+            key: 'name',
+            header: 'Name',
+            formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
+          },
+          {
+            key: 'status',
+            header: 'Status',
+            formatter: ({ row }: any) => <span className="text-white">{row.status}</span>,
+          },
+          {
+            key: 'agent',
+            header: 'Agent',
+            formatter: ({ row }: any) => <span className="text-white">{row.agent}</span>,
+          },
+          {
+            key: 'ports',
+            header: 'Ports',
+            formatter: ({ row }: any) => (
+              <span className="text-white whitespace-pre-wrap break-words">{row.ports}</span>
+            ),
+          },
+        ];
+
+        return (
+          <CustomDataTable
+            columns={columns}
+            data={tableData}
+            getRowKey={(row: any) => row.key}
+          />
+        );
+      },
+    },
+    {
+      label: 'Routes',
+      render: () => '',
+      isSectionHeader: true,
+    },
+    {
+      label: '',
+      isFullSection: true,
+      render: (node: any) => {
+        const routes = node?.routes || [];
+
+        if (!Array.isArray(routes) || routes.length === 0) {
+          return <div className="text-sm text-gray-400">No routes available.</div>;
+        }
+
+        const tableData = routes.map((route: any, index: number) => ({
+          name: route.name || '-',
+          from: route.from || '-',
+          to: route.to || '-',
+          key: `${route.name || 'route'}-${index}`,
+        }));
+
+        const columns = [
+          {
+            key: 'name',
+            header: 'Name',
+            formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
+          },
+          {
+            key: 'from',
+            header: 'From',
+            formatter: ({ row }: any) => <span className="text-white">{row.from}</span>,
+          },
+          {
+            key: 'to',
+            header: 'To',
+            formatter: ({ row }: any) => <span className="text-white">{row.to}</span>,
+          },
+        ];
+
+        return (
+          <CustomDataTable
+            columns={columns}
+            data={tableData}
+            getRowKey={(row: any) => row.key}
+          />
+        );
+      },
+    }
   ];
 
   return (
@@ -187,7 +303,6 @@ function ApplicationList() {
         columns={columns}
         data={data.applications}
         getRowKey={(row) => row.id}
-        expandableRowRender={expandedRowRender}
       />
       <SlideOver
         open={isOpen}
@@ -197,7 +312,42 @@ function ApplicationList() {
         fields={slideOverFields}
         onRestart={handleRestart}
         onDelete={handleDelete}
+        onEditYaml={handleEditYaml}
+        customWidth={600}
       />
+      <ResizableBottomDrawer
+        open={isBottomDrawerOpen}
+        isEdit={editorIsChanged}
+        onClose={() => { setIsBottomDrawerOpen(false); setEditorIsChanged(false); setEditorDataChanged(null) }}
+        onSave={() => handleYamlUpdate()}
+        title={`${selectedApplication?.name} YAML`}
+        showUnsavedChangesModal
+        unsavedModalTitle='Changes Not Saved'
+        unsavedModalMessage='Are you sure you want to exit? All unsaved changes will be lost.'
+        unsavedModalCancelLabel='Stay'
+        unsavedModalConfirmLabel='Exit Anyway'
+
+      >
+        <AceEditor
+          setOptions={{ useWorker: false }}
+          mode="yaml"
+          theme="monokai"
+          defaultValue={yamlDump}
+          onLoad={function (editor) {
+            editor.renderer.setPadding(10);
+            editor.renderer.setScrollMargin(10);
+          }}
+          style={{
+            width: "100%",
+            height: "100%",
+            borderRadius: "4px",
+          }}
+          onChange={function editorChanged(editor: any) {
+            setEditorIsChanged(true)
+            setEditorDataChanged(editor)
+          }}
+        />
+      </ResizableBottomDrawer>
     </div>
   );
 }

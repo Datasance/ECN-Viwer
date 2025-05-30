@@ -95,7 +95,7 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({ agentData }) => {
             background: '#333',
         },
         labels: ['RUNNING', 'NOT RUNNING'],
-        colors: ['#00E396', '#FF4560'], // RUNNING (green), UNKNOWN (red)
+        colors: ['#00E396', '#FF4560'],
         dataLabels: {
             enabled: false,
         },

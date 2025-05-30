@@ -29,6 +29,11 @@ function MicroservicesList() {
     setIsOpen(true);
   };
 
+  useEffect(() => {
+    console.log(data)
+  }, [data])
+
+
   const handleRestart = async () => {
     try {
       const res = await request(
@@ -245,11 +250,11 @@ function MicroservicesList() {
       isFullSection: true,
       render: (node: any) => {
         const ports = node?.ports || [];
-    
+
         if (!Array.isArray(ports) || ports.length === 0) {
           return <div className="text-sm text-gray-400">No ports found for this microservice.</div>;
         }
-    
+
         const portData = ports.map((port: any, index: number) => ({
           internal: port.internal,
           external: port.external,
@@ -257,7 +262,7 @@ function MicroservicesList() {
           publicLink: port.public?.links?.[0] || '-',
           key: `${port.internal}-${port.external}-${index}`,
         }));
-    
+
         const portColumns = [
           {
             key: 'internal',
@@ -297,7 +302,7 @@ function MicroservicesList() {
             },
           },
         ];
-    
+
         return (
           <CustomDataTable
             columns={portColumns}
@@ -306,15 +311,174 @@ function MicroservicesList() {
           />
         );
       },
-    }    
+    },
+    {
+      label: 'Volumes',
+      render: () => '',
+      isSectionHeader: true,
+    },
+    {
+      label: '',
+      isFullSection: true,
+      render: (node: any) => {
+        const volumes = node?.volumeMappings || [];
+
+        if (!Array.isArray(volumes) || volumes.length === 0) {
+          return <div className="text-sm text-gray-400">No Volumes found for this microservice.</div>;
+        }
+
+        const volumesData = volumes.map((volume: any, index: number) => ({
+          host: volume.hostDestination,
+          container: volume.containerDestination,
+          accessMode: volume.accessMode,
+          type: volume.type || '-',
+          key: `${volume.hostDestination}-${volume.containerDestination}-${index}`,
+        }));
+
+        const volumeColumns = [
+          {
+            key: 'host',
+            header: 'Host',
+            formatter: ({ row }: any) => <span className="text-white">{row.host}</span>,
+          },
+          {
+            key: 'container',
+            header: 'Container',
+            formatter: ({ row }: any) => <span className="text-white">{row.container}</span>,
+          },
+          {
+            key: 'accessMode',
+            header: 'Access Mode',
+            formatter: ({ row }: any) => <span className="uppercase text-white">{row.accessMode}</span>,
+          },
+          {
+            key: 'type',
+            header: 'Type',
+            formatter: ({ row }: any) => (
+              <span className="text-white">{row.type}</span>
+            ),
+          },
+          {
+            key: 'action',
+            header: 'Action',
+            render: (row: any) => {
+              return (
+                <button onClick={() => setSelectedPort(row)} className="hover:text-red-600 hover:bg-white rounded">
+                  <DeleteOutlineIcon fontSize="small" />
+                </button>
+              );
+            },
+          },
+        ];
+
+        return (
+          <CustomDataTable
+            columns={volumeColumns}
+            data={volumesData}
+            getRowKey={(row: any) => row.key}
+          />
+        );
+      },
+    },
+    {
+      label: 'Environment Variables',
+      render: () => '',
+      isSectionHeader: true,
+    },
+    {
+      label: '',
+      isFullSection: true,
+      render: (node: any) => {
+        const envVars = node?.env || [];
+
+        if (!Array.isArray(envVars) || envVars.length === 0) {
+          return <div className="text-sm text-gray-400">No environment variables found for this microservice.</div>;
+        }
+
+        const envData = envVars.map((env: any, index: number) => ({
+          keyName: env.key,
+          value: env.value,
+          key: `${env.key}-${index}`,
+        }));
+
+        const envColumns = [
+          {
+            key: 'keyName',
+            header: 'Key',
+            formatter: ({ row }: any) => <span className="text-white">{row.keyName}</span>,
+          },
+          {
+            key: 'value',
+            header: 'Value',
+            formatter: ({ row }: any) => <span className="text-white">{row.value}</span>,
+          },
+        ];
+
+        return (
+          <CustomDataTable
+            columns={envColumns}
+            data={envData}
+            getRowKey={(row: any) => row.key}
+          />
+        );
+      },
+    },
+    {
+      label: 'Extra Hosts',
+      render: () => '',
+      isSectionHeader: true,
+    },
+    {
+      label: '',
+      isFullSection: true,
+      render: (node: any) => {
+        const extraHosts = node?.extraHosts || [];
+
+        if (!Array.isArray(extraHosts) || extraHosts.length === 0) {
+          return <div className="text-sm text-gray-400">No extra hosts found for this microservice.</div>;
+        }
+
+        const extraHostsData = extraHosts.map((host: any, index: number) => ({
+          name: host.name || '-',
+          address: host.address || '-',
+          value: host.value || '-',
+          key: `${host.name}-${host.address}-${index}`,
+        }));
+
+        const extraHostColumns = [
+          {
+            key: 'name',
+            header: 'Name',
+            formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
+          },
+          {
+            key: 'address',
+            header: 'Address',
+            formatter: ({ row }: any) => <span className="text-white">{row.address}</span>,
+          },
+          {
+            key: 'value',
+            header: 'Value',
+            formatter: ({ row }: any) => <span className="text-white">{row.value}</span>,
+          },
+        ];
+
+        return (
+          <CustomDataTable
+            columns={extraHostColumns}
+            data={extraHostsData}
+            getRowKey={(row: any) => row.key}
+          />
+        );
+      },
+    }
   ];
 
   useEffect(() => {
-    if(selectedPort){
+    if (selectedPort) {
       setShowConfirmModal(true)
     }
   }, [selectedPort])
-  
 
   return (
     <div className="max-h-[90.8vh] min-h-[90.8vh] bg-gray-900 text-white overflow-auto p-4">
@@ -369,14 +533,14 @@ function MicroservicesList() {
         />
       </ResizableBottomDrawer>
       <UnsavedChangesModal
-          open={showConfirmModal}
-          onCancel={() => setShowConfirmModal(false)}
-          onConfirm={handlePortsDelete}
-          title={`Delete Port ${selectedPort?.internal}`}
-          message={"This is not reversible."}
-          cancelLabel={"Cancel"}
-          confirmLabel={"Delete"}
-        />
+        open={showConfirmModal}
+        onCancel={() => setShowConfirmModal(false)}
+        onConfirm={handlePortsDelete}
+        title={`Delete Port ${selectedPort?.internal}`}
+        message={"This is not reversible."}
+        cancelLabel={"Cancel"}
+        confirmLabel={"Delete"}
+      />
     </div>
   );
 }

@@ -9,7 +9,6 @@ interface SystemMicroservicesDashboardProps {
 const SystemMicroservicesDashboard: React.FC<SystemMicroservicesDashboardProps> = ({ systemApplications, title }) => {
     if (!systemApplications) return <div>Loading...</div>;
 
-    // Uygulama adına göre microservice'leri grupla
     const groupedByApplication: Record<string, any[]> = {};
     systemApplications.forEach(app => {
         const appName = app.name || 'Unknown';
@@ -99,7 +98,6 @@ const SystemMicroservicesDashboard: React.FC<SystemMicroservicesDashboardProps> 
         },
     ];
 
-    // Toplam microservice sayısını hesapla
     const totalMicroservices = Object.values(groupedByApplication).reduce((acc, val) => acc + val.length, 0);
 
     return (
