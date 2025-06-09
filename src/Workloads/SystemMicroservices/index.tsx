@@ -11,6 +11,10 @@ import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
 import ResizableBottomDrawer from '../../CustomComponent/ResizableBottomDrawer';
 import UnsavedChangesModal from '../../CustomComponent/UnsavedChangesModal';
 import AceEditor from "react-ace";
+import { parseMicroservice } from '../../Utils/ApplicationParser';
+import { API_VERSIONS } from '../../Utils/constants';
+import lget from "lodash/get";
+import yaml from "js-yaml";
 
 function SystemMicroserviceList() {
   const { data } = useData();
@@ -29,8 +33,12 @@ function SystemMicroserviceList() {
   const [isBottomDrawerOpen, setIsBottomDrawerOpen] = useState(false);
   const [editorIsChanged, setEditorIsChanged] = React.useState(false);
   const [editorDataChanged, setEditorDataChanged] = React.useState<any>()
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [showPortDeleteConfirmModal, setShowPortDeleteConfirmModal] = useState(false);
+  const [showVolumeDeleteConfirmModal, setShowVolumeDeleteConfirmModal] = useState(false);
   const [selectedPort, setSelectedPort] = useState<any>(null);
+  const [selectedVolume, setSelectedVolume] = useState<any>(null);
 
 
   const handleRowClick = (row: any) => {
@@ -40,8 +48,8 @@ function SystemMicroserviceList() {
 
   const handleRestart = async () => {
     try {
-      const res = await request(`/api/v3/microservices/${selectedMs.uuid}/restart`, {
-        method: 'POST',
+      const res = await request(`/api/v3/microservices/system/${selectedMs.uuid}/rebuild`, {
+        method: 'PATCH',
       });
 
       if (!res.ok) {
@@ -93,22 +101,88 @@ function SystemMicroserviceList() {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
     }
   };
+  const handleVolumeDelete = async () => {
+    try {
+      const res = await request(
+        `/api/v3/microservices/${selectedMs.uuid}`,
+        {
+          method: "DELETE",
+          headers: {
+            "content-type": "application/json",
+          },
+        }
+      );
+      if (!res.ok) {
+        pushFeedback({ message: res.statusText, type: "error" });
+      } else {
+        pushFeedback({ message: "Microservice Deleted", type: "success" });
+        setIsOpen(false)
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  };
 
-  const handleYamlUpdate = async () => {
-    const url = `/api/v3/microservices/${selectedMs.uuid}`
+  const parseMicroserviceFile = async (doc: any) => {
+    if (API_VERSIONS.indexOf(doc.apiVersion) === -1) {
+      return [{}, `Invalid API Version ${doc.apiVersion}, current version is ${API_VERSIONS.slice(-1)[0]}`]
+    }
+    if (doc.kind !== 'Microservice') {
+      return [{}, `Invalid kind ${doc.kind}`]
+    }
+    if (!doc.metadata || !doc.spec) {
+      return [{}, 'Invalid YAML format']
+    }
+    let tempObject = await parseMicroservice(doc.spec)
+    const microserviceData = {
+      name: lget(doc, 'metadata.name', undefined),
+      ...tempObject,
+    }
+    return [microserviceData]
+  }
+
+  const deployMicroservice = async (microservice: any) => {
+    const url = `/api/v3/microservices/system/${`${selectedMs.uuid}`}`
     try {
       const res = await request(url, {
         method: 'PATCH',
         headers: {
           'content-type': 'application/json'
         },
-        body: JSON.stringify(editorDataChanged)
+        body: JSON.stringify(microservice)
       })
       return res
     } catch (e: any) {
       pushFeedback({ message: e.message, type: 'error' })
     }
+  }
+
+  const handleYamlUpdate = async () => {
+    if (editorIsChanged) {
+      try {
+        const doc = yaml.load(editorDataChanged)
+        const [microserviceData, err] = await parseMicroserviceFile(doc)
+        if (err) {
+          return pushFeedback({ message: err, type: 'error' })
+        }
+        const newMicroservice = microserviceData
+        const res = await deployMicroservice(newMicroservice)
+        if (!res.ok) {
+          try {
+            const error = await res.json()
+            pushFeedback({ message: error.message, type: 'error' })
+          } catch (e) {
+            pushFeedback({ message: res.statusText, type: 'error' })
+          }
+        } else {
+          pushFeedback({ message: 'Microservice updated!', type: 'success' })
+        }
+      } catch (e: any) {
+        pushFeedback({ message: e.message, type: 'error' })
+      }
+    }
   };
+
 
   const yamlDump = React.useMemo(() => {
     return dumpMicroserviceYAML({
@@ -121,6 +195,18 @@ function SystemMicroserviceList() {
   const handleEditYaml = () => {
     setIsBottomDrawerOpen(true);
   };
+
+  useEffect(() => {
+    if (selectedPort) {
+      setShowPortDeleteConfirmModal(true)
+    }
+  }, [selectedPort])
+
+  useEffect(() => {
+    if (selectedVolume) {
+      setShowVolumeDeleteConfirmModal(true)
+    }
+  }, [selectedVolume])
 
   const columns = [
     {
@@ -362,7 +448,7 @@ function SystemMicroserviceList() {
             header: 'Action',
             render: (row: any) => {
               return (
-                <button onClick={() => setSelectedPort(row)} className="hover:text-red-600 hover:bg-white rounded">
+                <button onClick={() => setSelectedVolume(row)} className="hover:text-red-600 hover:bg-white rounded">
                   <DeleteOutlineIcon fontSize="small" />
                 </button>
               );
@@ -473,15 +559,11 @@ function SystemMicroserviceList() {
     }
   ];
 
-  useEffect(() => {
-    if (selectedPort) {
-      setShowConfirmModal(true)
-    }
-  }, [selectedPort])
+
 
   return (
     <div className="max-h-[90.8vh] min-h-[90.8vh] bg-gray-900 text-white overflow-auto p-4">
-      <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">Microservices List</h1>
+      <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">System Microservices List</h1>
       <CustomDataTable
         columns={columns}
         data={flattenedMicroservices || []}
@@ -493,8 +575,8 @@ function SystemMicroserviceList() {
         title={selectedMs?.name || 'Microservice Details'}
         data={selectedMs}
         fields={slideOverFields}
-        onRestart={handleRestart}
-        onDelete={handleDelete}
+        onRestart={() => setShowResetConfirmModal(true)}
+        onDelete={() => setShowDeleteConfirmModal(true)}
         onEditYaml={handleEditYaml}
         customWidth={600}
       />
@@ -532,10 +614,38 @@ function SystemMicroserviceList() {
         />
       </ResizableBottomDrawer>
       <UnsavedChangesModal
-        open={showConfirmModal}
-        onCancel={() => setShowConfirmModal(false)}
+        open={showResetConfirmModal}
+        onCancel={() => setShowResetConfirmModal(false)}
+        onConfirm={handleRestart}
+        title={`Restart ${selectedMs?.name}`}
+        message={"This is not reversible."}
+        cancelLabel={"Cancel"}
+        confirmLabel={"Restart"}
+        confirmColor='bg-blue'
+      />
+      <UnsavedChangesModal
+        open={showDeleteConfirmModal}
+        onCancel={() => setShowDeleteConfirmModal(false)}
+        onConfirm={handleDelete}
+        title={`Delete ${selectedMs?.name}`}
+        message={"This is not reversible."}
+        cancelLabel={"Cancel"}
+        confirmLabel={"Delete"}
+      />
+      <UnsavedChangesModal
+        open={showPortDeleteConfirmModal}
+        onCancel={() => setShowPortDeleteConfirmModal(false)}
         onConfirm={handlePortsDelete}
         title={`Delete Port ${selectedPort?.internal}`}
+        message={"This is not reversible."}
+        cancelLabel={"Cancel"}
+        confirmLabel={"Delete"}
+      />
+      <UnsavedChangesModal
+        open={showVolumeDeleteConfirmModal}
+        onCancel={() => setShowVolumeDeleteConfirmModal(false)}
+        onConfirm={handleVolumeDelete}
+        title={`Delete Volume ${selectedVolume?.host}`}
         message={"This is not reversible."}
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}

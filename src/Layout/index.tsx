@@ -34,6 +34,7 @@ import MicroservicesList from '../Workloads/Microservices'
 import SystemMicroservicesList from '../Workloads/SystemMicroservices'
 import ApplicationList from '../Workloads/Applications'
 import SystemApplicationList from '../Workloads/SystemApplications'
+import Map from '../ECNViewer/Map/Map'
 
 const controllerJson = window.controllerConfig || null
 
@@ -141,7 +142,7 @@ export default function Layout() {
                           </MenuItem>
                         )}
                       </NavLink>
-                      <NavLink to="/overview">
+                      <NavLink to="/nodes/Map">
                         {({ isActive }) => (
                           <MenuItem icon={<MapRounded />} active={isActive}>
                             Map
@@ -270,6 +271,7 @@ export default function Layout() {
               <Route path="/Workloads/SystemMicroservicesList" Component={SystemMicroservicesList} />
               <Route path="/Workloads/ApplicationList" Component={ApplicationList} />
               <Route path="/Workloads/SystemApplicationList" Component={SystemApplicationList} />
+              <Route path="/nodes/Map" element={<Map collapsed={collapsed} />} />
               <Route Component={() => <Navigate to="/dashboard" />} />
             </Routes>
           </div>

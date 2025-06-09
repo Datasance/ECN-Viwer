@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useData } from '../../providers/Data';
 import CustomDataTable from '../../CustomComponent/CustomDataTable';
-import CustomProgressBar from '../../CustomComponent/CustomProgressBar';
 import SlideOver from '../../CustomComponent/SlideOver';
 import { format, formatDistanceToNow } from 'date-fns';
 import { useController } from '../../ControllerProvider';
@@ -9,6 +8,11 @@ import { useFeedback } from '../../Utils/FeedbackContext';
 import { dumpApplicationYAML } from '../../Utils/applicationYAML';
 import AceEditor from "react-ace";
 import ResizableBottomDrawer from '../../CustomComponent/ResizableBottomDrawer';
+import UnsavedChangesModal from '../../CustomComponent/UnsavedChangesModal';
+import { parseMicroservice } from '../../Utils/ApplicationParser';
+import { API_VERSIONS } from '../../Utils/constants';
+import lget from 'lodash/get'
+import yaml from "js-yaml";
 
 function SystemApplicationList() {
   const { data } = useData();
@@ -19,7 +23,9 @@ function SystemApplicationList() {
   const [selectedApplication, setSelectedApplication] = useState<any | null>(null);
   const [isBottomDrawerOpen, setIsBottomDrawerOpen] = useState(false);
   const [editorIsChanged, setEditorIsChanged] = React.useState(false);
-  const [editorDataChanged, setEditorDataChanged] = React.useState<any>()
+  const [editorDataChanged, setEditorDataChanged] = React.useState<any>();
+  const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
 
   const handleRowClick = (row: any) => {
     setSelectedApplication(row);
@@ -58,21 +64,64 @@ function SystemApplicationList() {
     }
   };
 
+  const parseApplicationFile = async (doc: any) => {
+    if (API_VERSIONS.indexOf(doc.apiVersion) === -1) {
+      return [{}, `Invalid API Version ${doc.apiVersion}, current version is ${API_VERSIONS.slice(-1)[0]}`]
+    }
+    if (doc.kind !== 'Application') {
+      return [{}, `Invalid kind ${doc.kind}`]
+    }
+    if (!doc.metadata || !doc.spec) {
+      return [{}, 'Invalid YAML format']
+    }
+    const application = {
+      name: lget(doc, 'metadata.name', undefined),
+      ...doc.spec,
+      isActivated: true,
+      microservices: await Promise.all((doc.spec.microservices || []).map(async (m: any) => parseMicroservice(m)))
+    }
+
+    return [application]
+  }
+
   const handleYamlUpdate = async () => {
-    const url = `/api/v3/microservices/${selectedApplication.uuid}`
+    try {
+      const doc = yaml.load(editorDataChanged)
+      const [applicationData, err] = await parseApplicationFile(doc)
+      if (err) {
+        return pushFeedback({ message: err, type: 'error' })
+      }
+      const newApplication = !data.applications?.find((a: any) => a.name === applicationData.name)
+      const res = await deployApplication(applicationData, newApplication)
+      if (!res.ok) {
+        try {
+          const error = await res.json()
+          pushFeedback({ message: error.message, type: 'error' })
+        } catch (e) {
+          pushFeedback({ message: res.statusText, type: 'error' })
+        }
+      } else {
+        pushFeedback({ message: newApplication ? 'Application deployed!' : 'Application updated!', type: 'success' })
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: 'error' })
+    }
+  };
+  const deployApplication = async (application: any, newApplication: any) => {
+    const url = `/api/v3/application/system${newApplication ? '' : `/${application.name}`}`
     try {
       const res = await request(url, {
-        method: 'PATCH',
+        method: newApplication ? 'POST' : 'PUT',
         headers: {
           'content-type': 'application/json'
         },
-        body: JSON.stringify(editorDataChanged)
+        body: JSON.stringify(application)
       })
       return res
     } catch (e: any) {
       pushFeedback({ message: e.message, type: 'error' })
     }
-  };
+  }
 
   const yamlDump = React.useMemo(() => {
     return dumpApplicationYAML({
@@ -311,8 +360,8 @@ function SystemApplicationList() {
         title={selectedApplication?.msName || 'Microservice Details'}
         data={selectedApplication}
         fields={slideOverFields}
-        onRestart={handleRestart}
-        onDelete={handleDelete}
+        onRestart={() => setShowResetConfirmModal(true)}
+        onDelete={() => setShowDeleteConfirmModal(true)}
         onEditYaml={handleEditYaml}
         customWidth={700}
       />
@@ -349,6 +398,26 @@ function SystemApplicationList() {
           }}
         />
       </ResizableBottomDrawer>
+
+      <UnsavedChangesModal
+        open={showResetConfirmModal}
+        onCancel={() => setShowResetConfirmModal(false)}
+        onConfirm={handleRestart}
+        title={`Restart ${selectedApplication?.name}`}
+        message={"This is not reversible."}
+        cancelLabel={"Cancel"}
+        confirmLabel={"Restart"}
+        confirmColor='bg-blue'
+      />
+      <UnsavedChangesModal
+        open={showDeleteConfirmModal}
+        onCancel={() => setShowDeleteConfirmModal(false)}
+        onConfirm={handleDelete}
+        title={`Delete ${selectedApplication?.name}`}
+        message={"This is not reversible."}
+        cancelLabel={"Cancel"}
+        confirmLabel={"Delete"}
+      />
     </div>
   );
 }

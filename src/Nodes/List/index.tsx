@@ -6,6 +6,7 @@ import SlideOver from '../../CustomComponent/SlideOver';
 import { formatDistanceToNow, format } from 'date-fns';
 import { useController } from '../../ControllerProvider';
 import { useFeedback } from '../../Utils/FeedbackContext';
+import UnsavedChangesModal from '../../CustomComponent/UnsavedChangesModal';
 
 function NodesList() {
     const { data } = useData();
@@ -13,21 +14,15 @@ function NodesList() {
     const { pushFeedback } = useFeedback();
     const [selectedNode, setSelectedNode] = useState<any | null>(null);
     const [isOpen, setIsOpen] = useState(false);
+    const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
+    const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+
     const handleRowClick = (row: any) => {
         setSelectedNode(row);
         setIsOpen(true);
     };
 
-    const handleRestart = () => {
-        rebootAgent();
-    };
-
-    const handleDelete = () => {
-        deleteAgent();
-    };
-
-
-    const rebootAgent = async () => {
+    const handleRestart = async () => {
         try {
             const res = await request(`/api/v3/iofog/${selectedNode.uuid}/reboot`, {
                 method: "POST",
@@ -45,7 +40,7 @@ function NodesList() {
         }
     };
 
-    const deleteAgent = async () => {
+    const handleDelete = async () => {
         try {
             const res = await request(`/api/v3/iofog/${selectedNode.uuid}`, {
                 method: "DELETE",
@@ -61,8 +56,6 @@ function NodesList() {
             pushFeedback({ message: e.message || e.status, type: "error" });
         }
     };
-
-
 
     const columns = [
         {
@@ -222,11 +215,11 @@ function NodesList() {
                     (app: any) =>
                         app.microservices?.some((msvc: any) => msvc.iofogUuid === node.uuid)
                 );
-        
+
                 if (!agentApplications || agentApplications.length === 0) {
                     return <div className="text-sm text-gray-400">No applications found for this agent.</div>;
                 }
-        
+
                 const localColumns = [
                     {
                         key: 'name',
@@ -234,7 +227,7 @@ function NodesList() {
                         formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
                     },
                 ];
-        
+
                 return (
                     <CustomDataTable
                         columns={localColumns}
@@ -244,8 +237,8 @@ function NodesList() {
                 );
             },
         },
-        
-        
+
+
     ];
 
     return (
@@ -259,8 +252,27 @@ function NodesList() {
                 title={selectedNode?.name || 'Agent Details'}
                 data={selectedNode}
                 fields={slideOverFields}
-                onRestart={handleRestart}
-                onDelete={handleDelete}
+                onRestart={() => setShowResetConfirmModal(true)}
+                onDelete={() => setShowDeleteConfirmModal(true)}
+            />
+            <UnsavedChangesModal
+                open={showResetConfirmModal}
+                onCancel={() => setShowResetConfirmModal(false)}
+                onConfirm={handleRestart}
+                title={`Restart ${selectedNode?.name}`}
+                message={"This is not reversible."}
+                cancelLabel={"Cancel"}
+                confirmLabel={"Restart"}
+                confirmColor='bg-blue'
+            />
+            <UnsavedChangesModal
+                open={showDeleteConfirmModal}
+                onCancel={() => setShowDeleteConfirmModal(false)}
+                onConfirm={handleDelete}
+                title={`Delete ${selectedNode?.name}`}
+                message={"This is not reversible."}
+                cancelLabel={"Cancel"}
+                confirmLabel={"Delete"}
             />
 
         </div>

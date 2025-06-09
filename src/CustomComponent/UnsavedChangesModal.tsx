@@ -9,6 +9,7 @@ type UnsavedChangesModalProps = {
     message?: string;
     cancelLabel?: string;
     confirmLabel?: string;
+    confirmColor?: string;
 };
 
 const UnsavedChangesModal = ({
@@ -19,6 +20,7 @@ const UnsavedChangesModal = ({
     message = 'You have unsaved changes. If you close the panel now, your changes will be lost. Do you want to continue?',
     cancelLabel = 'Cancel',
     confirmLabel = 'Close Anyway',
+    confirmColor
 }: UnsavedChangesModalProps) => {
     return (
         <Transition show={open} as={Fragment}>
@@ -52,7 +54,7 @@ const UnsavedChangesModal = ({
                             </button>
                             <button
                                 onClick={onConfirm}
-                                className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded"
+                                className={`px-4 py-2 ${confirmColor ? confirmColor+"-600" : "bg-red-600"} text-white hover:${confirmColor ? confirmColor+"-700" : "bg-red-700"} rounded`}
                             >
                                 {confirmLabel}
                             </button>
