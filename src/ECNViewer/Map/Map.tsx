@@ -6,6 +6,7 @@ import CustomDataTable from '../../CustomComponent/CustomDataTable';
 import { formatDistanceToNow, format } from 'date-fns';
 import { useFeedback } from '../../Utils/FeedbackContext';
 import { useController } from '../../ControllerProvider';
+import UnsavedChangesModal from '../../CustomComponent/UnsavedChangesModal';
 
 interface CustomLeafletProps {
   collapsed: boolean;
@@ -17,6 +18,8 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { pushFeedback } = useFeedback();
   const { request } = useController();
+    const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
+    const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
 
   const markers = data?.reducedAgents?.byName
     ? Object.values(data.reducedAgents.byName)
@@ -235,8 +238,27 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
         title={selectedNode?.name || 'Agent Details'}
         data={selectedNode}
         fields={slideOverFields}
-        onRestart={handleRestart}
-        onDelete={handleDelete}
+        onRestart={()=> setShowResetConfirmModal(true)}
+        onDelete={()=> setShowDeleteConfirmModal(true)}
+      />
+      <UnsavedChangesModal
+        open={showResetConfirmModal}
+        onCancel={() => setShowResetConfirmModal(false)}
+        onConfirm={handleRestart}
+        title={`Restart ${selectedNode?.name}`}
+        message={"This is not reversible."}
+        cancelLabel={"Cancel"}
+        confirmLabel={"Restart"}
+        confirmColor='bg-blue'
+      />
+      <UnsavedChangesModal
+        open={showDeleteConfirmModal}
+        onCancel={() => setShowDeleteConfirmModal(false)}
+        onConfirm={handleDelete}
+        title={`Delete ${selectedNode?.name}`}
+        message={"This is not reversible."}
+        cancelLabel={"Cancel"}
+        confirmLabel={"Delete"}
       />
     </div>
   )
