@@ -31,6 +31,8 @@ function NodesList() {
 
             if (!res.ok) {
                 pushFeedback({ message: res.statusText, type: "error" });
+                setShowResetConfirmModal(false);
+                setShowDeleteConfirmModal(false);
                 return;
             }
 
@@ -48,6 +50,8 @@ function NodesList() {
 
             if (!res.ok) {
                 pushFeedback({ message: res.statusText || res.status, type: "error" });
+                setShowResetConfirmModal(false);
+                setShowDeleteConfirmModal(false);
                 return;
             }
 
@@ -70,6 +74,14 @@ function NodesList() {
         {
             key: 'ipAddress',
             header: 'IP Address',
+        },
+        {
+            key: 'deploymentType',
+            header: 'Deployment Type',
+        },
+        {
+            key: 'containerEngine',
+            header: 'Container Engine',
         },
         {
             key: 'memoryUsage',
@@ -123,6 +135,25 @@ function NodesList() {
             ),
         },
         {
+            label: 'Security Status',
+            render: (row: any) => (
+                <span
+                    className={`px-2 py-1 rounded-full text-xs font-semibold ${row.securityStatus === 'OK'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-red-600 text-white'
+                        }`}
+                >
+                    {row.securityStatus}
+                </span>
+            ),
+        },
+        {
+            label: 'Warning Messages',
+            render: (node: any) => {
+                return node.warningMessage && node.tags?.warningMessage > 0 ? <span className="text-white whitespace-pre-wrap break-words">{node.warningMessage}</span> : 'N/A'
+            },
+        },
+        {
             label: 'Last Active',
             render: (node: any) => {
                 const lastActive = node.lastActive || node.updated || node.timestamp;
@@ -137,7 +168,7 @@ function NodesList() {
         },
         {
             label: 'Description',
-            render: (node: any) => { return node.description && 'N/A' },
+            render: (node: any) => { return node.description  || 'N/A' },
         },
         {
             label: 'Agent Details',
@@ -149,12 +180,26 @@ function NodesList() {
             render: (node: any) => node.version || 'N/A',
         },
         {
-            label: 'Type',
-            render: (node: any) => node.architecture || 'N/A',
+            label: 'Deployment Type',
+            render: (node: any) => node.deploymentType || 'N/A',
         },
         {
-            label: 'Address',
+            label: 'Ccontainer Engine',
+            render: (node: any) => node.containerEngine || 'N/A',
+        },
+        {
+            label: 'Arch',
+            render: (node: any) => node.fogTypeId === 0 ? "Auto" : node.fogTypeId === 1 ? "x86" : "arm",
+        },
+        {
+            label: 'IP Address',
             render: (node: any) => node.ipAddress || 'N/A',
+        },
+        {
+            label: 'Tags',
+            render: (node: any) => {
+                return node.tags && node.tags?.length > 0 ? <span className="text-white whitespace-pre-wrap break-words">{node.tags}</span> : ""
+            },
         },
         {
             label: 'Created',
@@ -237,8 +282,74 @@ function NodesList() {
                 );
             },
         },
+        {
+            label: 'Microservices',
+            render: () => '',
+            isSectionHeader: true,
+        },
+        {
+            label: '',
+            isFullSection: true,
+            render: (node: any) => {
+                const agentApplications = data?.applications?.find(
+                    (app: any) =>
+                        app.microservices?.some((msvc: any) => msvc.iofogUuid === node.uuid)
+                );
+                const microservices = agentApplications?.microservices || [];
 
+                if (!Array.isArray(microservices) || microservices.length === 0) {
+                    return <div className="text-sm text-gray-400">No microservices available.</div>;
+                }
+                const tableData = microservices.map((ms: any, index: number) => ({
+                    key: `${ms.uuid}-${index}`,
+                    name: ms.name || '-',
+                    status: ms.status?.status || '-',
+                    agent: data.activeAgents?.find((a: any) => a.uuid === ms.iofogUuid)?.name ?? '-',
+                    ports: Array.isArray(ms.ports) ? (
+                        ms.ports.map((p: any, i: number) => (
+                            <div key={i}>
+                                {`${p.internal}:${p.external}/${p.protocol}`}
+                            </div>
+                        ))
+                    ) : (
+                        '-'
+                    )
+                }));
 
+                const columns = [
+                    {
+                        key: 'name',
+                        header: 'Name',
+                        formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
+                    },
+                    {
+                        key: 'status',
+                        header: 'Status',
+                        formatter: ({ row }: any) => <span className="text-white">{row.status}</span>,
+                    },
+                    {
+                        key: 'agent',
+                        header: 'Agent',
+                        formatter: ({ row }: any) => <span className="text-white">{row.agent}</span>,
+                    },
+                    {
+                        key: 'ports',
+                        header: 'Ports',
+                        formatter: ({ row }: any) => (
+                            <span className="text-white whitespace-pre-wrap break-words">{row.ports}</span>
+                        ),
+                    },
+                ];
+
+                return (
+                    <CustomDataTable
+                        columns={columns}
+                        data={tableData}
+                        getRowKey={(row: any) => row.key}
+                    />
+                );
+            },
+        },
     ];
 
     return (
@@ -254,6 +365,7 @@ function NodesList() {
                 fields={slideOverFields}
                 onRestart={() => setShowResetConfirmModal(true)}
                 onDelete={() => setShowDeleteConfirmModal(true)}
+                customWidth={500}
             />
             <UnsavedChangesModal
                 open={showResetConfirmModal}

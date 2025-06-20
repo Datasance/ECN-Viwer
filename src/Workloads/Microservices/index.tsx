@@ -32,6 +32,14 @@ function MicroservicesList() {
   const [showVolumeDeleteConfirmModal, setShowVolumeDeleteConfirmModal] = useState(false);
   const [selectedPort, setSelectedPort] = useState<any>(null);
   const [selectedVolume, setSelectedVolume] = useState<any>(null);
+  const flattenedMicroservices = data?.applications?.flatMap((app: any) =>
+    app.microservices.map((ms: any) => ({
+      ...ms,
+      appName: app.name,
+      appDescription: app.description,
+      appCreatedAt: app.createdAt,
+    }))
+  );
 
   const handleRowClick = (row: any) => {
     setSelectedMs(row);
@@ -58,6 +66,7 @@ function MicroservicesList() {
         pushFeedback({ message: res.statusText, type: "error" });
       } else {
         pushFeedback({ message: "Microservice Rebuilt", type: "success" });
+        setShowResetConfirmModal(false)
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -80,6 +89,7 @@ function MicroservicesList() {
       } else {
         pushFeedback({ message: "Microservice Deleted", type: "success" });
         setIsOpen(false)
+        setShowDeleteConfirmModal(false)
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -100,8 +110,33 @@ function MicroservicesList() {
       if (!res.ok) {
         pushFeedback({ message: res.statusText, type: "error" });
       } else {
-        pushFeedback({ message: "Microservice Deleted", type: "success" });
+        pushFeedback({ message: "Port Deleted", type: "success" });
         setIsOpen(false)
+        setShowPortDeleteConfirmModal(false)
+        
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  };
+
+  const handleVolumeDelete = async () => {
+    try {
+      const res = await request(
+        `/api/v3/microservices/${selectedMs.uuid}`,
+        {
+          method: "DELETE",
+          headers: {
+            "content-type": "application/json",
+          },
+        }
+      );
+      if (!res.ok) {
+        pushFeedback({ message: res.statusText, type: "error" });
+      } else {
+        pushFeedback({ message: "Volume Deleted", type: "success" });
+        setIsOpen(false)
+        setShowVolumeDeleteConfirmModal(false)
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -162,6 +197,9 @@ function MicroservicesList() {
           }
         } else {
           pushFeedback({ message: 'Microservice updated!', type: 'success' })
+          setIsBottomDrawerOpen(false); 
+          setEditorIsChanged(false); 
+          setEditorDataChanged(null);
         }
       } catch (e: any) {
         pushFeedback({ message: e.message, type: 'error' })
@@ -546,7 +584,7 @@ function MicroservicesList() {
       <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">Microservices List</h1>
       <CustomDataTable
         columns={columns}
-        data={data?.activeMsvcs || []}
+        data={flattenedMicroservices || []}
         getRowKey={(row: any) => row.uuid}
       />
       <SlideOver
@@ -624,7 +662,7 @@ function MicroservicesList() {
       <UnsavedChangesModal
         open={showVolumeDeleteConfirmModal}
         onCancel={() => setShowVolumeDeleteConfirmModal(false)}
-        onConfirm={handlePortsDelete}
+        onConfirm={handleVolumeDelete}
         title={`Delete Volume ${selectedVolume?.host}`}
         message={"This is not reversible."}
         cancelLabel={"Cancel"}

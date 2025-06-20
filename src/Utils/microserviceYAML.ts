@@ -15,9 +15,23 @@ interface GetYAMLParams {
   reducedAgents?: ReducedAgents;
 }
 
-export const getMicroserviceYAMLFromJSON = ({ microservice, activeAgents = [], reducedAgents = { byUUID: {} } }: GetYAMLParams) => {
-  if (!microservice) {
-    return {};
+export const getMicroserviceYAMLFromJSON = ({
+  microservice,
+  activeAgents = [],
+  reducedAgents = { byUUID: {} }
+}: GetYAMLParams) => {
+  if (!microservice) return {};
+
+  let parsedConfig: any = {};
+
+  try {
+    parsedConfig =
+      typeof microservice?.config === 'string'
+        ? JSON.parse(microservice.config)
+        : microservice.config || {};
+  } catch (e) {
+    console.warn("Failed to parse microservice.config:", e);
+    parsedConfig = microservice.config;
   }
 
   return {
@@ -50,32 +64,33 @@ export const getMicroserviceYAMLFromJSON = ({ microservice, activeAgents = [], r
         }
       ),
       container: {
+        annotations: {}, // <-- Eksikti, eklendi
         rootHostAccess: microservice.rootHostAccess,
-        runAsUser: microservice?.runAsUser,
-        platform: microservice?.platform,
-        runtime: microservice?.runtime,
+        runAsUser: microservice?.runAsUser ?? '',
+        platform: microservice?.platform ?? '',
+        runtime: microservice?.runtime ?? '',
         cdiDevices: microservice?.cdiDevices ?? [],
         capAdd: microservice?.capAdd ?? [],
         capDrop: microservice?.capDrop ?? [],
-        volumes: microservice.volumeMappings.map((vm: any) => {
+        volumes: (microservice.volumeMappings || []).map((vm: any) => {
           const { id, ...rest } = vm;
           return rest;
         }),
-        env: microservice.env.map((env: any) => {
+        env: (microservice.env || []).map((env: any) => {
           const { id, ...rest } = env;
           return rest;
         }),
-        extraHosts: microservice.extraHosts.map((eH: any) => {
+        extraHosts: (microservice.extraHosts || []).map((eH: any) => {
           const { id, ...rest } = eH;
           return rest;
         }),
-        ports: microservice.ports.map((p: any) => {
+        ports: (microservice.ports || []).map((p: any) => {
           if (p.host) {
             p.host = reducedAgents.byUUID[p.host]?.name || p.host;
           }
           return p;
         }),
-        commands: microservice.cmd.map((cmd: any) => {
+        commands: (microservice.cmd || []).map((cmd: any) => {
           const { id, ...rest } = cmd;
           return rest;
         }),
@@ -84,7 +99,7 @@ export const getMicroserviceYAMLFromJSON = ({ microservice, activeAgents = [], r
         pubTags: microservice?.pubTags ?? [],
         subTags: microservice?.subTags ?? [],
       },
-      config: JSON.parse(microservice?.config),
+      config: parsedConfig,
       application: microservice?.application,
       rebuild: microservice?.rebuild,
     }

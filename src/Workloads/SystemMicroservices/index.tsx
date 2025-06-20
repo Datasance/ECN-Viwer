@@ -56,8 +56,10 @@ function SystemMicroserviceList() {
         pushFeedback({ message: res.statusText, type: 'error' });
         return;
       }
-
-      pushFeedback({ message: 'Microservice Restarted', type: 'success' });
+      else {
+        pushFeedback({ message: 'Microservice Restarted', type: 'success' });
+        setShowResetConfirmModal(false)
+      }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: 'error' });
     }
@@ -73,8 +75,10 @@ function SystemMicroserviceList() {
         pushFeedback({ message: res.statusText, type: 'error' });
         return;
       }
-
-      pushFeedback({ message: 'Microservice Deleted', type: 'success' });
+      else {
+        pushFeedback({ message: 'Microservice Deleted', type: 'success' });
+        setShowDeleteConfirmModal(false)
+      }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: 'error' });
     }
@@ -94,8 +98,9 @@ function SystemMicroserviceList() {
       if (!res.ok) {
         pushFeedback({ message: res.statusText, type: "error" });
       } else {
-        pushFeedback({ message: "Microservice Deleted", type: "success" });
+        pushFeedback({ message: "Port Deleted", type: "success" });
         setIsOpen(false)
+        setShowPortDeleteConfirmModal(false)
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -115,8 +120,9 @@ function SystemMicroserviceList() {
       if (!res.ok) {
         pushFeedback({ message: res.statusText, type: "error" });
       } else {
-        pushFeedback({ message: "Microservice Deleted", type: "success" });
+        pushFeedback({ message: "Volume Deleted", type: "success" });
         setIsOpen(false)
+        setShowVolumeDeleteConfirmModal(false)
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -176,6 +182,9 @@ function SystemMicroserviceList() {
           }
         } else {
           pushFeedback({ message: 'Microservice updated!', type: 'success' })
+          setIsBottomDrawerOpen(false);
+          setEditorIsChanged(false);
+          setEditorDataChanged(null);
         }
       } catch (e: any) {
         pushFeedback({ message: e.message, type: 'error' })

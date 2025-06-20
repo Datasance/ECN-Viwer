@@ -41,8 +41,11 @@ function ApplicationList() {
         pushFeedback({ message: res.statusText, type: 'error' });
         return;
       }
-
-      pushFeedback({ message: 'Microservice Restarted', type: 'success' });
+      else {
+        pushFeedback({ message: 'Microservice Restarted', type: 'success' });
+        setShowResetConfirmModal(false);
+        setShowDeleteConfirmModal(false);
+      }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: 'error' });
     }
@@ -58,8 +61,14 @@ function ApplicationList() {
         pushFeedback({ message: res.statusText, type: 'error' });
         return;
       }
-
-      pushFeedback({ message: 'Microservice Deleted', type: 'success' });
+      else {
+        pushFeedback({ message: 'Microservice Deleted', type: 'success' });
+        setIsBottomDrawerOpen(false);
+        setEditorIsChanged(false);
+        setEditorDataChanged(null);
+        setShowResetConfirmModal(false);
+        setShowDeleteConfirmModal(false);
+      }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: 'error' });
     }
@@ -103,6 +112,9 @@ function ApplicationList() {
         }
       } else {
         pushFeedback({ message: newApplication ? 'Application deployed!' : 'Application updated!', type: 'success' })
+        setIsBottomDrawerOpen(false); 
+        setEditorIsChanged(false); 
+        setEditorDataChanged(null)
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: 'error' })
