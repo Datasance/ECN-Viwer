@@ -66,8 +66,10 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
         pushFeedback({ message: res.statusText, type: "error" });
         return;
       }
-
-      pushFeedback({ message: "Agent Rebooted", type: "success" });
+      else{
+        pushFeedback({ message: "Agent Rebooted", type: "success" });
+        setShowResetConfirmModal(false);
+      }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
     }
@@ -83,8 +85,10 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
         pushFeedback({ message: res.statusText || res.status, type: "error" });
         return;
       }
-
-      pushFeedback({ message: "Agent deleted!", type: "success" });
+      else{
+        pushFeedback({ message: "Agent deleted!", type: "success" });
+        setShowDeleteConfirmModal(false);
+      }
     } catch (e: any) {
       pushFeedback({ message: e.message || e.status, type: "error" });
     }

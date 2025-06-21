@@ -39,7 +39,7 @@ function SystemMicroserviceList() {
   const [showVolumeDeleteConfirmModal, setShowVolumeDeleteConfirmModal] = useState(false);
   const [selectedPort, setSelectedPort] = useState<any>(null);
   const [selectedVolume, setSelectedVolume] = useState<any>(null);
-
+  console.log(data)
 
   const handleRowClick = (row: any) => {
     setSelectedMs(row);
@@ -48,46 +48,53 @@ function SystemMicroserviceList() {
 
   const handleRestart = async () => {
     try {
-      const res = await request(`/api/v3/microservices/system/${selectedMs.uuid}/rebuild`, {
-        method: 'PATCH',
-      });
-
+      const res = await request(
+        `/api/v3/microservices/system/${selectedMs.uuid}/rebuild`,
+        {
+          method: "PATCH",
+          headers: {
+            "content-type": "application/json",
+          },
+        }
+      );
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: 'error' });
-        return;
-      }
-      else {
-        pushFeedback({ message: 'Microservice Restarted', type: 'success' });
+        pushFeedback({ message: res.statusText, type: "error" });
+      } else {
+        pushFeedback({ message: "Microservice Rebuilt", type: "success" });
         setShowResetConfirmModal(false)
       }
     } catch (e: any) {
-      pushFeedback({ message: e.message, type: 'error' });
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
     }
   };
 
   const handleDelete = async () => {
     try {
-      const res = await request(`/api/v3/microservices/${selectedMs.uuid}`, {
-        method: 'DELETE',
-      });
-
+      const res = await request(
+        `/api/v3/microservices/system/${selectedMs.uuid}`,
+        {
+          method: "DELETE",
+          headers: {
+            "content-type": "application/json",
+          },
+        }
+      );
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: 'error' });
-        return;
-      }
-      else {
-        pushFeedback({ message: 'Microservice Deleted', type: 'success' });
+        pushFeedback({ message: res.statusText, type: "error" });
+      } else {
+        pushFeedback({ message: "Microservice Deleted", type: "success" });
+        setIsOpen(false)
         setShowDeleteConfirmModal(false)
       }
     } catch (e: any) {
-      pushFeedback({ message: e.message, type: 'error' });
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
     }
   };
 
   const handlePortsDelete = async () => {
     try {
       const res = await request(
-        `/api/v3/microservices/${selectedMs.uuid}`,
+        `/api/v3/microservices/${selectedMs.uuid}/port-mapping/${selectedPort?.internal}`,
         {
           method: "DELETE",
           headers: {
@@ -109,7 +116,7 @@ function SystemMicroserviceList() {
   const handleVolumeDelete = async () => {
     try {
       const res = await request(
-        `/api/v3/microservices/${selectedMs.uuid}`,
+        `/api/v3/microservices/${selectedMs.uuid}/volume-mapping/${selectedVolume?.id}`,
         {
           method: "DELETE",
           headers: {
@@ -626,10 +633,10 @@ function SystemMicroserviceList() {
         open={showResetConfirmModal}
         onCancel={() => setShowResetConfirmModal(false)}
         onConfirm={handleRestart}
-        title={`Restart ${selectedMs?.name}`}
+        title={`Rebuild ${selectedMs?.name}`}
         message={"This is not reversible."}
         cancelLabel={"Cancel"}
-        confirmLabel={"Restart"}
+        confirmLabel={"Rebuild"}
         confirmColor='bg-blue'
       />
       <UnsavedChangesModal

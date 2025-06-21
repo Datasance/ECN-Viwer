@@ -31,12 +31,12 @@ function NodesList() {
 
             if (!res.ok) {
                 pushFeedback({ message: res.statusText, type: "error" });
-                setShowResetConfirmModal(false);
-                setShowDeleteConfirmModal(false);
                 return;
             }
-
-            pushFeedback({ message: "Agent Rebooted", type: "success" });
+            else{
+                pushFeedback({ message: "Agent Rebooted", type: "success" });
+                setShowResetConfirmModal(false);
+            }
         } catch (e: any) {
             pushFeedback({ message: e.message, type: "error", uuid: "error" });
         }
@@ -50,12 +50,12 @@ function NodesList() {
 
             if (!res.ok) {
                 pushFeedback({ message: res.statusText || res.status, type: "error" });
-                setShowResetConfirmModal(false);
-                setShowDeleteConfirmModal(false);
                 return;
             }
-
-            pushFeedback({ message: "Agent deleted!", type: "success" });
+            else{
+                pushFeedback({ message: "Agent deleted!", type: "success" });
+                setShowDeleteConfirmModal(false);
+            }
         } catch (e: any) {
             pushFeedback({ message: e.message || e.status, type: "error" });
         }

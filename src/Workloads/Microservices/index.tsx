@@ -53,6 +53,7 @@ function MicroservicesList() {
 
   const handleRestart = async () => {
     try {
+      debugger
       const res = await request(
         `/api/v3/microservices/${selectedMs.uuid}/rebuild`,
         {
@@ -635,10 +636,10 @@ function MicroservicesList() {
         open={showResetConfirmModal}
         onCancel={() => setShowResetConfirmModal(false)}
         onConfirm={handleRestart}
-        title={`Restart ${selectedMs?.name}`}
+        title={`Rebuild ${selectedMs?.name}`}
         message={"This is not reversible."}
         cancelLabel={"Cancel"}
-        confirmLabel={"Restart"}
+        confirmLabel={"Rebuild"}
         confirmColor='bg-blue'
       />
       <UnsavedChangesModal

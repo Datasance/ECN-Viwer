@@ -31,29 +31,36 @@ function ApplicationList() {
     setIsOpen(true);
   };
 
-  const handleRestart = async () => {
+  async function restartFunction() {
     try {
-      const res = await request(`/api/v3/microservices/${selectedApplication.uuid}/restart`, {
-        method: 'POST',
-      });
-
-      if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: 'error' });
-        return;
-      }
-      else {
-        pushFeedback({ message: 'Microservice Restarted', type: 'success' });
+      const res = await request(`/api/v3/application/${selectedApplication.name}`, {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({ isActivated: !selectedApplication.isActivated })
+      })
+      if (res.ok) {
+        selectedApplication.isActivated = !selectedApplication.isActivated
+        pushFeedback({ message: selectedApplication.isActivated ? 'Application stopped!' : 'Application started!', type: 'success' })
         setShowResetConfirmModal(false);
-        setShowDeleteConfirmModal(false);
+      } else {
+        pushFeedback({ message: res.statusText, type: 'error' })
       }
     } catch (e: any) {
-      pushFeedback({ message: e.message, type: 'error' });
+      pushFeedback({ message: e.message, type: 'error' })
     }
+  }
+
+  const handleRestart = async () => {
+    await restartFunction();
+    await new Promise(resolve => setTimeout(resolve, 8000));
+    await restartFunction();
   };
 
   const handleDelete = async () => {
     try {
-      const res = await request(`/api/v3/microservices/${selectedApplication.uuid}`, {
+      const res = await request(`/api/v3/application/${selectedApplication.name}`, {
         method: 'DELETE',
       });
 

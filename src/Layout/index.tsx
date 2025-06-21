@@ -35,6 +35,7 @@ import SystemMicroservicesList from '../Workloads/SystemMicroservices'
 import ApplicationList from '../Workloads/Applications'
 import SystemApplicationList from '../Workloads/SystemApplications'
 import Map from '../ECNViewer/Map/Map'
+import AppTemplates from '../DatasanceConfig/appTemplates/index'
 
 const controllerJson = window.controllerConfig || null
 
@@ -89,7 +90,7 @@ export default function Layout() {
         <div className="flex">
           <ProSidebarProvider>
             <div
-              className="max-h-[93.5vh] min-h-[93.5vh]"
+              className="max-h-[93.5vh] min-h-[93.5vh] overflow-y-auto custom-scrollbar"
               onMouseEnter={() => !isPinned && setCollapsed(false)}
               onMouseLeave={() => !isPinned && setCollapsed(true)}
             >
@@ -186,14 +187,14 @@ export default function Layout() {
                     </SubMenu>
 
                     <SubMenu label="Config" icon={<CatalogIcon />}>
-                      <NavLink to="/catalog">
+                      <NavLink to="/config/AppTemplates">
                         {({ isActive }) => (
                           <MenuItem icon={<FileCopyOutlined />} active={isActive}>
                             App Templates
                           </MenuItem>
                         )}
                       </NavLink>
-                      <NavLink to="/catalog/microservice">
+                      <NavLink to="/config/microservice">
                         {({ isActive }) => (
                           <MenuItem icon={<CategoryOutlined />} active={isActive}>
                             Catalog Microservices
@@ -253,6 +254,7 @@ export default function Layout() {
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" Component={Dashboard} />
+              <Route path="/config/AppTemplates" Component={AppTemplates} />
               <Route path="/catalog" Component={Catalog} />
               <Route
                 path="/overview"

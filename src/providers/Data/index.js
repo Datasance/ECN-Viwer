@@ -154,7 +154,7 @@ export const DataProvider = ({
       for (const application of applications) {
         // We need this to get microservice details like Status
         const microservicesResponse = await request(`/api/v3/microservices?application=${application.name}`)
-        if (!microservicesResponse.ok) {
+        if (!microservicesResponse?.ok) {
           setError({ message: microservicesResponse.statusText })
           return
         }
