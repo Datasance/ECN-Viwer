@@ -250,7 +250,7 @@ export default function Layout() {
 
 
           {/* Content Area */}
-          <div className="flex-1 px-5 pt-6 overflow-auto">
+          <div className="flex-1 px-5 pt-6 overflow-auto bg-gray-900">
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" Component={Dashboard} />
@@ -280,7 +280,7 @@ export default function Layout() {
         </div>
 
         {/* Footer */}
-        <footer className="text-xs text-center border-t border-gray-700 flex justify-between p-3">
+        <footer className="text-xs text-center border-t border-gray-700 flex justify-between p-3 bg-gray-900">
           <div className="text-white">
             <p>
               Controller v{status?.versions.controller}
