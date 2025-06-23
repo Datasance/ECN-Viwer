@@ -15,6 +15,7 @@ import yaml from "js-yaml";
 import { API_VERSIONS } from '../../Utils/constants';
 import { parseMicroservice } from '../../Utils/ApplicationParser';
 import lget from "lodash/get";
+import CryptoTextBox from '../../CustomComponent/CustomCryptoTextBox';
 
 
 function MicroservicesList() {
@@ -35,6 +36,7 @@ function MicroservicesList() {
   const flattenedMicroservices = data?.applications?.flatMap((app: any) =>
     app.microservices.map((ms: any) => ({
       ...ms,
+      agentName: data.activeAgents.find((x:any)=>x.uuid === ms.iofogUuid)?.name,
       appName: app.name,
       appDescription: app.description,
       appCreatedAt: app.createdAt,
@@ -235,7 +237,7 @@ function MicroservicesList() {
   const columns = [
     {
       key: 'name',
-      header: 'Name',
+      header: 'Microservice Name',
       render: (row: any) => (
         <div
           className="cursor-pointer text-blue-400 hover:underline"
@@ -244,6 +246,10 @@ function MicroservicesList() {
           {row.name}
         </div>
       ),
+    },
+    {
+      key: 'agentName',
+      header: 'Agent Name',
     },
     {
       key: 'application',
@@ -292,9 +298,19 @@ function MicroservicesList() {
       ),
     },
     {
+      label: 'Error Messages',
+      render: (node: any) => {
+        return node.status.errorMessage ? <span className="text-white whitespace-pre-wrap break-words">{node.status?.errorMessage}</span> : 'N/A'
+      },
+    },
+    {
       label: 'Microservice Details',
       render: () => '',
       isSectionHeader: true,
+    },
+    {
+      label: 'uuid',
+      render: (row: any) => row.uuid || 'N/A',
     },
     {
       label: 'Image',
@@ -502,7 +518,7 @@ function MicroservicesList() {
 
         const envData = envVars.map((env: any, index: number) => ({
           keyName: env.key,
-          value: env.value,
+          value: <CryptoTextBox data={env.value}/>,
           key: `${env.key}-${index}`,
         }));
 
@@ -515,7 +531,6 @@ function MicroservicesList() {
           {
             key: 'value',
             header: 'Value',
-            formatter: ({ row }: any) => <span className="text-white">{row.value}</span>,
           },
         ];
 
@@ -581,7 +596,7 @@ function MicroservicesList() {
 
 
   return (
-    <div className="max-h-[90.8vh] min-h-[90.8vh] bg-gray-900 text-white overflow-auto p-4">
+    <div className=" bg-gray-900 text-white overflow-auto p-4">
       <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">Microservices List</h1>
       <CustomDataTable
         columns={columns}

@@ -152,6 +152,45 @@ function SystemApplicationList() {
     setIsBottomDrawerOpen(true);
   };
 
+
+
+  const readApplicationFile = async (item: any) => {
+    const file = item
+    if (file) {
+      const reader = new window.FileReader()
+
+      reader.onload = async function (evt: any) {
+        try {
+          const doc = yaml.load(evt.target.result)
+          const [applicationData, err] = await parseApplicationFile(doc)
+          if (err) {
+            return pushFeedback({ message: err, type: 'error' })
+          }
+          const newApplication = !data.applications?.find((a: any) => a.name === applicationData.name)
+          const res = await deployApplication(applicationData, newApplication)
+          if (!res.ok) {
+            try {
+              const error = await res.json()
+              pushFeedback({ message: error.message, type: 'error' })
+            } catch (e) {
+              pushFeedback({ message: res.statusText, type: 'error' })
+            }
+          } else {
+            pushFeedback({ message: newApplication ? 'Application deployed!' : 'Application updated!', type: 'success' })
+          }
+        } catch (e: any) {
+          pushFeedback({ message: e.message, type: 'error' })
+        }
+      }
+
+      reader.onerror = function (evt) {
+        pushFeedback({ message: evt, type: 'error' })
+      }
+
+      reader.readAsText(file, 'UTF-8')
+    }
+  }
+
   const columns = [
     {
       key: 'name',
@@ -361,7 +400,7 @@ function SystemApplicationList() {
   ];
 
   return (
-    <div className="max-h-[90.8vh] min-h-[90.8vh] bg-gray-900 text-white overflow-auto p-4">
+    <div className=" bg-gray-900 text-white overflow-auto p-4">
       <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">
         System Application List
       </h1>
@@ -370,6 +409,8 @@ function SystemApplicationList() {
         columns={columns}
         data={data.systemApplications}
         getRowKey={(row) => row.id}
+        uploadDropzone
+        uploadFunction={readApplicationFile}
       />
       <SlideOver
         open={isOpen}

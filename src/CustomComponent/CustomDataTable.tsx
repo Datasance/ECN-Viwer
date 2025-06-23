@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import KeyboardArrowDown from '@material-ui/icons/KeyboardArrowDownOutlined';
 import KeyboardArrowUpOutlined from '@material-ui/icons/KeyboardArrowUpOutlined';
 import MoreVertIcon from '@material-ui/icons/MoreVert';
@@ -19,6 +19,7 @@ type CustomDataTableProps<T> = {
   getRowKey: (row: T) => string | number;
   uploadDropzone?: boolean;
   uploadFunction?: (file: File) => void;
+  closeMenuRowKey?: any
 };
 
 export default function CustomDataTable<T>({
@@ -27,7 +28,8 @@ export default function CustomDataTable<T>({
   expandableRowRender,
   getRowKey,
   uploadDropzone,
-  uploadFunction
+  uploadFunction,
+  closeMenuRowKey
 }: CustomDataTableProps<T>) {
   const [expandedRows, setExpandedRows] = useState<Set<string | number>>(new Set());
   const [filterText, setFilterText] = useState('');
@@ -50,8 +52,12 @@ export default function CustomDataTable<T>({
     })
   );
 
+  useEffect(() => {
+    setOpenMenuRowKey(null);
+  }, [closeMenuRowKey])
+
   return (
-    <div className="w-full">
+    <div className="w-full h-full overflow-auto">
       <div className="flex justify-end mb-2">
         <input
           type="text"
@@ -68,7 +74,7 @@ export default function CustomDataTable<T>({
 
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto h-full overflow-auto">
         <table className="min-w-full text-sm text-gray-300">
           <thead className="bg-gray-700 text-xs uppercase">
             <tr>

@@ -1,20 +1,14 @@
 import React from 'react'
 import { HashRouter, Route, NavLink, useLocation, Routes, Navigate } from 'react-router-dom'
-import HomeIcon from '@material-ui/icons/HomeOutlined'
-import CatalogIcon from '@material-ui/icons/GraphicEqOutlined'
+import MiscellaneousServicesIcon from '@material-ui/icons/Settings'
 import ExitToAppIcon from '@material-ui/icons/ExitToApp'
 import AccountBoxIcon from '@material-ui/icons/AccountBox'
 import DashboardIcon from '@material-ui/icons/Dashboard'
 import ChevronLeftSharp from '@material-ui/icons/ChevronLeftSharp';
 import ChevronRightSharp from '@material-ui/icons/ChevronRightSharp';
-import SettingsEthernetOutlined from '@material-ui/icons/SettingsEthernetOutlined'
-import NetworkCell from '@material-ui/icons/NetworkCell'
+import Hub from '@material-ui/icons/DeviceHubRounded'
 import StorageRounded from '@material-ui/icons/StorageRounded'
-import ListAltRounded from '@material-ui/icons/ListAltRounded'
-import MapRounded from '@material-ui/icons/MapRounded'
 import LayersRounded from '@material-ui/icons/LayersRounded'
-import FileCopyOutlined from '@material-ui/icons/FileCopyOutlined'
-import CategoryOutlined from '@material-ui/icons/CategoryOutlined'
 
 import { MapProvider } from '../providers/Map'
 import { useData } from '../providers/Data'
@@ -36,6 +30,11 @@ import ApplicationList from '../Workloads/Applications'
 import SystemApplicationList from '../Workloads/SystemApplications'
 import Map from '../ECNViewer/Map/Map'
 import AppTemplates from '../DatasanceConfig/appTemplates/index'
+import CatalogMicroservices from '../DatasanceConfig/catalogMicroservices'
+import ConfigMaps from '../DatasanceConfig/configMaps'
+import SecretsMicroservices from '../DatasanceConfig/secret'
+import Certificates from '../DatasanceConfig/certificates'
+import Services from '../DatasanceConfig/services'
 
 const controllerJson = window.controllerConfig || null
 
@@ -90,7 +89,7 @@ export default function Layout() {
         <div className="flex">
           <ProSidebarProvider>
             <div
-              className="max-h-[93.5vh] min-h-[93.5vh] overflow-y-auto custom-scrollbar"
+              className="h-screen overflow-y-auto custom-scrollbar"
               onMouseEnter={() => !isPinned && setCollapsed(false)}
               onMouseLeave={() => !isPinned && setCollapsed(true)}
             >
@@ -100,14 +99,15 @@ export default function Layout() {
                 className="h-full flex flex-col"
                 rootStyles={{
                   border: 'none !important',
-                }}>
+                }}
+              >
                 <div className="flex justify-center py-4">
                   <NavLink to="/dashboard" onClick={returnHome}>
                     <img src={logomark} className="w-9 mt-2" alt="Datasance" />
                   </NavLink>
                 </div>
 
-                <div className="flex-grow">
+                <div className="overflow-y-auto h-[calc(100vh-265px)] border-t border-gray-500">
                   <Menu
                     menuItemStyles={{
                       button: ({ active, disabled }) => ({
@@ -127,6 +127,7 @@ export default function Layout() {
                       }),
                     }}
                   >
+
                     <NavLink to="/dashboard">
                       {({ isActive }) => (
                         <MenuItem icon={<DashboardIcon />} active={isActive}>
@@ -138,14 +139,14 @@ export default function Layout() {
                     <SubMenu label="Nodes" icon={<StorageRounded />}>
                       <NavLink to="/nodes/list">
                         {({ isActive }) => (
-                          <MenuItem icon={<ListAltRounded />} active={isActive}>
+                          <MenuItem active={isActive}>
                             List
                           </MenuItem>
                         )}
                       </NavLink>
                       <NavLink to="/nodes/Map">
                         {({ isActive }) => (
-                          <MenuItem icon={<MapRounded />} active={isActive}>
+                          <MenuItem active={isActive}>
                             Map
                           </MenuItem>
                         )}
@@ -153,57 +154,82 @@ export default function Layout() {
                     </SubMenu>
 
                     <SubMenu label="Workloads" icon={<LayersRounded />}>
-                      <MenuItem icon={<HomeIcon />} disabled>
-                        Overview
-                      </MenuItem>
                       <NavLink to="/Workloads/MicroservicesList">
                         {({ isActive }) => (
-                          <MenuItem icon={<SettingsEthernetOutlined />} active={isActive}>
+                          <MenuItem active={isActive}>
                             Microservices
                           </MenuItem>
                         )}
                       </NavLink>
                       <NavLink to="/Workloads/SystemMicroservicesList">
                         {({ isActive }) => (
-                          <MenuItem icon={<SettingsEthernetOutlined />} active={isActive}>
+                          <MenuItem active={isActive}>
                             System Microservices
                           </MenuItem>
                         )}
                       </NavLink>
                       <NavLink to="/Workloads/ApplicationList">
                         {({ isActive }) => (
-                          <MenuItem icon={<SettingsEthernetOutlined />} active={isActive}>
+                          <MenuItem active={isActive}>
                             Application
                           </MenuItem>
                         )}
                       </NavLink>
                       <NavLink to="/Workloads/SystemApplicationList">
                         {({ isActive }) => (
-                          <MenuItem icon={<SettingsEthernetOutlined />} active={isActive}>
+                          <MenuItem active={isActive}>
                             System Application
                           </MenuItem>
                         )}
                       </NavLink>
                     </SubMenu>
 
-                    <SubMenu label="Config" icon={<CatalogIcon />}>
+                    <SubMenu label="Config" icon={<MiscellaneousServicesIcon />}>
                       <NavLink to="/config/AppTemplates">
                         {({ isActive }) => (
-                          <MenuItem icon={<FileCopyOutlined />} active={isActive}>
+                          <MenuItem active={isActive}>
                             App Templates
                           </MenuItem>
                         )}
                       </NavLink>
-                      <NavLink to="/config/microservice">
+                      <NavLink to="/config/CatalogMicroservices">
                         {({ isActive }) => (
-                          <MenuItem icon={<CategoryOutlined />} active={isActive}>
+                          <MenuItem active={isActive}>
                             Catalog Microservices
+                          </MenuItem>
+                        )}
+                      </NavLink>
+                      <NavLink to="/config/ConfigMaps">
+                        {({ isActive }) => (
+                          <MenuItem active={isActive}>
+                            Config Maps
+                          </MenuItem>
+                        )}
+                      </NavLink>
+                      <NavLink to="/config/secret">
+                        {({ isActive }) => (
+                          <MenuItem active={isActive}>
+                            Secrets
+                          </MenuItem>
+                        )}
+                      </NavLink>
+                      <NavLink to="/config/certificates">
+                        {({ isActive }) => (
+                          <MenuItem active={isActive}>
+                            Certificates
+                          </MenuItem>
+                        )}
+                      </NavLink>
+                      <NavLink to="/config/services">
+                        {({ isActive }) => (
+                          <MenuItem active={isActive}>
+                            Services
                           </MenuItem>
                         )}
                       </NavLink>
                     </SubMenu>
 
-                    <MenuItem icon={<NetworkCell />} disabled>
+                    <MenuItem icon={<Hub />} disabled>
                       Network
                     </MenuItem>
 
@@ -227,12 +253,13 @@ export default function Layout() {
                   </Menu>
                 </div>
 
-                <div className="sticky flex-shrink-0 p-3 ">
+                {/* ALT: Pin button + versiyon bilgisi + footer */}
+                <div className="flex flex-col gap-3 px-3 py-4 border-t border-gray-500">
                   <button
                     className="w-full text-xs bg-gray-700 text-white py-2 rounded hover:bg-gray-600 transition flex items-center justify-center"
                     onClick={() => {
-                      setIsPinned(!isPinned)
-                      setCollapsed(false)
+                      setIsPinned(!isPinned);
+                      setCollapsed(false);
                     }}
                   >
                     {!collapsed && (
@@ -240,8 +267,41 @@ export default function Layout() {
                     )}
                     {isPinned ? <ChevronLeftSharp /> : <ChevronRightSharp />}
                   </button>
+
+                  {
+                    !collapsed ?
+                      <>
+                        <div className="flex justify-center items-center text-white text-xs space-x-8">
+                          <a className="font-bold underline underline-offset-2" href="https://docs.datasance.com" target="_blank" rel="noreferrer">
+                            DOCS
+                          </a>
+                          <a
+                            className="font-bold underline underline-offset-2"
+                            href={`/#/api?userToken=${keycloak?.token}&baseUrl=${/^(http:\/\/|https:\/\/)?((\d{1,3}\.){3}\d{1,3}|localhost)(:\d+)?$/.test(window.location.origin)
+                              ? `${window.location.origin.replace(/(:\d+)?$/, `:${window.controllerConfig?.port}`)}/api/v3`
+                              : `${window.location.origin}/api/v3`
+                              }`}
+                            target="_parent"
+                          >
+                            API
+                          </a>
+                          <a className="font-bold underline underline-offset-2" href="https://datasance.com/EULA.pdf" target="_blank" rel="noreferrer">
+                            EULA
+                          </a>
+                        </div>
+                        <div className="text-white text-xs text-center">
+                          <p>Controller v{status?.versions.controller}</p>
+                          <p>ECN Viewer v{status?.versions.ecnViewer}</p>
+                        </div>
+                      </> : null
+                  }
+                  <a href="https://datasance.com/" className="text-white text-xs text-center">
+                    © {new Date().getFullYear()} Datasance
+                  </a>
+
                 </div>
               </Sidebar>
+
 
 
 
@@ -250,16 +310,15 @@ export default function Layout() {
 
 
           {/* Content Area */}
-          <div className="flex-1 px-5 pt-6 overflow-auto bg-gray-900">
+          <div className="flex-1 px-5 pt-6 overflow-auto bg-gray-900 h-screen overflow-auto">
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" Component={Dashboard} />
-              <Route path="/config/AppTemplates" Component={AppTemplates} />
               <Route path="/catalog" Component={Catalog} />
               <Route
                 path="/overview"
                 element={
-                  <div className='max-h-[90.8vh] min-h-[90.8vh] overflow-auto'>
+                  <div className=' overflow-auto'>
                     <MapProvider>
                       <ECNViewer returnHomeCBRef={returnHomeCbRef} />
                     </MapProvider>
@@ -274,13 +333,19 @@ export default function Layout() {
               <Route path="/Workloads/ApplicationList" Component={ApplicationList} />
               <Route path="/Workloads/SystemApplicationList" Component={SystemApplicationList} />
               <Route path="/nodes/Map" element={<Map collapsed={collapsed} />} />
+              <Route path="/config/AppTemplates" Component={AppTemplates} />
+              <Route path="/config/CatalogMicroservices" Component={CatalogMicroservices} />
+              <Route path="/config/ConfigMaps" Component={ConfigMaps} />
+              <Route path="/config/secret" Component={SecretsMicroservices} />
+              <Route path="/config/certificates" Component={Certificates} />
+              <Route path="/config/services" Component={Services} />
               <Route Component={() => <Navigate to="/dashboard" />} />
             </Routes>
           </div>
         </div>
 
         {/* Footer */}
-        <footer className="text-xs text-center border-t border-gray-700 flex justify-between p-3 bg-gray-900">
+        {/* <footer className="text-xs text-center border-t border-gray-700 flex justify-between p-3 bg-gray-900">
           <div className="text-white">
             <p>
               Controller v{status?.versions.controller}
@@ -313,7 +378,7 @@ export default function Layout() {
           <a href="https://datasance.com/" className="text-white">
             © {new Date().getFullYear()} Datasance.
           </a>
-        </footer>
+        </footer> */}
       </div>
     </HashRouter>
   )

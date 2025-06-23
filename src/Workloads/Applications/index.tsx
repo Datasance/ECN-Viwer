@@ -81,26 +81,6 @@ function ApplicationList() {
     }
   };
 
-  const parseApplicationFile = async (doc: any) => {
-    if (API_VERSIONS.indexOf(doc.apiVersion) === -1) {
-      return [{}, `Invalid API Version ${doc.apiVersion}, current version is ${API_VERSIONS.slice(-1)[0]}`]
-    }
-    if (doc.kind !== 'Application') {
-      return [{}, `Invalid kind ${doc.kind}`]
-    }
-    if (!doc.metadata || !doc.spec) {
-      return [{}, 'Invalid YAML format']
-    }
-    const application = {
-      name: lget(doc, 'metadata.name', undefined),
-      ...doc.spec,
-      isActivated: true,
-      microservices: await Promise.all((doc.spec.microservices || []).map(async (m: any) => parseMicroservice(m)))
-    }
-
-    return [application]
-  }
-
   const handleYamlUpdate = async () => {
     try {
       const doc = yaml.load(editorDataChanged)
@@ -119,8 +99,8 @@ function ApplicationList() {
         }
       } else {
         pushFeedback({ message: newApplication ? 'Application deployed!' : 'Application updated!', type: 'success' })
-        setIsBottomDrawerOpen(false); 
-        setEditorIsChanged(false); 
+        setIsBottomDrawerOpen(false);
+        setEditorIsChanged(false);
         setEditorDataChanged(null)
       }
     } catch (e: any) {
@@ -150,6 +130,64 @@ function ApplicationList() {
       reducedAgents: data?.reducedAgents,
     });
   }, [selectedApplication, data]);
+
+
+  const parseApplicationFile = async (doc:any) => {
+      if (API_VERSIONS.indexOf(doc.apiVersion) === -1) {
+        return [{}, `Invalid API Version ${doc.apiVersion}, current version is ${API_VERSIONS.slice(-1)[0]}`]
+      }
+      if (doc.kind !== 'Application') {
+        return [{}, `Invalid kind ${doc.kind}`]
+      }
+      if (!doc.metadata || !doc.spec) {
+        return [{}, 'Invalid YAML format']
+      }
+      const application = {
+        name: lget(doc, 'metadata.name', undefined),
+        ...doc.spec,
+        isActivated: true,
+        microservices: await Promise.all((doc.spec.microservices || []).map(async (m:any) => parseMicroservice(m)))
+      }
+  
+      return [application]
+    }
+  
+    const readApplicationFile = async (item:any) => {
+      const file = item
+      if (file) {
+        const reader = new window.FileReader()
+  
+        reader.onload = async function (evt:any) {
+          try {
+            const doc = yaml.load(evt.target.result)
+            const [applicationData, err] = await parseApplicationFile(doc)
+            if (err) {
+              return pushFeedback({ message: err, type: 'error' })
+            }
+            const newApplication = !data.applications?.find((a:any) => a.name === applicationData.name)
+            const res = await deployApplication(applicationData, newApplication)
+            if (!res.ok) {
+              try {
+                const error = await res.json()
+                pushFeedback({ message: error.message, type: 'error' })
+              } catch (e) {
+                pushFeedback({ message: res.statusText, type: 'error' })
+              }
+            } else {
+              pushFeedback({ message: newApplication ? 'Application deployed!' : 'Application updated!', type: 'success' })
+            }
+          } catch (e:any) {
+            pushFeedback({ message: e.message, type: 'error' })
+          }
+        }
+  
+        reader.onerror = function (evt) {
+          pushFeedback({ message: evt, type: 'error' })
+        }
+  
+        reader.readAsText(file, 'UTF-8')
+      }
+    }
 
   const columns = [
     {
@@ -360,7 +398,7 @@ function ApplicationList() {
   ];
 
   return (
-    <div className="max-h-[90.8vh] min-h-[90.8vh] bg-gray-900 text-white overflow-auto p-4">
+    <div className=" bg-gray-900 text-white overflow-auto p-4">
       <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">
         Application List
       </h1>
@@ -368,6 +406,8 @@ function ApplicationList() {
         columns={columns}
         data={data.applications}
         getRowKey={(row) => row.id}
+        uploadDropzone
+        uploadFunction={readApplicationFile}
       />
       <SlideOver
         open={isOpen}

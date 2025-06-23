@@ -7,6 +7,7 @@ import {
 } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import ZoomOutMap from '@material-ui/icons/ZoomOutMap';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -88,7 +89,16 @@ const CustomLeaflet: React.FC<CustomLeafletProps> = ({
   const adjustedMarkers = groupMarkersByPosition(markers);
 
   const CustomMarker = ({ marker }: { marker: MarkerData }) => {
+    const map = useMap();
     const isSelected = selectedMarker?.id === marker.id;
+
+    const handleClick = (e: any) => {
+      e.originalEvent.stopPropagation();
+      setSelectedMarker(marker);
+      map.setView(marker.position, map.getZoom());
+      map.flyTo(marker.position, 16, { duration: 0.5 });
+    };
+
     return (
       <LeafletCircleMarker
         center={marker.position}
@@ -99,14 +109,12 @@ const CustomLeaflet: React.FC<CustomLeafletProps> = ({
         }}
         radius={isSelected ? 12 : 10}
         eventHandlers={{
-          click: (e) => {
-            e.originalEvent.stopPropagation();
-            setSelectedMarker(marker);
-          },
+          click: handleClick,
         }}
       />
     );
   };
+
 
   const MapResizer = ({ collapsed }: { collapsed: boolean }) => {
     const map = useMap();
@@ -116,6 +124,33 @@ const CustomLeaflet: React.FC<CustomLeafletProps> = ({
     }, [collapsed, map]);
 
     return null;
+  };
+
+  const ZoomOutButton = () => {
+    const map = useMap();
+
+    const getCenterOfMarkers = (markers: MarkerData[]): [number, number] => {
+      const latSum = markers.reduce((sum, m) => sum + m.position[0], 0);
+      const lngSum = markers.reduce((sum, m) => sum + m.position[1], 0);
+      return [latSum / markers.length, lngSum / markers.length];
+    };
+
+    const handleZoomOut = () => {
+      const center = getCenterOfMarkers(markers);
+      map.setView(center, 3);
+    };
+
+    return (
+      <div className="absolute bottom-4 right-4 z-[1000]">
+        <button
+          onClick={handleZoomOut}
+          className="bg-gray-800 text-white rounded-full shadow-md w-10 h-10 flex items-center justify-center hover:bg-gray-700 transition"
+          title="Zoom Out"
+        >
+          <ZoomOutMap fontSize="default" />
+        </button>
+      </div>
+    );
   };
 
   return (
@@ -131,6 +166,7 @@ const CustomLeaflet: React.FC<CustomLeafletProps> = ({
           <CustomMarker key={marker.id} marker={marker} />
         ))}
         <MapResizer collapsed={collapsed} />
+        <ZoomOutButton />
       </MapContainer>
 
       {selectedMarker && (

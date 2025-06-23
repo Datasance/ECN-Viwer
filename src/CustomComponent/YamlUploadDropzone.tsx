@@ -39,7 +39,10 @@ const YamlUploadDropzone: React.FC<Props> = ({ onUpload }) => {
     };
 
     const handleClick = () => {
-        fileInputRef.current?.click();
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+            fileInputRef.current.click();
+        }
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

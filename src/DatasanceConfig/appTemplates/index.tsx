@@ -1,10 +1,14 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import CustomDataTable from '../../CustomComponent/CustomDataTable'
 import { ControllerContext } from '../../ControllerProvider'
 import { FeedbackContext } from '../../Utils/FeedbackContext'
 import lget from 'lodash/get'
 import yaml from 'js-yaml'
 import { parseMicroservice } from '../../Utils/ApplicationParser'
+import UnsavedChangesModal from '../../CustomComponent/UnsavedChangesModal'
+import DeployApplicationTemplate from '../../Catalog/Application/DeployApplicationTemplate'
+import CustomActionModal from '../../CustomComponent/CustomActionModal'
+import AceEditor from "react-ace";
 
 function AppTemplates() {
     const [fetching, setFetching] = React.useState(true)
@@ -12,6 +16,10 @@ function AppTemplates() {
     const [catalog, setCatalog] = React.useState([])
     const { request } = React.useContext(ControllerContext)
     const { pushFeedback } = React.useContext(FeedbackContext)
+    const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+    const [showDeployModal, setShowDeployModal] = useState(false);
+    const [showDetailModal, setShowDetailModal] = useState(false);
+    const [selectedItem, setselectedItem] = useState<any>()
 
     useEffect(() => {
         fetchCatalog()
@@ -56,6 +64,8 @@ function AppTemplates() {
             } else {
                 setCatalog(catalog.filter((i: any) => i.id !== item.id))
                 pushFeedback({ message: 'Application template deleted', type: 'success' })
+                setShowDeleteConfirmModal(false)
+                setselectedItem(null);
             }
             setLoading(false)
         } catch (e: any) {
@@ -64,20 +74,8 @@ function AppTemplates() {
         }
     }
 
-    const downloadYAML = (item: any) => {
-        const yamlStr = yaml.dump(item)
-        const blob = new Blob([yamlStr], { type: 'application/x-yaml' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `${item.name}.yaml`
-        a.click()
-        URL.revokeObjectURL(url)
-    }
-
     const showDetails = (item: any) => {
         console.log('Details:', item)
-        // örn: SlideOver açılabilir
     }
 
 
@@ -131,7 +129,7 @@ function AppTemplates() {
     }
 
     const handleYamlUpload = async (item: any) => {
-        const file = item.files[0]
+        const file = item
         if (file) {
             const reader = new window.FileReader()
 
@@ -162,9 +160,7 @@ function AppTemplates() {
             key: 'name',
             header: 'Name',
             render: (row: any) => (
-                <div className="cursor-pointer text-blue-400 hover:underline">
-                    {row.name}
-                </div>
+                <span>{row.name || '-'}</span>
             ),
         },
         {
@@ -198,7 +194,7 @@ function AppTemplates() {
                 if (variables.length === 0) return <span>-</span>;
 
                 return (
-                    <div className="flex flex-col space-y-1">
+                    <div className="max-h-64 overflow-y-auto flex flex-col space-y-1 pr-1 custom-scroll">
                         {variables.map((v: any, index: number) => (
                             <div key={index} className="text-xs text-gray-100 bg-gray-800 px-2 py-1 rounded">
                                 <strong>{v.key}</strong>: {v.description}
@@ -210,25 +206,34 @@ function AppTemplates() {
         },
         {
             key: 'actions',
-            header: '',
+            header: 'Action',
             type: 'action',
             render: (row: any) => (
                 <ul className="text-sm text-black bg-gray-200 rounded">
                     <li
                         className="px-4 py-2 hover:bg-gray-700 cursor-pointer hover:text-white"
-                        onClick={() => showDetails(row)}
+                        onClick={() => {
+                            setselectedItem(row);
+                            setShowDeployModal(true)
+                        }}
+                    >
+                        Deploy
+                    </li>
+                    <li
+                        className="px-4 py-2 hover:bg-gray-700 cursor-pointer hover:text-white"
+                        onClick={() => {
+                            setselectedItem(row);
+                            setShowDetailModal(true)
+                        }}
                     >
                         Details
                     </li>
                     <li
-                        className="px-4 py-2 hover:bg-gray-700 cursor-pointer hover:text-white"
-                        onClick={() => downloadYAML(row)}
-                    >
-                        Download YAML
-                    </li>
-                    <li
                         className="px-4 py-2 hover:bg-red-600 hover:text-white cursor-pointer"
-                        onClick={() => removeCatalogItem(row)}
+                        onClick={() => {
+                            setselectedItem(row);
+                            setShowDeleteConfirmModal(true)
+                        }}
                     >
                         Remove
                     </li>
@@ -238,19 +243,68 @@ function AppTemplates() {
     ];
 
     return (
-        <div className="max-h-[90.8vh] min-h-[90.8vh] bg-gray-900 text-white overflow-auto p-4">
-            <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">
-                Application Templates
-            </h1>
+        <>
+            <div className="bg-gray-900 text-white overflow-auto p-4">
+                <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">
+                    Application Templates
+                </h1>
 
-            <CustomDataTable
-                columns={columns}
-                data={catalog}
-                getRowKey={(row: any) => row.uuid}
-                uploadDropzone
-                uploadFunction={handleYamlUpload}
+                <CustomDataTable
+                    columns={columns}
+                    data={catalog}
+                    getRowKey={(row: any) => row.id}
+                    uploadDropzone
+                    uploadFunction={handleYamlUpload}
+                    closeMenuRowKey={selectedItem}
+                />
+            </div>
+            <UnsavedChangesModal
+                open={showDeleteConfirmModal}
+                onCancel={() => { setShowDeleteConfirmModal(false); }}
+                onConfirm={() => removeCatalogItem(selectedItem)}
+                title={`Delete ${selectedItem?.name}`}
+                message={"This is not reversible."}
+                cancelLabel={"Cancel"}
+                confirmLabel={"Delete"}
             />
-        </div>
+            <CustomActionModal
+                open={showDeployModal}
+                child={<DeployApplicationTemplate template={selectedItem} close={() => setShowDeployModal(false)} />}
+                title={`Deploy ${selectedItem?.name}`}
+                onCancel={() => { setShowDeployModal(false); }}
+            />
+            <CustomActionModal
+                open={showDetailModal}
+                child={
+                    <div className="w-full h-[70vh] min-h-[400px]">
+                        <AceEditor
+                            mode="json"
+                            theme="monokai"
+                            value={selectedItem ? JSON.stringify(selectedItem, null, 2) : ''}
+                            setOptions={{
+                                useWorker: false,
+                                wrap: true,
+                            }}
+                            onLoad={(editor) => {
+                                editor.renderer.setPadding(10);
+                                editor.renderer.setScrollMargin(10);
+                                editor.getSession().setUseWrapMode(true); 
+                            }}
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                borderRadius: '4px',
+                            }}
+                        />
+
+                    </div>
+                }
+                title={`${selectedItem?.name} Details`}
+                onCancel={() => { setShowDetailModal(false); }}
+                cancelLabel={"Cancel"}
+            />
+        </>
+
     )
 }
 

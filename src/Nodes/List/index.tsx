@@ -7,6 +7,7 @@ import { formatDistanceToNow, format } from 'date-fns';
 import { useController } from '../../ControllerProvider';
 import { useFeedback } from '../../Utils/FeedbackContext';
 import UnsavedChangesModal from '../../CustomComponent/UnsavedChangesModal';
+import CryptoTextBox from '../../CustomComponent/CustomCryptoTextBox';
 
 function NodesList() {
     const { data } = useData();
@@ -121,6 +122,10 @@ function NodesList() {
     ];
 
     const slideOverFields = [
+        {
+            label: 'uuid',
+            render: (row: any) => row.uuid || 'N/A',
+        },
         {
             label: 'Status',
             render: (row: any) => (
@@ -353,7 +358,7 @@ function NodesList() {
     ];
 
     return (
-        <div className="max-h-[90.8vh] min-h-[90.8vh] bg-gray-900 text-white overflow-auto p-4">
+        <div className=" bg-gray-900 text-white overflow-auto p-4">
             <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">Agent List</h1>
             <CustomDataTable columns={columns} data={Object.values(data?.reducedAgents?.byName || [])} getRowKey={(row: any) => row.uuid} />
 

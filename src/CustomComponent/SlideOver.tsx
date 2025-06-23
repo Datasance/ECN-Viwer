@@ -96,7 +96,7 @@ const SlideOver = <T,>({
                 >
                   <div
                     onMouseDown={startResizing}
-                    className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize z-50 bg-gray-700 hover:bg-gray-600"
+                    className="absolute left-0 top-0 bottom-0 w-2 cursor-col-resize z-50 bg-gray-700 hover:bg-gray-600 h-[200%]"
                   />
 
                   <div className="flex items-start justify-between p-4 border-b border-gray-700">
@@ -144,7 +144,7 @@ const SlideOver = <T,>({
                             </div>
                           ) : (
                             <div key={idx} className="py-3 sm:grid sm:grid-cols-5 sm:gap-4 flex flex-col">
-                              <dt className="text-sm font-medium text-gray-300 sm:col-span-2">
+                              <dt className="text-sm font-medium text-gray-300 sm:col-span-2 content-center">
                                 {field.label}
                               </dt>
                               <dd className="mt-1 text-sm text-white sm:mt-0 sm:col-span-3">

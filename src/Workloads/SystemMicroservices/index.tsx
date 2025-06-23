@@ -288,9 +288,19 @@ function SystemMicroserviceList() {
       ),
     },
     {
+      label: 'Error Messages',
+      render: (node: any) => {
+        return node.status.errorMessage ? <span className="text-white whitespace-pre-wrap break-words">{node.status?.errorMessage}</span> : 'N/A'
+      },
+    },
+    {
       label: 'Microservice Details',
       render: () => '',
       isSectionHeader: true,
+    },
+    {
+      label: 'uuid',
+      render: (row: any) => row.uuid || 'N/A',
     },
     {
       label: 'Image',
@@ -578,7 +588,7 @@ function SystemMicroserviceList() {
 
 
   return (
-    <div className="max-h-[90.8vh] min-h-[90.8vh] bg-gray-900 text-white overflow-auto p-4">
+    <div className=" bg-gray-900 text-white overflow-auto p-4">
       <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">System Microservices List</h1>
       <CustomDataTable
         columns={columns}
