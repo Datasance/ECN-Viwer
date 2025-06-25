@@ -33,6 +33,13 @@ function CatalogMicroservices() {
 
     const columns = [
         {
+            key: 'id',
+            header: 'ID',
+            render: (row: any) => (
+                <span>{row.id || '-'}</span>
+            ),
+        },
+        {
             key: 'name',
             header: 'Name',
             render: (row: any) => (
@@ -58,6 +65,11 @@ function CatalogMicroservices() {
             key: 'images',
             header: 'ARM',
             render: (row: any) => <span>{row.images.find((x:any) => x.fogTypeId === 2)?.containerImage }</span>,
+        },
+        {
+            key: 'category',
+            header: 'Category',
+            render: (row: any) => <span>{row.category || '-'}</span>,
         },
     ];
 

@@ -95,15 +95,12 @@ export default function Layout() {
             >
               <Sidebar
                 collapsed={collapsed}
-                backgroundColor="#2c3e50"
-                className="h-full flex flex-col"
-                rootStyles={{
-                  border: 'none !important',
-                }}
+                backgroundColor="#111827"
+                className="h-full flex flex-col border-r border-gray-500"
               >
                 <div className="flex justify-center py-4">
                   <NavLink to="/dashboard" onClick={returnHome}>
-                    <img src={logomark} className="w-9 mt-2" alt="Datasance" />
+                    <img src={logomark} className="w-7 mt-2" alt="Datasance" />
                   </NavLink>
                 </div>
 
@@ -111,11 +108,11 @@ export default function Layout() {
                   <Menu
                     menuItemStyles={{
                       button: ({ active, disabled }) => ({
-                        backgroundColor: active ? '#374151' : '#2c3e50',
+                        backgroundColor: active ? '#374151' : '#111827',
                         color: disabled ? '#5e5e5e' : active ? '#ffffff' : '#d1d5db',
                         cursor: disabled ? 'not-allowed' : 'pointer',
                         '&:hover': {
-                          backgroundColor: disabled ? '#2c3e50' : '#1a2633',
+                          backgroundColor: disabled ? '#111827' : '#1a2633',
                           color: disabled ? '#9ca3af' : '#ffffff',
                         },
                       }),
@@ -220,6 +217,9 @@ export default function Layout() {
                           </MenuItem>
                         )}
                       </NavLink>
+                    </SubMenu>
+
+                    <SubMenu label="Network" icon={<Hub />}>
                       <NavLink to="/config/services">
                         {({ isActive }) => (
                           <MenuItem active={isActive}>
@@ -229,9 +229,6 @@ export default function Layout() {
                       </NavLink>
                     </SubMenu>
 
-                    <MenuItem icon={<Hub />} disabled>
-                      Network
-                    </MenuItem>
 
                     {keycloak && (
                       <MenuItem

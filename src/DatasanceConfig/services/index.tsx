@@ -18,7 +18,7 @@ function Services() {
                 setFetching(false)
                 return
             }
-            const servicesItems = (await servicesItemsResponse.json()).servicesItems
+            const servicesItems = (await servicesItemsResponse.json())
             setServices(servicesItems)
             setFetching(false)
         } catch (e: any) {
@@ -33,10 +33,10 @@ function Services() {
 
     const columns = [
         {
-            key: 'service',
-            header: 'service',
+            key: 'name',
+            header: 'name',
             render: (row: any) => (
-                <span>{row.service || '-'}</span>
+                <span>{row.name || '-'}</span>
             ),
         },
         {
@@ -50,39 +50,39 @@ function Services() {
             render: (row: any) => <span>{row.resource || '-'}</span>,
         },
         {
-            key: 'target_port',
-            header: 'target_port',
-            render: (row: any) => <span>{row.target_port || '-'}</span>,
+            key: 'targetPort',
+            header: 'Target Port',
+            render: (row: any) => <span>{row.targetPort || '-'}</span>,
         },
         {
-            key: 'service_port',
+            key: 'servicePort',
             header: 'service_port',
-            render: (row: any) => <span>{row.service_port || '-'}</span>,
+            render: (row: any) => <span>{row.servicePort || '-'}</span>,
         },
         {
-            key: 'k8s_type',
-            header: 'k8s_type',
-            render: (row: any) => <span>{row.k8s_type || '-'}</span>,
+            key: 'k8sType',
+            header: 'k8s Type',
+            render: (row: any) => <span>{row.k8sType || '-'}</span>,
         },
         {
-            key: 'bridge_port',
-            header: 'bridge_port',
-            render: (row: any) => <span>{row.bridge_port || '-'}</span>,
+            key: 'bridgePort',
+            header: 'Bridge Port',
+            render: (row: any) => <span>{row.bridgePort || '-'}</span>,
         },
         {
-            key: 'default_bridge',
-            header: 'default_bridge',
-            render: (row: any) => <span>{row.default_bridge || '-'}</span>,
+            key: 'defaultBridge',
+            header: 'Default Bridge',
+            render: (row: any) => <span>{row.defaultBridge || '-'}</span>,
         },
         {
-            key: 'service_endpoint',
-            header: 'service_endpoint',
-            render: (row: any) => <span>{row.service_endpoint || '-'}</span>,
+            key: 'serviceEndpoint',
+            header: 'serviceEndpoint',
+            render: (row: any) => <span>{row.serviceEndpoint || '-'}</span>,
         },
         {
-            key: 'status',
+            key: 'provisioningStatus',
             header: 'status',
-            render: (row: any) => <span>{row.status || '-'}</span>,
+            render: (row: any) => <span>{row.provisioningStatus || '-'}</span>,
         },
     ];
 

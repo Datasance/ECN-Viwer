@@ -18,8 +18,7 @@ function ConfigMaps() {
                 setFetching(false)
                 return
             }
-            const configMapsItems = (await configMapsItemsResponse.json()).configMapsItems
-            debugger
+            const configMapsItems = (await configMapsItemsResponse.json()).configMaps
             setConfigMaps(configMapsItems)
             setFetching(false)
         } catch (e: any) {
@@ -34,16 +33,16 @@ function ConfigMaps() {
 
     const columns = [
         {
-            key: 'configmap',
-            header: 'configmap',
-            render: (row: any) => (
-                <span>{row.configmap || '-'}</span>
-            ),
-        },
-        {
             key: 'id',
             header: 'id',
             render: (row: any) => <span>{row.id || '-'}</span>,
+        },
+        {
+            key: 'name',
+            header: 'Name',
+            render: (row: any) => (
+                <span>{row.name || '-'}</span>
+            ),
         },
         {
             key: 'immutable',

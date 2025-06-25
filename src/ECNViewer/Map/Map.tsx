@@ -95,6 +95,10 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
 
   const slideOverFields = [
     {
+      label: 'uuid',
+      render: (row: any) => row.uuid || 'N/A',
+    },
+    {
       label: 'Status',
       render: (row: any) => (
         <span
@@ -121,9 +125,15 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
       ),
     },
     {
-      label: 'Warning Messages',
+      label: 'Security Violation Info',
       render: (node: any) => {
-        return node.warningMessage && node.tags?.warningMessage > 0 ? <span className="text-white whitespace-pre-wrap break-words">{node.warningMessage}</span> : 'N/A'
+        return node.warningMessage ? <span className="text-white whitespace-pre-wrap break-words">{node.securityViolationInfo}</span> : 'N/A'
+      },
+    },
+    {
+      label: 'Warning Message',
+      render: (node: any) => {
+        return node.warningMessage ? <span className="text-white whitespace-pre-wrap break-words">{node.warningMessage}</span> : 'N/A'
       },
     },
     {
@@ -144,6 +154,10 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
       render: (node: any) => { return node.description || 'N/A' },
     },
     {
+      label: 'Up Time',
+      render: (node: any) => { return node.daemonOperatingDuration || 'N/A' },
+    },
+    {
       label: 'Agent Details',
       render: () => '',
       isSectionHeader: true,
@@ -153,11 +167,15 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
       render: (node: any) => node.version || 'N/A',
     },
     {
+      label: 'Mode',
+      render: (node: any) => node.isSystem ? "System" : 'Node',
+    },
+    {
       label: 'Deployment Type',
       render: (node: any) => node.deploymentType || 'N/A',
     },
     {
-      label: 'Ccontainer Engine',
+      label: 'Container Engine',
       render: (node: any) => node.containerEngine || 'N/A',
     },
     {
@@ -167,6 +185,10 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
     {
       label: 'IP Address',
       render: (node: any) => node.ipAddress || 'N/A',
+    },
+    {
+      label: 'IP Address External',
+      render: (node: any) => node.ipAddressExternal || 'N/A',
     },
     {
       label: 'Tags',
@@ -219,6 +241,101 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
         }
         return `${(Number(node.diskUsage) || 0).toFixed(2)}%`;
       },
+    },
+    {
+      label: 'System Available Disk',
+      render: (node: any) => `${(Number(node.systemAvailableDisk) || 0).toFixed(2)}%`,
+    },
+    {
+      label: 'System Available Memory',
+      render: (node: any) => `${(Number(node.systemAvailableMemory) || 0).toFixed(2)}%`,
+    },
+    {
+      label: 'System Total CPU',
+      render: (node: any) => `${(Number(node.systemTotalCPU) || 0).toFixed(2)}%`,
+    },
+    {
+      label: 'Volume Mounts',
+      render: () => '',
+      isSectionHeader: true,
+    },
+    {
+      label: '',
+      isFullSection: true,
+      render: (node: any) => {
+
+        if (!node.volumeMounts || node.volumeMounts === 0) {
+          return <div className="text-sm text-gray-400">No volume mounts found for this agent.</div>;
+        }
+
+        const localColumns = [
+          {
+            key: 'name',
+            header: 'Name',
+            formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
+          },
+          {
+            key: 'version',
+            header: 'Version',
+            formatter: ({ row }: any) => <span className="text-white">{row.version}</span>,
+          },
+          {
+            key: 'configMapName',
+            header: 'Config Map Name',
+            formatter: ({ row }: any) => <span className="text-white">{row.configMapName}</span>,
+          },
+          {
+            key: 'secretName',
+            header: 'Secret Name',
+            formatter: ({ row }: any) => <span className="text-white">{row.secretName}</span>,
+          },
+        ];
+
+        return (
+          <CustomDataTable
+            columns={localColumns}
+            data={node.volumeMounts}
+            getRowKey={(row: any) => row.uuid}
+          />
+        );
+      },
+    },
+    {
+      label: 'Status',
+      render: () => '',
+      isSectionHeader: true,
+    },
+    {
+      label: 'Cpu Violation',
+      render: (row: any) => row.cpuViolation || 'N/A',
+    },
+    {
+      label: 'Disk Violation',
+      render: (row: any) => row.diskViolation || 'N/A',
+    },
+    {
+      label: 'Memory Violation',
+      render: (row: any) => row.memoryViolation || 'N/A',
+    },
+    {
+      label: 'Is Ready To Rollback',
+      render: (row: any) => <span>{row.isReadyToRollback.toString()}</span>,
+    },
+    {
+      label: 'Is Ready To Upgrade',
+      render: (row: any) => <span>{row.isReadyToUpgrade.toString()}</span>,
+    },
+    // {
+    //     label: 'Last Command Time',
+    //     render: (row: any) => row.lastCommandTime || 'N/A',
+    // },
+    {
+      label: 'Last Status Time',
+      render: (row: any) => <span>{new Date(row.lastStatusTime).toLocaleString()}</span>,
+    },
+    {
+      label: 'Processed Messages',
+      render: (row: any) => row.processedMessages || 'N/A',
     },
     {
       label: 'Applications',

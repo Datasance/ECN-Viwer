@@ -18,7 +18,7 @@ function Certificates() {
                 setFetching(false)
                 return
             }
-            const certificatesItems = (await certificatesItemsResponse.json()).certificatesItems
+            const certificatesItems = (await certificatesItemsResponse.json()).certificates
             setCertificates(certificatesItems)
             setFetching(false)
         } catch (e: any) {
@@ -33,41 +33,41 @@ function Certificates() {
 
     const columns = [
         {
-            key: 'certificate',
-            header: 'Certificate',
+            key: 'name',
+            header: 'name',
             render: (row: any) => (
-                <span>{row.certificate || '-'}</span>
+                <span>{row.name || '-'}</span>
             ),
         },
         {
-            key: 'is_ca',
-            header: 'IS CA',
-            render: (row: any) => <span>{row.is_ca || '-'}</span>,
+            key: 'isCA',
+            header: 'isCA',
+            render: (row: any) => <span>{row.isCA.toString()}</span>,
         },
         {
-            key: 'valid_from',
+            key: 'validFrom',
             header: 'Valid From',
-            render: (row: any) => <span>{new Date(row.valid_from).toLocaleString()}</span>,
+            render: (row: any) => <span>{new Date(row.validFrom).toLocaleString()}</span>,
         },
         {
-            key: 'valid_to',
+            key: 'validTo',
             header: 'Valid To',
-            render: (row: any) => <span>{new Date(row.valid_to).toLocaleString()}</span>,
+            render: (row: any) => <span>{new Date(row.validTo).toLocaleString()}</span>,
         },
         {
-            key: 'ca_name',
+            key: 'caName',
             header: 'ca name',
-            render: (row: any) => <span>{row.ca_name || '-'}</span>,
+            render: (row: any) => <span>{row.caName || '-'}</span>,
         },
         {
-            key: 'days_remaining',
+            key: 'daysRemaining',
             header: 'Days Remaining',
-            render: (row: any) => <span>{new Date(row.days_remaining).toLocaleString()}</span>,
+            render: (row: any) => <span>{new Date(row.daysRemaining).toLocaleString()}</span>,
         },
         {
-            key: 'is_expired',
+            key: 'isExpired',
             header: 'Is Expired',
-            render: (row: any) => <span>{new Date(row.is_expired).toLocaleString()}</span>,
+            render: (row: any) => <span>{row.isExpired.toString()}</span>,
         },
     ];
 

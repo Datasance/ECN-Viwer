@@ -18,7 +18,7 @@ function SecretsMicroservices() {
                 setFetching(false)
                 return
             }
-            const secretsItems = (await secretsItemsResponse.json()).secretsItems
+            const secretsItems = (await secretsItemsResponse.json()).secrets
             setSecrets(secretsItems)
             setFetching(false)
         } catch (e: any) {
@@ -33,16 +33,16 @@ function SecretsMicroservices() {
 
     const columns = [
         {
-            key: 'secret',
-            header: 'secret',
-            render: (row: any) => (
-                <span>{row.secret || '-'}</span>
-            ),
-        },
-        {
             key: 'id',
             header: 'id',
             render: (row: any) => <span>{row.id || '-'}</span>,
+        },
+        {
+            key: 'Name',
+            header: 'name',
+            render: (row: any) => (
+                <span>{row.name || '-'}</span>
+            ),
         },
         {
             key: 'type',
