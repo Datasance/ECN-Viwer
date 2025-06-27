@@ -1,215 +1,153 @@
 import React from 'react';
 import ApexCharts from 'react-apexcharts';
+import { StatusColor } from '../../Utils/Enums/StatusColor';
+import { MiBFactor, prettyBytes } from '../../ECNViewer/utils';
 
 interface AgentData {
-    lastActive: number;
-    daemonOperatingDuration: number;
-    daemonLastStart: number;
-    systemAvailableDisk: number;
-    systemAvailableMemory: number;
-    repositoryCount: number;
-    systemTime: number;
-    lastStatusTime: number;
-    processedMessages: number;
-    lastCommandTime: number;
-    logFileCount: number;
     uuid: string;
     name: string;
-    location: string | null;
-    gpsMode: string;
-    latitude: number;
-    longitude: number;
-    description: string | null;
     daemonStatus: string;
     memoryUsage: number;
     diskUsage: number;
     cpuUsage: number;
-    memoryViolation: string;
-    diskViolation: string;
-    cpuViolation: string;
-    systemTotalCpu: number;
-    securityStatus: string;
-    securityViolationInfo: string;
-    catalogItemStatus: string | null;
-    repositoryStatus: string;
-    ipAddress: string;
-    ipAddressExternal: string;
-    host: string;
-    catalogItemMessageCounts: string | null;
-    messageSpeed: number;
-    networkInterface: string;
-    dockerUrl: string;
-    diskLimit: number;
-    diskDirectory: string;
-    memoryLimit: number;
-    cpuLimit: number;
-    logLimit: number;
-    logDirectory: string;
-    bluetoothEnabled: boolean;
-    abstractedHardwareEnabled: boolean;
-    version: string;
-    isReadyToUpgrade: boolean;
-    isReadyToRollback: boolean;
-    statusFrequency: number;
-    changeFrequency: number;
-    deviceScanFrequency: number;
-    tunnel: string;
-    watchdogEnabled: boolean;
-    dockerPruningFrequency: number;
-    availableDiskThreshold: number;
-    logLevel: string;
-    isSystem: boolean;
-    routerId: string | null;
-    timeZone: string;
-    createdAt: string;
-    updatedAt: string;
-    fogTypeId: number;
-    tags: string[];
-    routerMode: string;
-    messagingPort: number;
-    interRouterPort: number;
-    edgeRouterPort: number;
-    upstreamRouters: string[];
-    edgeResources: any[];
 }
 
 interface AgentDashboardProps {
-    agentData: AgentData[] | undefined;
+    agentData: Record<string, AgentData> | undefined;
 }
 
 const AgentDashboard: React.FC<AgentDashboardProps> = ({ agentData }) => {
     if (!agentData) return <div>Loading...</div>;
 
-    const formatData = (data: number) => data.toFixed(2);
+    const agentArray = Object.values(agentData);
+    const agentMap = agentArray.reduce((acc, agent) => {
+        acc[agent.name] = agent;
+        return acc;
+    }, {} as Record<string, AgentData>);
 
-    const memoryUsage = agentData.map(agent => formatData(agent.memoryUsage));
-    const cpuUsage = agentData.map(agent => formatData(agent.cpuUsage));
-    const diskUsage = agentData.map(agent => formatData(agent.diskUsage));
-
-    const runningCount = agentData.filter(agent => agent.daemonStatus === 'RUNNING').length;
-    const notRunningCount = agentData.length - runningCount;
+    const runningCount = agentArray.filter(agent => agent.daemonStatus === 'RUNNING').length;
+    const notRunningCount = agentArray.length - runningCount;
 
     const daemonStatusChartOptions = {
-        chart: {
-            type: 'donut' as 'donut',
-            background: '#333',
-        },
-        labels: ['RUNNING', 'NOT RUNNING'],
-        colors: ['#00E396', '#FF4560'],
-        dataLabels: {
-            enabled: false,
-        },
+        chart: { type: 'donut' as const, background: '#333' },
+         labels: ['RUNNING', 'NOT RUNNING'],
+         colors: [StatusColor.RUNNING, StatusColor.STOPPED],
+         dataLabels: { enabled: true },
         tooltip: {
             y: {
-              formatter: function (_val: number, opts: any) {
-                const isRunning = opts.seriesIndex === 0;
-          
-                const agentNames = agentData
-                  .filter(agent =>
-                    isRunning ? agent.daemonStatus === 'RUNNING' : agent.daemonStatus !== 'RUNNING'
-                  )
-                  .map(agent => `- ${agent.name}`)
-                  .join('<br />');
-          
-                return agentNames || 'No agents';
-              },
+                formatter: function (_val: number, opts: any) {
+                    const isRunning = opts.seriesIndex === 0;
+                    const agentNames = agentArray
+                        .filter(agent => (isRunning ? agent.daemonStatus === 'RUNNING' : agent.daemonStatus !== 'RUNNING'))
+                        .map(agent => `- ${agent.name}`)
+                        .join('<br />');
+                    return agentNames || 'No agents';
+                },
             },
-          },          
+        },
         legend: {
-            position: 'top' as 'top',
-            horizontalAlign: 'left' as 'left',
-            labels: {
-                colors: '#fff',
-            },
+            labels: { colors: '#fff' },
+            position: 'bottom' as const,
+            horizontalAlign: 'center' as const,
         },
-        theme: {
-            mode: 'dark' as 'dark',
-            palette: 'palette1',
-        },
+        theme: { mode: 'dark' as const },
     };
 
     const daemonStatusChartSeries = [runningCount, notRunningCount];
 
-    const barChartOptions = {
+    const bubbleSeries = agentArray.map(agent => ({
+        name: agent.name,
+        data: [
+          {
+            x: agent.cpuUsage || 0,
+            y: agent.memoryUsage ? (agent.memoryUsage * MiBFactor) / (1024 * 1024) : 0,
+            z: agent.diskUsage ? (agent.diskUsage * MiBFactor) / (1024 * 1024) : 0,
+            daemonStatus: agent.daemonStatus,
+          }
+        ],
+      }));
+      const bubbleChartOptions = {
         chart: {
-            type: 'bar' as 'bar',
-            stacked: true,
-            background: '#333',
+          type: 'bubble' as const,
+          background: '#333',
+          toolbar: { show: false },
         },
+        dataLabels: { enabled: false },
+        fill: { opacity: 0.8 },
+        colors: agentArray.map(agent => StatusColor[agent.daemonStatus as keyof typeof StatusColor] || '#FFFFFF'),
         plotOptions: {
-            bar: {
-                horizontal: true,
-            },
+          bubble: {
+            minBubbleRadius: 4,
+            maxBubbleRadius: 20,
+          },
         },
-        dataLabels: {
-            enabled: false,
+        tooltip: {
+          custom: function ({ seriesIndex, dataPointIndex }: { seriesIndex: number; dataPointIndex: number }) {
+            const point = bubbleSeries[seriesIndex].data[dataPointIndex];
+            if (!point) return '<div style="padding:8px; color:#fff;">No data available</div>';
+      
+            const memoryPretty = prettyBytes(point.y * MiBFactor);
+            const diskPretty = prettyBytes(point.z * MiBFactor);
+      
+            return `
+              <div style="padding:8px; color:#fff;">
+                <strong>${bubbleSeries[seriesIndex].name}</strong><br/>
+                Status: ${point.daemonStatus}<br/>
+                CPU: ${point.x.toFixed(2)}%<br/>
+                Memory: ${memoryPretty}<br/>
+                Disk: ${diskPretty}
+              </div>
+            `;
+          },
         },
         xaxis: {
-            categories: agentData.map(agent => agent.name),
+          min: -5,
+          max: 100,
+          tickAmount: 5,
+          title: { text: 'CPU Usage (%)', style: { color: '#fff' } },
+          labels: { style: { colors: '#fff' } },
         },
         yaxis: {
-            title: {
-                text: 'Usage',
-            },
+          min: 0,
+          max: 1000,
+          tickAmount: 5,
+          title: { text: 'Memory Usage (MB)', style: { color: '#fff' } },
+          labels: {
+            style: { colors: '#fff' },
+            formatter: (val: number) => val.toFixed(2),
+          },
         },
-        fill: {
-            opacity: 1,
-        },
-        legend: {
-            position: 'top' as 'top',
-            horizontalAlign: 'left' as 'left',
-            labels: {
-                colors: '#fff',
-            },
-        },
-        theme: {
-            mode: 'dark' as 'dark',
-            palette: 'palette1',
-        },
-    };
-
-    const barChartSeries = [
-        {
-            name: 'Memory Usage',
-            data: memoryUsage.map(Number),
-        },
-        {
-            name: 'CPU Usage',
-            data: cpuUsage.map(Number),
-        },
-        {
-            name: 'Disk Usage',
-            data: diskUsage.map(Number),
-        },
-    ];
+        theme: { mode: 'dark' as const },
+      };
+      
 
     return (
         <div className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-2xl p-6 shadow-md w-full h-full flex flex-col">
-            <h1 className="text-3xl font-bold text-white mb-6 text-start">
-                {`${agentData?.length} Agents`}
-            </h1>
+            <h1 className="text-3xl font-bold text-white mb-6 text-start">{`${agentArray.length} Agents`}</h1>
 
-            <div className="flex flex-col md:flex-row justify-between w-full gap-6">
-                <div className="md:basis-1/4 w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                <div className="w-full">
                     <h2 className="text-white text-xl mb-4">Daemon Status</h2>
-                    <div className="h-[200px]">
+                    <div className="aspect-w-1 aspect-h-1 min-h-[250px] max-h-[400px]">
                         <ApexCharts
                             options={daemonStatusChartOptions}
                             series={daemonStatusChartSeries}
                             type="donut"
-                            height={200}
+                            height="100%"
+                            width="100%"
                         />
                     </div>
                 </div>
 
-                <div className="md:basis-3/4 w-full">
-                    <h2 className="text-white text-xl mb-4">Agents Resource Usage</h2>
-                    <div className="h-[200px]">
+                <div className="w-full">
+                    <h2 className="text-white text-xl mb-4">Agents Resource Chart</h2>
+                    <div className="aspect-w-2 aspect-h-1 min-h-[250px] max-h-[400px]">
                         <ApexCharts
-                            options={barChartOptions}
-                            series={barChartSeries}
-                            type="bar"
-                            height={200}
+                            options={bubbleChartOptions}
+                            series={bubbleSeries}
+                            type="bubble"
+                            height="100%"
+                            width="100%"
                         />
                     </div>
                 </div>

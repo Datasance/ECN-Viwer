@@ -1,5 +1,7 @@
 import React from 'react';
 import ApexCharts from 'react-apexcharts';
+import { StatusColor } from '../../Utils/Enums/StatusColor';
+import { MiBFactor, prettyBytes } from '../../ECNViewer/utils';
 
 interface SystemMicroservicesDashboardProps {
     systemApplications: any[];
@@ -9,109 +11,127 @@ interface SystemMicroservicesDashboardProps {
 const SystemMicroservicesDashboard: React.FC<SystemMicroservicesDashboardProps> = ({ systemApplications, title }) => {
     if (!systemApplications) return <div>Loading...</div>;
 
-    const groupedByApplication: Record<string, any[]> = {};
-    systemApplications.forEach(app => {
-        const appName = app.name || 'Unknown';
-        if (!groupedByApplication[appName]) {
-            groupedByApplication[appName] = [];
-        }
-        groupedByApplication[appName].push(...(app.microservices || []));
-    });
+    const allMicroservices = systemApplications.flatMap(app => app.microservices || []);
+    const totalMicroservices = allMicroservices.length;
 
-    const applicationNames = Object.keys(groupedByApplication);
-    const microserviceCounts = applicationNames.map(app => groupedByApplication[app].length);
+    const runningCount = allMicroservices.filter(
+        msvc => msvc.status?.status?.toUpperCase() === 'RUNNING'
+    ).length;
+    const notRunningCount = totalMicroservices - runningCount;
 
-    const barChartOptions = {
-        chart: {
-            type: 'bar' as const,
-            background: '#333',
-            height: 350,
+    const donutChartOptions = {
+        chart: { type: 'donut' as const, background: '#333' },
+        labels: ['RUNNING', 'NOT RUNNING'],
+        colors: [StatusColor.RUNNING, StatusColor.STOPPED],
+        dataLabels: { enabled: true },
+        tooltip: {
+            y: {
+                formatter: function (_val: number, opts: any) {
+                    const isRunning = opts.seriesIndex === 0;
+                    const names = allMicroservices
+                        .filter(msvc =>
+                            isRunning
+                                ? msvc.status?.status?.toUpperCase() === 'RUNNING'
+                                : msvc.status?.status?.toUpperCase() !== 'RUNNING'
+                        )
+                        .map(msvc => `- ${msvc.name}`)
+                        .join('<br />');
+                    return names || 'No microservices';
+                },
+            },
         },
+        legend: {
+            labels: { colors: '#fff' },
+            position: 'bottom' as const,
+        },
+        theme: { mode: 'dark' as const },
+    };
+    const donutChartSeries = [runningCount, notRunningCount];
+
+    const uniqueStatuses = Array.from(
+        new Set(allMicroservices.map(msvc => msvc.status?.status?.toUpperCase() || 'UNKNOWN'))
+    );
+
+    const bubbleSeries = uniqueStatuses.map(status => ({
+        name: status,
+        data: allMicroservices
+            .filter(msvc => (msvc.status?.status?.toUpperCase() || 'UNKNOWN') === status)
+            .map(msvc => ({
+                x: (msvc.status?.cpuUsage || 0 * 1) || 0,
+                y: prettyBytes(msvc.status?.memoryUsage || 0 * MiBFactor) || 0,
+                z: 10,
+                name: msvc.name,
+            })),
+    }));
+
+    const bubbleChartOptions = {
+        chart: { type: 'bubble' as const, background: '#333', toolbar: { show: false } },
+        dataLabels: { enabled: false },
+        fill: { opacity: 0.8 },
+        colors: uniqueStatuses.map(status =>
+            StatusColor[status as keyof typeof StatusColor] || StatusColor.UNKNOWN
+        ),
         plotOptions: {
-            bar: {
-                horizontal: false,
-                columnWidth: '10%',
-            },
-        },
-        dataLabels: {
-            enabled: true,
-            style: {
-                colors: ['#fff'],
-            },
-        },
-        xaxis: {
-            categories: applicationNames,
-            labels: {
-                style: {
-                    colors: '#fff',
-                },
-                formatter: (value: string) => {
-                    return value.length > 10 ? value.substring(0, 10) + '...' : value;
-                },
-            },
-        },
-        yaxis: {
-            labels: {
-                style: {
-                    colors: '#fff',
-                },
-            },
-            title: {
-                text: 'Microservice Count',
-                style: {
-                    color: '#fff',
-                },
+            bubble: {
+                minBubbleRadius: 4,
+                maxBubbleRadius: 20,
             },
         },
         tooltip: {
-            y: {
-                formatter: (_: number, opts: any) => {
-                    const appName = opts.w.globals.labels[opts.dataPointIndex];
-                    const services = groupedByApplication[appName] || [];
-                    const formatted = services
-                        .map(msvc => {
-                            const status = msvc.status?.status === 'RUNNING' ? '🟢' : '🔴';
-                            return `${status} ${msvc.name}`;
-                        })
-                        .join('<br/>');
-                    return `<strong>${appName}</strong><br/>${formatted}`;
-                },
+            custom: function ({ seriesIndex, dataPointIndex }: { seriesIndex: number; dataPointIndex: number }) {
+                const point = bubbleSeries[seriesIndex].data[dataPointIndex];
+                return `
+          <div style="padding:8px; color:#fff;">
+            <strong>${point.name}</strong><br/>
+            Status: ${uniqueStatuses[seriesIndex]}<br/>
+            CPU: ${point.x}%<br/>
+            Memory: ${point.y}<br/>
+          </div>
+        `;
             },
         },
-        fill: {
-            opacity: 1,
+        xaxis: {
+            min: -2,
+            max: 100,
+            tickAmount: 5,
+            title: { text: 'CPU Usage (%)', style: { color: '#fff' } },
+            labels: { style: { colors: '#fff' } },
         },
-        theme: {
-            mode: 'dark' as const,
+        yaxis: {
+            min: 0,
+            max: 100,
+            tickAmount: 5,
+            title: { text: 'Memory Usage (MB)', style: { color: '#fff' } },
+            labels: { style: { colors: '#fff' } },
         },
         legend: {
-            labels: {
-                colors: '#fff',
-            },
+            labels: { colors: '#fff' },
         },
+        theme: { mode: 'dark' as const },
     };
-
-    const barChartSeries = [
-        {
-            name: 'Microservices',
-            data: microserviceCounts,
-        },
-    ];
-
-    const totalMicroservices = Object.values(groupedByApplication).reduce((acc, val) => acc + val.length, 0);
 
     return (
         <div className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-2xl p-4 md:p-6 shadow-md w-full h-full flex flex-col">
             <h1 className="text-2xl md:text-3xl font-bold text-white mb-4 md:mb-6 text-start">
-                {`${totalMicroservices} ${title}${totalMicroservices > 1 ? 's' : ''}`}
+                {`${totalMicroservices} ${title}${totalMicroservices !== 1 ? 's' : ''}`}
             </h1>
-            <div className="w-full">
-                <ApexCharts
-                    options={barChartOptions}
-                    series={barChartSeries}
-                    type="bar"
-                    height={200}
-                />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                <div className="w-full">
+                    <ApexCharts
+                        options={donutChartOptions}
+                        series={donutChartSeries}
+                        type="donut"
+                        height={332}
+                    />
+                </div>
+                <div className="w-full">
+                    <ApexCharts
+                        options={bubbleChartOptions}
+                        series={bubbleSeries}
+                        type="bubble"
+                        height={300}
+                    />
+                </div>
             </div>
         </div>
     );

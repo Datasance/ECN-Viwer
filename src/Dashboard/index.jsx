@@ -23,20 +23,8 @@ const Dashboard = () => {
           />
         </div>
         <div className="col-span-1 md:col-span-2">
-          <ApplicationDashboard
-            applications={data?.applications}
-            title={"Application"}
-          />
-        </div>
-        <div className="col-span-1 md:col-span-2">
-          <ApplicationDashboard
-            applications={data?.systemApplications}
-            title={"System Application"}
-          />
-        </div>
-        <div className="col-span-1 md:col-span-2">
           <MicroservicesDashboard
-            activeMsvcs={data?.activeMsvcs}
+            applications={data?.applications}
             title={"Microservice"}
           />
         </div>
