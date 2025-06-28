@@ -67,6 +67,8 @@ export const getApplicationYAMLFromJSON = ({
         annotations: {},
         rootHostAccess: ms.rootHostAccess ?? false,
         runAsUser: ms.runAsUser ?? null,
+        ipcMode: ms?.ipcMode ?? '',
+        pidMode: ms?.pidMode ?? '',
         platform: ms.platform ?? null,
         runtime: ms.runtime ?? null,
         cdiDevices: ms.cdiDevices ?? [],

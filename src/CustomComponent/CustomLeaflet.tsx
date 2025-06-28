@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   MapContainer,
   TileLayer,
   CircleMarker as LeafletCircleMarker,
-  useMap
+  useMap,
 } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -35,6 +35,7 @@ interface CustomLeafletProps {
   attribution?: string;
   onMarkerAction?: (marker: MarkerData) => void;
   collapsed: boolean;
+  selectedMarkerId?: string;
 }
 
 const CustomLeaflet: React.FC<CustomLeafletProps> = ({
@@ -47,16 +48,30 @@ const CustomLeaflet: React.FC<CustomLeafletProps> = ({
   tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
   attribution = '&copy; OpenStreetMap contributors',
   onMarkerAction,
-  collapsed
+  collapsed,
+  selectedMarkerId,
 }) => {
   const [selectedMarker, setSelectedMarker] = useState<MarkerData | null>(null);
   const [mapCenter, setMapCenter] = useState<[number, number]>(center);
+
+  const mapRef = useRef<L.Map>(null);
 
   useEffect(() => {
     if (markers.length > 0) {
       setMapCenter(markers[0].position);
     }
   }, [markers]);
+
+  useEffect(() => {
+    if (selectedMarkerId && mapRef.current) {
+      const foundMarker = markers.find(m => m.id === selectedMarkerId);
+      if (foundMarker) {
+        mapRef.current.setView(foundMarker.position, mapRef.current.getZoom());
+        mapRef.current.flyTo(foundMarker.position, 16, { duration: 0.5 });
+        setSelectedMarker(foundMarker);
+      }
+    }
+  }, [selectedMarkerId, markers]);
 
   function groupMarkersByPosition(markers: any[]): any[] {
     const grouped: Record<string, any[]> = {};
@@ -86,6 +101,7 @@ const CustomLeaflet: React.FC<CustomLeafletProps> = ({
 
     return adjustedMarkers;
   }
+
   const adjustedMarkers = groupMarkersByPosition(markers);
 
   const CustomMarker = ({ marker }: { marker: MarkerData }) => {
@@ -114,7 +130,6 @@ const CustomLeaflet: React.FC<CustomLeafletProps> = ({
       />
     );
   };
-
 
   const MapResizer = ({ collapsed }: { collapsed: boolean }) => {
     const map = useMap();
@@ -160,6 +175,7 @@ const CustomLeaflet: React.FC<CustomLeafletProps> = ({
         zoom={zoom}
         scrollWheelZoom={true}
         className="h-full w-full rounded-xl shadow-lg z-0"
+        ref={mapRef}
       >
         <TileLayer url={tileUrl} attribution={attribution} />
         {adjustedMarkers.map((marker) => (
@@ -173,9 +189,9 @@ const CustomLeaflet: React.FC<CustomLeafletProps> = ({
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-lg rounded-lg p-4 w-[90%] max-w-md z-50 transition-all">
           <div className="flex justify-between items-start">
             <div>
-              <h3 className="text-lg font-semibold mb-1">{selectedMarker.label || 'Seçilen Marker'}</h3>
+              <h3 className="text-lg font-semibold mb-1">{selectedMarker.label || 'Selected Marker'}</h3>
               <p className="text-sm opacity-80 mb-2">ID: {selectedMarker.id}</p>
-              <p className="text-sm opacity-80">Konum: {selectedMarker.position.join(', ')}</p>
+              <p className="text-sm opacity-80">Location: {selectedMarker.position.join(', ')}</p>
             </div>
             <button
               onClick={() => setSelectedMarker(null)}

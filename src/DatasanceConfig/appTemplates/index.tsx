@@ -271,7 +271,6 @@ function AppTemplates() {
                 open={showDeployModal}
                 child={<DeployApplicationTemplate template={selectedItem} close={() => setShowDeployModal(false)} />}
                 title={`Deploy ${selectedItem?.name}`}
-                onCancel={() => { setShowDeployModal(false); }}
             />
             <CustomActionModal
                 open={showDetailModal}

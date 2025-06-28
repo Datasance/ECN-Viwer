@@ -64,9 +64,11 @@ export const getMicroserviceYAMLFromJSON = ({
         }
       ),
       container: {
-        annotations: {}, // <-- Eksikti, eklendi
+        annotations: {},
         rootHostAccess: microservice.rootHostAccess,
         runAsUser: microservice?.runAsUser ?? '',
+        ipcMode: microservice?.ipcMode ?? '',
+        pidMode: microservice?.pidMode ?? '',
         platform: microservice?.platform ?? '',
         runtime: microservice?.runtime ?? '',
         cdiDevices: microservice?.cdiDevices ?? [],

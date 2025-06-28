@@ -7,10 +7,16 @@ import { formatDistanceToNow, format } from 'date-fns';
 import { useFeedback } from '../../Utils/FeedbackContext';
 import { useController } from '../../ControllerProvider';
 import UnsavedChangesModal from '../../CustomComponent/UnsavedChangesModal';
+import CustomSelect from '../../CustomComponent/CustomSelect';
 
 interface CustomLeafletProps {
   collapsed: boolean;
 }
+
+type OptionType = {
+  label: string;
+  value: string;
+};
 
 const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
   const { data } = useData()
@@ -37,13 +43,29 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
     : [];
 
 
+  const selectOptions: OptionType[] = markers.map((m) => ({
+    value: m.id,
+    label: m.label,
+  }));
+
+  const handleSelectChange = (option: OptionType | null) => {
+    if (option) {
+      const selectedAgent = data.reducedAgents.byUUID[option.value];
+      setSelectedNode(selectedAgent);
+      setIsOpen(true);
+    } else {
+      setSelectedNode(null);
+      setIsOpen(false);
+    }
+  };
+
   const handleButtonClick = (marker: any) => {
     if (marker) {
-      const selectedAgents = data.reducedAgents.byUUID[marker.id]
-      setSelectedNode(selectedAgents)
-      setIsOpen(true)
+      const selectedAgents = data.reducedAgents.byUUID[marker.id];
+      setSelectedNode(selectedAgents);
+      setIsOpen(true);
     }
-  }
+  };
 
   const handleRestart = () => {
     rebootAgent();
@@ -443,14 +465,28 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
   ];
 
   return (
-    <div className="h-full w-full">
-      <CustomLeaflet
-        markers={markers}
-        center={[39.9255, 32.8663]}
-        zoom={3}
-        onMarkerAction={handleButtonClick}
-        collapsed={collapsed}
-      />
+    <div className="h-full w-full flex flex-col">
+
+      <div className="flex-grow relative">
+        <CustomLeaflet
+          markers={markers}
+          center={[39.9255, 32.8663]}
+          zoom={3}
+          onMarkerAction={handleButtonClick}
+          collapsed={collapsed}
+          selectedMarkerId={selectedNode?.uuid || undefined}
+        />
+        <CustomSelect<OptionType>
+          options={selectOptions}
+          onChange={handleSelectChange}
+          isClearable
+          placeholder="Select an agent..."
+          className="!absolute top-3 left-16 w-[250px] z-[1000] bg-white rounded shadow"
+        />
+
+      </div>
+
+
       <SlideOver
         open={isOpen}
         onClose={() => setIsOpen(false)}
@@ -460,6 +496,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
         onRestart={() => setShowResetConfirmModal(true)}
         onDelete={() => setShowDeleteConfirmModal(true)}
       />
+
       <UnsavedChangesModal
         open={showResetConfirmModal}
         onCancel={() => setShowResetConfirmModal(false)}
@@ -468,8 +505,9 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
         message={"This is not reversible."}
         cancelLabel={"Cancel"}
         confirmLabel={"Restart"}
-        confirmColor='bg-blue'
+        confirmColor="bg-blue"
       />
+
       <UnsavedChangesModal
         open={showDeleteConfirmModal}
         onCancel={() => setShowDeleteConfirmModal(false)}
