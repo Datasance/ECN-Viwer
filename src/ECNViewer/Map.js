@@ -106,7 +106,7 @@ export default function Map (props) {
         // componentDidmount is over Mymarker function can be mark on the map
         <Consumer>
           {(mymapobj) => {
-            const Mymarker = L.marker(props.position).addTo(mymapobj);
+            // const Mymarker = L.marker(props.position).addTo(mymapobj);
             // var allcity = L.layerGroup(...Mymarker).addTo(mymapobj);
           }
           }
