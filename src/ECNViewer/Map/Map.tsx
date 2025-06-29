@@ -8,6 +8,9 @@ import { useFeedback } from '../../Utils/FeedbackContext';
 import { useController } from '../../ControllerProvider';
 import UnsavedChangesModal from '../../CustomComponent/UnsavedChangesModal';
 import CustomSelect from '../../CustomComponent/CustomSelect';
+import AceEditor from "react-ace";
+import ResizableBottomDrawer from '../../CustomComponent/ResizableBottomDrawer';
+import yaml from 'js-yaml';
 
 interface CustomLeafletProps {
   collapsed: boolean;
@@ -26,6 +29,10 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
   const { request } = useController();
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [isBottomDrawerOpen, setIsBottomDrawerOpen] = useState(false);
+  const [editorIsChanged, setEditorIsChanged] = React.useState(false);
+  const [editorDataChanged, setEditorDataChanged] = React.useState<any>()
+  const [yamlDump, setyamlDump] = useState<any>()
 
   const markers = data?.reducedAgents?.byName
     ? Object.values(data.reducedAgents.byName)
@@ -115,6 +122,90 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
     }
   };
 
+  const handleEditYaml = () => {
+    const yamlDump = {
+      apiVersion: 'datasance.com/v3',
+      kind: 'AgentConfig',
+      metadata: {
+        name: selectedNode?.name,
+        tags: selectedNode?.tags,
+      },
+      spec: {
+        name: selectedNode?.name,
+        location: selectedNode?.location,
+        latitude: selectedNode?.latitude,
+        longitude: selectedNode?.longitude,
+        description: selectedNode?.description,
+        fogType: selectedNode?.fogType,
+        networkInterface: selectedNode?.networkInterface,
+        dockerUrl: selectedNode?.dockerUrl,
+        containerEngine: selectedNode?.containerEngine,
+        deploymentType: selectedNode?.deploymentType,
+        diskLimit: selectedNode?.diskLimit,
+        diskDirectory: selectedNode?.diskDirectory,
+        memoryLimit: selectedNode?.memoryLimit,
+        cpuLimit: selectedNode?.cpuLimit,
+        logLimit: selectedNode?.logLimit,
+        logDirectory: selectedNode?.logDirectory,
+        logFileCount: selectedNode?.logFileCount,
+        statusFrequency: selectedNode?.statusFrequency,
+        changeFrequency: selectedNode?.changeFrequency,
+        deviceScanFrequency: selectedNode?.deviceScanFrequency,
+        bluetoothEnabled: selectedNode?.bluetoothEnabled,
+        watchdogEnabled: selectedNode?.watchdogEnabled,
+        gpsMode: selectedNode?.gpsMode,
+        gpsScanFrequency: selectedNode?.gpsScanFrequency,
+        gpsDevice: selectedNode?.gpsDevice,
+        edgeGuardFrequency: selectedNode?.edgeGuardFrequency,
+        abstractedHardwareEnabled: selectedNode?.abstractedHardwareEnabled,
+        upstreamRouters: selectedNode?.upstreamRouters ?? [],
+        routerConfig: {
+          routerMode: selectedNode?.routerMode,
+          messagingPort: selectedNode?.messagingPort,
+          edgeRouterPort: selectedNode?.edgeRouterPort,
+          interRouterPort: selectedNode?.interRouterPort,
+        },
+        logLevel: selectedNode?.logLevel,
+        dockerPruningFrequency: selectedNode?.dockerPruningFrequency,
+        availableDiskThreshold: selectedNode?.availableDiskThreshold,
+        timeZone: selectedNode?.timeZone,
+        tags: selectedNode?.tags,
+      },
+    };
+
+    const yamlString = yaml.dump(yamlDump, { noRefs: true, indent: 2 });
+    setyamlDump(yamlString);
+    setIsBottomDrawerOpen(true);
+  };
+
+  async function handleYamlUpdate() {
+    try {
+      const parsed = yaml.load(editorDataChanged) as any;
+
+      const patchBody = parsed?.spec ?? {};
+
+      const res = await request(`/api/v3/iofog/${selectedNode?.uuid}`, {
+        method: "PATCH",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(patchBody),
+      });
+
+      if (!res.ok) {
+        pushFeedback({ message: res.statusText, type: "error" });
+      } else {
+        pushFeedback({ message: "Controller Updated", type: "success" });
+        setIsBottomDrawerOpen(false);
+        setEditorIsChanged(false);
+        setEditorDataChanged(null);
+        setIsOpen(false);
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  }
+
   const slideOverFields = [
     {
       label: 'uuid',
@@ -183,6 +274,10 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
       label: 'Agent Details',
       render: () => '',
       isSectionHeader: true,
+    },
+    {
+      label: 'Host',
+      render: (node: any) => node.host || 'N/A',
     },
     {
       label: 'Version',
@@ -495,8 +590,41 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
         fields={slideOverFields}
         onRestart={() => setShowResetConfirmModal(true)}
         onDelete={() => setShowDeleteConfirmModal(true)}
+        onEditYaml={handleEditYaml}
       />
+      <ResizableBottomDrawer
+        open={isBottomDrawerOpen}
+        isEdit={editorIsChanged}
+        onClose={() => { setIsBottomDrawerOpen(false); setEditorIsChanged(false); setEditorDataChanged(null) }}
+        onSave={() => handleYamlUpdate()}
+        title={`${selectedNode?.name} Config`}
+        showUnsavedChangesModal
+        unsavedModalTitle='Changes Not Saved'
+        unsavedModalMessage='Are you sure you want to exit? All unsaved changes will be lost.'
+        unsavedModalCancelLabel='Stay'
+        unsavedModalConfirmLabel='Exit Anyway'
 
+      >
+        <AceEditor
+          setOptions={{ useWorker: false }}
+          mode="yaml"
+          theme="monokai"
+          defaultValue={yamlDump}
+          onLoad={function (editor) {
+            editor.renderer.setPadding(10);
+            editor.renderer.setScrollMargin(10);
+          }}
+          style={{
+            width: "100%",
+            height: "100%",
+            borderRadius: "4px",
+          }}
+          onChange={function editorChanged(editor: any) {
+            setEditorIsChanged(true)
+            setEditorDataChanged(editor)
+          }}
+        />
+      </ResizableBottomDrawer>
       <UnsavedChangesModal
         open={showResetConfirmModal}
         onCancel={() => setShowResetConfirmModal(false)}

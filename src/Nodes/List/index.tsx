@@ -9,6 +9,8 @@ import { useFeedback } from '../../Utils/FeedbackContext';
 import UnsavedChangesModal from '../../CustomComponent/UnsavedChangesModal';
 import AceEditor from "react-ace";
 import ResizableBottomDrawer from '../../CustomComponent/ResizableBottomDrawer';
+import yaml from 'js-yaml';
+
 
 function NodesList() {
     const { data } = useData();
@@ -21,7 +23,7 @@ function NodesList() {
     const [isBottomDrawerOpen, setIsBottomDrawerOpen] = useState(false);
     const [editorIsChanged, setEditorIsChanged] = React.useState(false);
     const [editorDataChanged, setEditorDataChanged] = React.useState<any>()
-    const [jsonDump, setjsonDump] = useState<any>()
+    const [yamlDump, setyamlDump] = useState<any>()
 
     const handleRowClick = (row: any) => {
         setSelectedNode(row);
@@ -69,65 +71,77 @@ function NodesList() {
 
 
     const handleEditYaml = () => {
-        const jsonDump = {
-            name: selectedNode?.name,
-            location: selectedNode?.location ?? "",
-            latitude: selectedNode?.latitude,
-            longitude: selectedNode?.longitude,
-            description: selectedNode?.description ?? "",
-            dockerUrl: selectedNode?.dockerUrl,
-            diskLimit: selectedNode?.diskLimit,
-            diskDirectory: selectedNode?.diskDirectory,
-            memoryLimit: selectedNode?.memoryLimit,
-            cpuLimit: selectedNode?.cpuLimit,
-            logLimit: selectedNode?.logLimit,
-            logDirectory: selectedNode?.logDirectory,
-            logFileCount: selectedNode?.logFileCount,
-            statusFrequency: selectedNode?.statusFrequency,
-            changeFrequency: selectedNode?.changeFrequency,
-            deviceScanFrequency: selectedNode?.deviceScanFrequency,
-            bluetoothEnabled: selectedNode?.bluetoothEnabled,
-            watchdogEnabled: selectedNode?.watchdogEnabled,
-            abstractedHardwareEnabled: selectedNode?.abstractedHardwareEnabled,
-            fogType: selectedNode?.fogType,
-            dockerPruningFrequency: selectedNode?.dockerPruningFrequency,
-            availableDiskThreshold: selectedNode?.availableDiskThreshold,
-            logLevel: selectedNode?.logLevel,
-            routerMode: selectedNode?.routerMode,
-            messagingPort: selectedNode?.messagingPort,
-            interRouterPort: selectedNode?.interRouterPort,
-            edgeRouterPort: selectedNode?.edgeRouterPort,
-            host: selectedNode?.host,
-            upstreamRouters: selectedNode?.upstreamRouters,
-            networkInterface: selectedNode?.networkInterface,
-            tags: selectedNode?.tags,
-            timeZone: selectedNode?.timeZone,
-            containerEngine: selectedNode?.containerEngine,
-            deploymentType: selectedNode?.deploymentTyp,
-            gpsMode: selectedNode?.gpsMode,
-            gpsScanFrequency: selectedNode?.gpsScanFrequency,
-            gpsDevice: selectedNode?.gpsDevice,
-            edgeGuardFrequency: selectedNode?.edgeGuardFrequency,
-            routerConfig: {
-                routerMode: selectedNode?.routerMode,
-                messagingPort: selectedNode?.messagingPort,
-                edgeRouterPort: selectedNode?.edgeRouterPort,
-                interRouterPort: selectedNode?.interRouterPort,
+        const yamlDump = {
+            apiVersion: 'datasance.com/v3',
+            kind: 'AgentConfig',
+            metadata: {
+                name: selectedNode?.name,
+                tags: selectedNode?.tags,
+            },
+            spec: {
+                name: selectedNode?.name,
+                location: selectedNode?.location,
+                latitude: selectedNode?.latitude,
+                longitude: selectedNode?.longitude,
+                description: selectedNode?.description,
+                fogType: selectedNode?.fogType,
+                networkInterface: selectedNode?.networkInterface,
+                dockerUrl: selectedNode?.dockerUrl,
+                containerEngine: selectedNode?.containerEngine,
+                deploymentType: selectedNode?.deploymentType,
+                diskLimit: selectedNode?.diskLimit,
+                diskDirectory: selectedNode?.diskDirectory,
+                memoryLimit: selectedNode?.memoryLimit,
+                cpuLimit: selectedNode?.cpuLimit,
+                logLimit: selectedNode?.logLimit,
+                logDirectory: selectedNode?.logDirectory,
+                logFileCount: selectedNode?.logFileCount,
+                statusFrequency: selectedNode?.statusFrequency,
+                changeFrequency: selectedNode?.changeFrequency,
+                deviceScanFrequency: selectedNode?.deviceScanFrequency,
+                bluetoothEnabled: selectedNode?.bluetoothEnabled,
+                watchdogEnabled: selectedNode?.watchdogEnabled,
+                gpsMode: selectedNode?.gpsMode,
+                gpsScanFrequency: selectedNode?.gpsScanFrequency,
+                gpsDevice: selectedNode?.gpsDevice,
+                edgeGuardFrequency: selectedNode?.edgeGuardFrequency,
+                abstractedHardwareEnabled: selectedNode?.abstractedHardwareEnabled,
+                upstreamRouters: selectedNode?.upstreamRouters ?? [],
+                routerConfig: {
+                    routerMode: selectedNode?.routerMode,
+                    messagingPort: selectedNode?.messagingPort,
+                    edgeRouterPort: selectedNode?.edgeRouterPort,
+                    interRouterPort: selectedNode?.interRouterPort,
+                },
+                logLevel: selectedNode?.logLevel,
+                dockerPruningFrequency: selectedNode?.dockerPruningFrequency,
+                availableDiskThreshold: selectedNode?.availableDiskThreshold,
+                timeZone: selectedNode?.timeZone,
+                tags: selectedNode?.tags,
             },
         };
-        setjsonDump(JSON.stringify(jsonDump, null, 2));
+
+        const yamlString = yaml.dump(yamlDump, { noRefs: true, indent: 2 });
+        setyamlDump(yamlString);
         setIsBottomDrawerOpen(true);
     };
 
+
+
     async function handleYamlUpdate() {
         try {
+            const parsed = yaml.load(editorDataChanged) as any;
+
+            const patchBody = parsed?.spec ?? {};
+
             const res = await request(`/api/v3/iofog/${selectedNode?.uuid}`, {
                 method: "PATCH",
                 headers: {
                     "content-type": "application/json",
                 },
-                body: editorDataChanged,
+                body: JSON.stringify(patchBody),
             });
+
             if (!res.ok) {
                 pushFeedback({ message: res.statusText, type: "error" });
             } else {
@@ -135,7 +149,7 @@ function NodesList() {
                 setIsBottomDrawerOpen(false);
                 setEditorIsChanged(false);
                 setEditorDataChanged(null);
-                setIsOpen(false)
+                setIsOpen(false);
             }
         } catch (e: any) {
             pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -168,21 +182,21 @@ function NodesList() {
             key: 'memoryUsage',
             header: 'Memory Usage',
             render: (row: any) => (
-                <CustomProgressBar value={row.memoryUsage} max={100} unit="%" />
+                <CustomProgressBar value={row.memoryUsage} max={row.memoryLimit} unit="%" />
             ),
         },
         {
             key: 'cpuUsage',
             header: 'CPU Usage',
             render: (row: any) => (
-                <CustomProgressBar value={row.cpuUsage} max={100} unit="%" />
+                <CustomProgressBar value={row.cpuUsage} max={row.cpuLimit} unit="%" />
             ),
         },
         {
             key: 'diskUsage',
             header: 'Disk Usage',
             render: (row: any) => (
-                <CustomProgressBar value={row.diskUsage} max={100} unit="%" />
+                <CustomProgressBar value={row.diskUsage} max={row.diskLimit} unit="%" />
             ),
         },
         {
@@ -586,9 +600,9 @@ function NodesList() {
             >
                 <AceEditor
                     setOptions={{ useWorker: false }}
-                    mode="json"
+                    mode="yaml"
                     theme="monokai"
-                    defaultValue={jsonDump}
+                    defaultValue={yamlDump}
                     onLoad={function (editor) {
                         editor.renderer.setPadding(10);
                         editor.renderer.setScrollMargin(10);
