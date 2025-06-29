@@ -36,7 +36,7 @@ function MicroservicesList() {
   const flattenedMicroservices = data?.applications?.flatMap((app: any) =>
     app.microservices.map((ms: any) => ({
       ...ms,
-      agentName: data.activeAgents.find((x:any)=>x.uuid === ms.iofogUuid)?.name,
+      agentName: data.reducedAgents.byUUID[ms.iofogUuid]?.name,
       appName: app.name,
       appDescription: app.description,
       appCreatedAt: app.createdAt,
@@ -116,7 +116,7 @@ function MicroservicesList() {
         pushFeedback({ message: "Port Deleted", type: "success" });
         setIsOpen(false)
         setShowPortDeleteConfirmModal(false)
-        
+
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -200,8 +200,8 @@ function MicroservicesList() {
           }
         } else {
           pushFeedback({ message: 'Microservice updated!', type: 'success' })
-          setIsBottomDrawerOpen(false); 
-          setEditorIsChanged(false); 
+          setIsBottomDrawerOpen(false);
+          setEditorIsChanged(false);
           setEditorDataChanged(null);
         }
       } catch (e: any) {
@@ -274,18 +274,56 @@ function MicroservicesList() {
     {
       key: 'status',
       header: 'Status',
-      render: (row: any) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-semibold ${row.status?.status === 'RUNNING' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-            }`}
-        >
-          {row.status?.status || 'UNKNOWN'}
-        </span>
-      ),
-    },
+      render: (row: any) => {
+        const status = row.status?.status || 'UNKNOWN';
+        const percentage = row.status?.percentage;
+
+        if (status === 'PULLING') {
+          return (
+            <span className="text-yellow-500 font-semibold">
+              {`${status}${typeof percentage === 'number' ? ` (${percentage.toFixed(2)}%)` : ''}`}
+            </span>
+          );
+        }
+
+        return (
+          <span
+            className={`px-2 py-1 rounded-full text-xs font-semibold ${status === 'RUNNING'
+              ? 'bg-green-600 text-white'
+              : 'bg-red-600 text-white'
+              }`}
+          >
+            {status}
+          </span>
+        );
+      },
+    }
+
   ];
 
   const slideOverFields = [
+    {
+      label: 'Exec Status',
+      render: () => '',
+      isSectionHeader: true,
+    },
+    {
+      label: 'Status',
+      render: (row: any) => (
+        <span>
+          {row.execStatus.status}
+        </span>
+      ),
+    },
+    {
+      label: 'Exec Session Id',
+      render: (row: any) => row.execStatus.execSessionId || 'N/A',
+    },
+    {
+      label: 'Status',
+      render: () => '',
+      isSectionHeader: true,
+    },
     {
       label: 'Status',
       render: (row: any) => (
@@ -304,6 +342,23 @@ function MicroservicesList() {
       },
     },
     {
+      label: 'Exec Session Ids',
+      render: (row: any) => {
+          return row.status.execSessionIds?.length ? <span className="text-white whitespace-pre-wrap break-words">{row.status.execSessionIds}</span> : 'N/A'
+        }
+    },
+    {
+      label: 'Container Id',
+      render: (row: any) => (
+        <span
+          className="font-semibold truncate"
+          title={row.status.containerId || 'N/A'}
+        >
+          {row.status.containerId || 'N/A'}
+        </span>
+      ),
+    },    
+    {
       label: 'Microservice Details',
       render: () => '',
       isSectionHeader: true,
@@ -311,6 +366,10 @@ function MicroservicesList() {
     {
       label: 'uuid',
       render: (row: any) => row.uuid || 'N/A',
+    },
+    {
+      label: 'Ip Address',
+      render: (row: any) => row.status.ipAddress || 'N/A',
     },
     {
       label: 'Image',
@@ -336,6 +395,23 @@ function MicroservicesList() {
       render: (row: any) => row.namespace || 'N/A',
     },
     {
+      label: 'Start Time',
+      render: (row: any) => {
+        const startTime = row.status.startTime;
+        const dateStr = startTime
+          ? new Date(startTime).toLocaleString()
+          : 'N/A';
+        return (
+          <span
+            className="font-semibold truncate"
+            title={dateStr}
+          >
+            {dateStr}
+          </span>
+        );
+      },
+    },    
+    {
       label: 'Created at',
       render: (row: any) => {
         const created = row.createdAt || row.creationTimestamp;
@@ -345,6 +421,21 @@ function MicroservicesList() {
         return `${formatDistanceToNow(date, { addSuffix: true })} (${formattedDate})`;
       },
     },
+    {
+      label: 'Operating Duration',
+      render: (row: any) => {
+        const durationMs = row.status.operatingDuration;
+        if (!durationMs) return 'N/A';
+    
+        const totalSeconds = Math.floor(durationMs / 1000);
+        const days = Math.floor(totalSeconds / (24 * 3600));
+        const hours = Math.floor((totalSeconds % (24 * 3600)) / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+    
+        return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+      },
+    },    
     {
       label: 'Resource Utilization',
       render: () => '',
@@ -518,7 +609,7 @@ function MicroservicesList() {
 
         const envData = envVars.map((env: any, index: number) => ({
           keyName: env.key,
-          value: <CryptoTextBox data={env.value}/>,
+          value: <CryptoTextBox data={env.value} />,
           key: `${env.key}-${index}`,
         }));
 
@@ -609,8 +700,8 @@ function MicroservicesList() {
         title={selectedMs?.name || 'Microservice Details'}
         data={selectedMs}
         fields={slideOverFields}
-        onRestart={()=> setShowResetConfirmModal(true)}
-        onDelete={()=> setShowDeleteConfirmModal(true)}
+        onRestart={() => setShowResetConfirmModal(true)}
+        onDelete={() => setShowDeleteConfirmModal(true)}
         onEditYaml={handleEditYaml}
         customWidth={600}
       />

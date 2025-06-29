@@ -26,25 +26,27 @@ function SystemApplicationList() {
   const [editorDataChanged, setEditorDataChanged] = React.useState<any>();
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+    const [showStartStopConfirmModal, setShowStartStopConfirmModal] = useState(false);
 
   const handleRowClick = (row: any) => {
     setSelectedApplication(row);
     setIsOpen(true);
   };
 
-  async function restartFunction() {
+  async function restartFunction(type:boolean) {
     try {
       const res = await request(`/api/v3/application/${selectedApplication.name}`, {
         method: 'PATCH',
         headers: {
           'content-type': 'application/json'
         },
-        body: JSON.stringify({ isActivated: !selectedApplication.isActivated })
+        body: JSON.stringify({ isActivated: type })
       })
       if (res.ok) {
-        selectedApplication.isActivated = !selectedApplication.isActivated
-        pushFeedback({ message: selectedApplication.isActivated ? 'Application stopped!' : 'Application started!', type: 'success' })
+        pushFeedback({ message: !type ? 'Application stopped!' : 'Application started!', type: 'success' })
         setShowResetConfirmModal(false);
+        setShowStartStopConfirmModal(false);
+        setIsOpen(false)
       } else {
         pushFeedback({ message: res.statusText, type: 'error' })
       }
@@ -54,9 +56,9 @@ function SystemApplicationList() {
   }
 
   const handleRestart = async () => {
-    await restartFunction();
+    await restartFunction(false);
     await new Promise(resolve => setTimeout(resolve, 8000));
-    await restartFunction();
+    await restartFunction(true);
   };
 
   const handleDelete = async () => {
@@ -76,6 +78,10 @@ function SystemApplicationList() {
     } catch (e: any) {
       pushFeedback({ message: e.message, type: 'error' });
     }
+  };
+
+  const handleStartStop = async () => {
+    await restartFunction(!selectedApplication?.isActivated);
   };
 
   const parseApplicationFile = async (doc: any) => {
@@ -415,13 +421,15 @@ function SystemApplicationList() {
       <SlideOver
         open={isOpen}
         onClose={() => setIsOpen(false)}
-        title={selectedApplication?.msName || 'Microservice Details'}
+        title={selectedApplication?.name || 'Application Details'}
         data={selectedApplication}
         fields={slideOverFields}
         onRestart={() => setShowResetConfirmModal(true)}
         onDelete={() => setShowDeleteConfirmModal(true)}
         onEditYaml={handleEditYaml}
         customWidth={700}
+        onStartStop={() => setShowStartStopConfirmModal(true)}
+        startStopValue={selectedApplication?.isActivated}
       />
       <ResizableBottomDrawer
         open={isBottomDrawerOpen}
@@ -475,6 +483,15 @@ function SystemApplicationList() {
         message={"This is not reversible."}
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
+      />
+      <UnsavedChangesModal
+        open={showStartStopConfirmModal}
+        onCancel={() => setShowStartStopConfirmModal(false)}
+        onConfirm={handleStartStop}
+        title={`${!selectedApplication?.isActivated ? 'Active' : 'Inactive'} ${selectedApplication?.name}`}
+        message={"This is not reversible."}
+        cancelLabel={"Cancel"}
+        confirmLabel={`${!selectedApplication?.isActivated ? 'Active' : 'Inactive'}`}
       />
     </div>
   );

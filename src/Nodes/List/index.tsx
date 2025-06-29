@@ -7,7 +7,8 @@ import { formatDistanceToNow, format } from 'date-fns';
 import { useController } from '../../ControllerProvider';
 import { useFeedback } from '../../Utils/FeedbackContext';
 import UnsavedChangesModal from '../../CustomComponent/UnsavedChangesModal';
-import CryptoTextBox from '../../CustomComponent/CustomCryptoTextBox';
+import AceEditor from "react-ace";
+import ResizableBottomDrawer from '../../CustomComponent/ResizableBottomDrawer';
 
 function NodesList() {
     const { data } = useData();
@@ -17,6 +18,10 @@ function NodesList() {
     const [isOpen, setIsOpen] = useState(false);
     const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
     const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+    const [isBottomDrawerOpen, setIsBottomDrawerOpen] = useState(false);
+    const [editorIsChanged, setEditorIsChanged] = React.useState(false);
+    const [editorDataChanged, setEditorDataChanged] = React.useState<any>()
+    const [jsonDump, setjsonDump] = useState<any>()
 
     const handleRowClick = (row: any) => {
         setSelectedNode(row);
@@ -34,7 +39,7 @@ function NodesList() {
                 pushFeedback({ message: res.statusText, type: "error" });
                 return;
             }
-            else{
+            else {
                 pushFeedback({ message: "Agent Rebooted", type: "success" });
                 setShowResetConfirmModal(false);
             }
@@ -53,7 +58,7 @@ function NodesList() {
                 pushFeedback({ message: res.statusText || res.status, type: "error" });
                 return;
             }
-            else{
+            else {
                 pushFeedback({ message: "Agent deleted!", type: "success" });
                 setShowDeleteConfirmModal(false);
             }
@@ -61,6 +66,81 @@ function NodesList() {
             pushFeedback({ message: e.message || e.status, type: "error" });
         }
     };
+
+
+    const handleEditYaml = () => {
+        const jsonDump = {
+            name: selectedNode?.name,
+            location: selectedNode?.location ?? "",
+            latitude: selectedNode?.latitude,
+            longitude: selectedNode?.longitude,
+            description: selectedNode?.description ?? "",
+            dockerUrl: selectedNode?.dockerUrl,
+            diskLimit: selectedNode?.diskLimit,
+            diskDirectory: selectedNode?.diskDirectory,
+            memoryLimit: selectedNode?.memoryLimit,
+            cpuLimit: selectedNode?.cpuLimit,
+            logLimit: selectedNode?.logLimit,
+            logDirectory: selectedNode?.logDirectory,
+            logFileCount: selectedNode?.logFileCount,
+            statusFrequency: selectedNode?.statusFrequency,
+            changeFrequency: selectedNode?.changeFrequency,
+            deviceScanFrequency: selectedNode?.deviceScanFrequency,
+            bluetoothEnabled: selectedNode?.bluetoothEnabled,
+            watchdogEnabled: selectedNode?.watchdogEnabled,
+            abstractedHardwareEnabled: selectedNode?.abstractedHardwareEnabled,
+            fogType: selectedNode?.fogType,
+            dockerPruningFrequency: selectedNode?.dockerPruningFrequency,
+            availableDiskThreshold: selectedNode?.availableDiskThreshold,
+            logLevel: selectedNode?.logLevel,
+            routerMode: selectedNode?.routerMode,
+            messagingPort: selectedNode?.messagingPort,
+            interRouterPort: selectedNode?.interRouterPort,
+            edgeRouterPort: selectedNode?.edgeRouterPort,
+            host: selectedNode?.host,
+            upstreamRouters: selectedNode?.upstreamRouters,
+            networkInterface: selectedNode?.networkInterface,
+            tags: selectedNode?.tags,
+            timeZone: selectedNode?.timeZone,
+            containerEngine: selectedNode?.containerEngine,
+            deploymentType: selectedNode?.deploymentTyp,
+            gpsMode: selectedNode?.gpsMode,
+            gpsScanFrequency: selectedNode?.gpsScanFrequency,
+            gpsDevice: selectedNode?.gpsDevice,
+            edgeGuardFrequency: selectedNode?.edgeGuardFrequency,
+            routerConfig: {
+                routerMode: selectedNode?.routerMode,
+                messagingPort: selectedNode?.messagingPort,
+                edgeRouterPort: selectedNode?.edgeRouterPort,
+                interRouterPort: selectedNode?.interRouterPort,
+            },
+        };
+        setjsonDump(JSON.stringify(jsonDump, null, 2));
+        setIsBottomDrawerOpen(true);
+    };
+
+    async function handleYamlUpdate() {
+        try {
+            const res = await request(`/api/v3/iofog/${selectedNode?.uuid}`, {
+                method: "PATCH",
+                headers: {
+                    "content-type": "application/json",
+                },
+                body: editorDataChanged,
+            });
+            if (!res.ok) {
+                pushFeedback({ message: res.statusText, type: "error" });
+            } else {
+                pushFeedback({ message: "Controller Updated", type: "success" });
+                setIsBottomDrawerOpen(false);
+                setEditorIsChanged(false);
+                setEditorDataChanged(null);
+                setIsOpen(false)
+            }
+        } catch (e: any) {
+            pushFeedback({ message: e.message, type: "error", uuid: "error" });
+        }
+    }
 
     const columns = [
         {
@@ -179,16 +259,20 @@ function NodesList() {
         },
         {
             label: 'Description',
-            render: (node: any) => { return node.description  || 'N/A' },
+            render: (node: any) => { return node.description || 'N/A' },
         },
         {
             label: 'Up Time',
-            render: (node: any) => { return node.daemonOperatingDuration  || 'N/A' },
+            render: (node: any) => { return node.daemonOperatingDuration || 'N/A' },
         },
         {
             label: 'Agent Details',
             render: () => '',
             isSectionHeader: true,
+        },
+        {
+            label: 'Host',
+            render: (node: any) => node.host || 'N/A',
         },
         {
             label: 'Version',
@@ -291,7 +375,7 @@ function NodesList() {
             label: '',
             isFullSection: true,
             render: (node: any) => {
-                
+
                 if (!node.volumeMounts || node.volumeMounts === 0) {
                     return <div className="text-sm text-gray-400">No volume mounts found for this agent.</div>;
                 }
@@ -483,8 +567,43 @@ function NodesList() {
                 fields={slideOverFields}
                 onRestart={() => setShowResetConfirmModal(true)}
                 onDelete={() => setShowDeleteConfirmModal(true)}
+                onEditYaml={handleEditYaml}
                 customWidth={500}
             />
+
+            <ResizableBottomDrawer
+                open={isBottomDrawerOpen}
+                isEdit={editorIsChanged}
+                onClose={() => { setIsBottomDrawerOpen(false); setEditorIsChanged(false); setEditorDataChanged(null) }}
+                onSave={() => handleYamlUpdate()}
+                title={`${selectedNode?.name} Config`}
+                showUnsavedChangesModal
+                unsavedModalTitle='Changes Not Saved'
+                unsavedModalMessage='Are you sure you want to exit? All unsaved changes will be lost.'
+                unsavedModalCancelLabel='Stay'
+                unsavedModalConfirmLabel='Exit Anyway'
+
+            >
+                <AceEditor
+                    setOptions={{ useWorker: false }}
+                    mode="json"
+                    theme="monokai"
+                    defaultValue={jsonDump}
+                    onLoad={function (editor) {
+                        editor.renderer.setPadding(10);
+                        editor.renderer.setScrollMargin(10);
+                    }}
+                    style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "4px",
+                    }}
+                    onChange={function editorChanged(editor: any) {
+                        setEditorIsChanged(true)
+                        setEditorDataChanged(editor)
+                    }}
+                />
+            </ResizableBottomDrawer>
             <UnsavedChangesModal
                 open={showResetConfirmModal}
                 onCancel={() => setShowResetConfirmModal(false)}

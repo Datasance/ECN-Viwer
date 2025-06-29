@@ -4,6 +4,8 @@ import XMarkIcon from '@material-ui/icons/CloseOutlined';
 import RestartAltIcon from '@material-ui/icons/ReplayOutlined';
 import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
 import EditOutlinedIcon from '@material-ui/icons/EditOutlined';
+import PlayCircleFilledOutlined from '@material-ui/icons/PlayCircleFilledOutlined';
+import StopOutlined from '@material-ui/icons/StopOutlined';
 
 type Field<T> = {
   label: string;
@@ -20,8 +22,10 @@ type SlideOverProps<T> = {
   fields: Field<T>[];
   onRestart?: () => void;
   onDelete?: () => void;
+  onStartStop?: () => void;
+  startStopValue?: string;
   onEditYaml?: () => void;
-  customWidth?:number;
+  customWidth?: number;
 };
 
 const SlideOver = <T,>({
@@ -31,6 +35,8 @@ const SlideOver = <T,>({
   data,
   fields,
   onRestart,
+  onStartStop,
+  startStopValue,
   onDelete,
   onEditYaml,
   customWidth
@@ -109,6 +115,15 @@ const SlideOver = <T,>({
                           <EditOutlinedIcon fontSize="small" />
                         </button>
                       )}
+                      {onStartStop && (
+                        !startStopValue ?
+                          <button onClick={onStartStop} className="hover:text-green-600 hover:bg-white rounded">
+                            <PlayCircleFilledOutlined fontSize="small" />
+                          </button> :
+                          <button onClick={onStartStop} className="hover:text-red-600 hover:bg-white rounded">
+                            <StopOutlined fontSize="default" />
+                          </button>
+                      )}
                       {onRestart && (
                         <button onClick={onRestart} className="hover:text-green-600 hover:bg-white rounded">
                           <RestartAltIcon fontSize="small" />
@@ -143,11 +158,14 @@ const SlideOver = <T,>({
                               </dd>
                             </div>
                           ) : (
-                            <div key={idx} className="py-3 sm:grid sm:grid-cols-5 sm:gap-4 flex flex-col">
-                              <dt className="text-sm font-medium text-gray-300 sm:col-span-2 content-center">
+                            <div
+                              key={idx}
+                              className="py-3 sm:grid sm:grid-cols-[minmax(120px,150px)_1fr] sm:gap-2 flex flex-col"
+                            >
+                              <dt className="text-sm font-medium text-gray-300 content-center">
                                 {field.label}
                               </dt>
-                              <dd className="mt-1 text-sm text-white sm:mt-0 sm:col-span-3">
+                              <dd className="mt-1 text-sm text-white sm:mt-0 truncate">
                                 {field.render(data)}
                               </dd>
                             </div>

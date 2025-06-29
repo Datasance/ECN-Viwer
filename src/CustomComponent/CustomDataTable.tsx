@@ -10,6 +10,7 @@ type Column<T> = {
   className?: string;
   type?: string;
   render?: (row: T) => React.ReactNode;
+  width?: string;
 };
 
 type CustomDataTableProps<T> = {
@@ -79,7 +80,7 @@ export default function CustomDataTable<T>({
           <thead className="bg-gray-700 text-xs uppercase">
             <tr>
               {columns.map(col => (
-                <th key={col.key} className={`px-4 py-2 text-start ${col.className || ''}`}>
+                <th key={col.key} className={`px-4 py-2 text-start ${col.className || ''} ${col.width || ''}`}>
                   {col.header}
                 </th>
               ))}
