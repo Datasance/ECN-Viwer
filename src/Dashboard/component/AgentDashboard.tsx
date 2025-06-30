@@ -66,11 +66,22 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({ agentData }) => {
           }
         ],
       }));
+
+    // Calculate dynamic max value for y-axis (memory usage)
+    const memoryValues = agentArray.map(agent => 
+        agent.memoryUsage ? (agent.memoryUsage * MiBFactor) / (1024 * 1024) : 0
+    );
+    const maxMemory = Math.max(...memoryValues);
+    const dynamicYMax = maxMemory > 0 ? Math.ceil(maxMemory * 1.2) : 1000; // Add 20% padding
+
       const bubbleChartOptions = {
         chart: {
           type: 'bubble' as const,
           background: '#333',
           toolbar: { show: false },
+        },
+        legend: {
+          show: false,
         },
         dataLabels: { enabled: false },
         fill: { opacity: 0.8 },
@@ -104,17 +115,17 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({ agentData }) => {
           min: -5,
           max: 100,
           tickAmount: 5,
-          title: { text: 'CPU Usage (%)', style: { color: '#fff' } },
+          title: { text: 'CPU Usage (%)', style: { color: '#fff' }, offsetY: -10 },
           labels: { style: { colors: '#fff' } },
         },
         yaxis: {
           min: 0,
-          max: 1000,
+          max: dynamicYMax,
           tickAmount: 5,
           title: { text: 'Memory Usage (MB)', style: { color: '#fff' } },
           labels: {
             style: { colors: '#fff' },
-            formatter: (val: number) => val.toFixed(2),
+            formatter: (val: number) => val.toFixed(0),
           },
         },
         theme: { mode: 'dark' as const },
@@ -123,7 +134,7 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({ agentData }) => {
 
     return (
         <div className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-2xl p-6 shadow-md w-full h-full flex flex-col">
-            <h1 className="text-3xl font-bold text-white mb-6 text-start">{`${agentArray.length} Agents`}</h1>
+            <h1 className="text-3xl font-bold text-white mb-6 text-start">{` Agents (${agentArray.length})`}</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                 <div className="w-full">

@@ -64,6 +64,13 @@ const SystemMicroservicesDashboard: React.FC<SystemMicroservicesDashboardProps> 
             })),
     }));
 
+    // Calculate dynamic max value for y-axis (memory usage)
+    const memoryValues = allMicroservices.map(msvc => 
+        msvc.status?.memoryUsage ? (msvc.status.memoryUsage) / (1024 * 1024) : 0
+    );
+    const maxMemory = Math.max(...memoryValues);
+    const dynamicYMax = maxMemory > 0 ? Math.ceil(maxMemory * 1.2) : 100;
+
     const bubbleChartOptions = {
         chart: { type: 'bubble' as const, background: '#333', toolbar: { show: false } },
         dataLabels: { enabled: false },
@@ -94,15 +101,18 @@ const SystemMicroservicesDashboard: React.FC<SystemMicroservicesDashboardProps> 
             min: -2,
             max: 100,
             tickAmount: 5,
-            title: { text: 'CPU Usage (%)', style: { color: '#fff' } },
+            title: { text: 'CPU Usage (%)', style: { color: '#fff' }, offsetY: -10 },
             labels: { style: { colors: '#fff' } },
         },
         yaxis: {
             min: 0,
-            max: 100,
+            max: dynamicYMax,
             tickAmount: 5,
             title: { text: 'Memory Usage (MB)', style: { color: '#fff' } },
-            labels: { style: { colors: '#fff' } },
+            labels: {
+                style: { colors: '#fff' },
+                formatter: (val: number) => val.toFixed(0),
+              },
         },
         legend: {
             labels: { colors: '#fff' },
@@ -113,10 +123,11 @@ const SystemMicroservicesDashboard: React.FC<SystemMicroservicesDashboardProps> 
     return (
         <div className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-2xl p-4 md:p-6 shadow-md w-full h-full flex flex-col">
             <h1 className="text-2xl md:text-3xl font-bold text-white mb-4 md:mb-6 text-start">
-                {`${totalMicroservices} ${title}${totalMicroservices !== 1 ? 's' : ''}`}
+                {` ${title}${totalMicroservices !== 1 ? 's' : ''} (${totalMicroservices})`}
             </h1>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                 <div className="w-full">
+                    <h2 className="text-white text-xl mb-4">System Microservices Status</h2>
                     <ApexCharts
                         options={donutChartOptions}
                         series={donutChartSeries}
@@ -125,6 +136,7 @@ const SystemMicroservicesDashboard: React.FC<SystemMicroservicesDashboardProps> 
                     />
                 </div>
                 <div className="w-full">
+                    <h2 className="text-white text-xl mb-4">System Microservices Resource Chart</h2>
                     <ApexCharts
                         options={bubbleChartOptions}
                         series={bubbleSeries}
