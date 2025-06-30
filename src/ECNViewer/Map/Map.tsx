@@ -22,6 +22,32 @@ type OptionType = {
   value: string;
 };
 
+// Format duration in human-readable format of duration in milliseconds
+const formatDuration = (milliseconds: number): string => {
+  if (!milliseconds || milliseconds <= 0) return 'N/A';
+  
+  const totalSeconds = Math.floor(milliseconds / 1000);
+  
+  const days = Math.floor(totalSeconds / (24 * 3600));
+  const remainingHours = Math.floor((totalSeconds % (24 * 3600)) / 3600);
+  const remainingMinutes = Math.floor((totalSeconds % 3600) / 60);
+  const remainingSeconds = totalSeconds % 60;
+  
+  if (days > 0) {
+      return `${days}d${remainingHours}h`;
+  }
+  
+  if (remainingHours > 0) {
+      return `${remainingHours}h${remainingMinutes}m`;
+  }
+  
+  if (remainingMinutes > 0) {
+      return `${remainingMinutes}m${remainingSeconds}s`;
+  }
+  
+  return `${remainingSeconds}s`;
+};
+
 const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
   const { data } = useData()
   const [selectedNode, setSelectedNode] = useState<any | null>(null);
@@ -269,7 +295,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
     },
     {
       label: 'Up Time',
-      render: (node: any) => { return node.daemonOperatingDuration || 'N/A' },
+      render: (node: any) => { return formatDuration(node.daemonOperatingDuration) },
     },
     {
       label: 'Agent Details',
