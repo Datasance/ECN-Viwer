@@ -165,7 +165,7 @@ const SlideOver = <T,>({
                               <dt className="text-sm font-medium text-gray-300 content-center">
                                 {field.label}
                               </dt>
-                              <dd className="mt-1 text-sm text-white sm:mt-0 truncate">
+                              <dd className="mt-1 text-sm text-white sm:mt-0 truncate min-h-6">
                                 {field.render(data)}
                               </dd>
                             </div>

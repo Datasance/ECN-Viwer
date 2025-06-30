@@ -357,11 +357,11 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
     },
     {
       label: 'CPU Usage',
-      render: (node: any) => `${(Number(node.cpuUsage) || 0).toFixed(2)}%`,
+      render: (node: any) => `${(Number(node.cpuUsage) || 0)?.toFixed(2)}%`,
     },
     {
       label: 'System Total CPU',
-      render: (node: any) => `${node.systemTotalCpu.toFixed(2)}%`,
+      render: (node: any) => `${node.systemTotalCpu?.toFixed(2)}%`,
     },
     {
       label: 'Memory Usage',
@@ -373,7 +373,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
     },
     {
       label: 'Disk Usage',
-      render: (node: any) => `${prettyBytes(Number((node.diskUsage * MiBFactor).toFixed(2)) || 0)}`,
+      render: (node: any) => `${prettyBytes(Number((node.diskUsage * MiBFactor)?.toFixed(2)) || 0)}`,
     },
     {
       label: 'System Available Disk',

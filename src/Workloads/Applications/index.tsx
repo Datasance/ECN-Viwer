@@ -13,6 +13,8 @@ import { parseMicroservice } from '../../Utils/ApplicationParser';
 import lget from 'lodash/get'
 import { API_VERSIONS } from '../../Utils/constants';
 import yaml from "js-yaml";
+import { StatusColor, StatusType } from '../../Utils/Enums/StatusColor';
+import { getTextColor } from '../../ECNViewer/utils';
 
 function ApplicationList() {
   const { data } = useData();
@@ -32,7 +34,7 @@ function ApplicationList() {
     setIsOpen(true);
   };
 
-  async function restartFunction(type:boolean) {
+  async function restartFunction(type: boolean) {
     try {
       const res = await request(`/api/v3/application/${selectedApplication.name}`, {
         method: 'PATCH',
@@ -138,62 +140,62 @@ function ApplicationList() {
   }, [selectedApplication, data]);
 
 
-  const parseApplicationFile = async (doc:any) => {
-      if (API_VERSIONS.indexOf(doc.apiVersion) === -1) {
-        return [{}, `Invalid API Version ${doc.apiVersion}, current version is ${API_VERSIONS.slice(-1)[0]}`]
-      }
-      if (doc.kind !== 'Application') {
-        return [{}, `Invalid kind ${doc.kind}`]
-      }
-      if (!doc.metadata || !doc.spec) {
-        return [{}, 'Invalid YAML format']
-      }
-      const application = {
-        name: lget(doc, 'metadata.name', undefined),
-        ...doc.spec,
-        isActivated: true,
-        microservices: await Promise.all((doc.spec.microservices || []).map(async (m:any) => parseMicroservice(m)))
-      }
-  
-      return [application]
+  const parseApplicationFile = async (doc: any) => {
+    if (API_VERSIONS.indexOf(doc.apiVersion) === -1) {
+      return [{}, `Invalid API Version ${doc.apiVersion}, current version is ${API_VERSIONS.slice(-1)[0]}`]
     }
-  
-    const readApplicationFile = async (item:any) => {
-      const file = item
-      if (file) {
-        const reader = new window.FileReader()
-  
-        reader.onload = async function (evt:any) {
-          try {
-            const doc = yaml.load(evt.target.result)
-            const [applicationData, err] = await parseApplicationFile(doc)
-            if (err) {
-              return pushFeedback({ message: err, type: 'error' })
-            }
-            const newApplication = !data.applications?.find((a:any) => a.name === applicationData.name)
-            const res = await deployApplication(applicationData, newApplication)
-            if (!res.ok) {
-              try {
-                const error = await res.json()
-                pushFeedback({ message: error.message, type: 'error' })
-              } catch (e) {
-                pushFeedback({ message: res.statusText, type: 'error' })
-              }
-            } else {
-              pushFeedback({ message: newApplication ? 'Application deployed!' : 'Application updated!', type: 'success' })
-            }
-          } catch (e:any) {
-            pushFeedback({ message: e.message, type: 'error' })
+    if (doc.kind !== 'Application') {
+      return [{}, `Invalid kind ${doc.kind}`]
+    }
+    if (!doc.metadata || !doc.spec) {
+      return [{}, 'Invalid YAML format']
+    }
+    const application = {
+      name: lget(doc, 'metadata.name', undefined),
+      ...doc.spec,
+      isActivated: true,
+      microservices: await Promise.all((doc.spec.microservices || []).map(async (m: any) => parseMicroservice(m)))
+    }
+
+    return [application]
+  }
+
+  const readApplicationFile = async (item: any) => {
+    const file = item
+    if (file) {
+      const reader = new window.FileReader()
+
+      reader.onload = async function (evt: any) {
+        try {
+          const doc = yaml.load(evt.target.result)
+          const [applicationData, err] = await parseApplicationFile(doc)
+          if (err) {
+            return pushFeedback({ message: err, type: 'error' })
           }
+          const newApplication = !data.applications?.find((a: any) => a.name === applicationData.name)
+          const res = await deployApplication(applicationData, newApplication)
+          if (!res.ok) {
+            try {
+              const error = await res.json()
+              pushFeedback({ message: error.message, type: 'error' })
+            } catch (e) {
+              pushFeedback({ message: res.statusText, type: 'error' })
+            }
+          } else {
+            pushFeedback({ message: newApplication ? 'Application deployed!' : 'Application updated!', type: 'success' })
+          }
+        } catch (e: any) {
+          pushFeedback({ message: e.message, type: 'error' })
         }
-  
-        reader.onerror = function (evt) {
-          pushFeedback({ message: evt, type: 'error' })
-        }
-  
-        reader.readAsText(file, 'UTF-8')
       }
+
+      reader.onerror = function (evt) {
+        pushFeedback({ message: evt, type: 'error' })
+      }
+
+      reader.readAsText(file, 'UTF-8')
     }
+  }
 
   const columns = [
     {
@@ -215,14 +217,22 @@ function ApplicationList() {
     {
       key: 'isActivated',
       header: 'Activated',
-      render: (row: any) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-semibold ${row.isActivated ? 'bg-green-600 text-white' : 'bg-gray-600 text-white'
-            }`}
-        >
-          {row.isActivated ? 'Active' : 'Inactive'}
-        </span>
-      ),
+      render: (row: any) => {
+        const statusKey = row.isActivated ? StatusType.ACTIVE : StatusType.INACTIVE;
+        const bgColor = StatusColor[statusKey] ?? '#9CA3AF';
+        const textColor = getTextColor(bgColor);
+        return (
+          <span
+            className="px-2 py-1 rounded-full text-xs font-semibold"
+            style={{
+              backgroundColor: bgColor,
+              color: textColor
+            }}
+          >
+            {row.isActivated ? 'Active' : 'Inactive'}
+          </span>
+        );
+      }
     },
     {
       key: 'createdAt',
@@ -242,14 +252,22 @@ function ApplicationList() {
     },
     {
       label: 'Activated',
-      render: (row: any) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-semibold ${row.isActivated ? 'bg-green-600 text-white' : 'bg-gray-600 text-white'
-            }`}
-        >
-          {row.isActivated ? 'Active' : 'Inactive'}
-        </span>
-      ),
+      render: (row: any) => {
+        const statusKey = row.isActivated ? StatusType.ACTIVE : StatusType.INACTIVE;
+        const bgColor = StatusColor[statusKey] ?? '#9CA3AF';
+        const textColor = getTextColor(bgColor);
+        return (
+          <span
+            className="px-2 py-1 rounded-full text-xs font-semibold"
+            style={{
+              backgroundColor: bgColor,
+              color: textColor
+            }}
+          >
+            {row.isActivated ? 'Active' : 'Inactive'}
+          </span>
+        );
+      }
     },
     {
       label: 'System',

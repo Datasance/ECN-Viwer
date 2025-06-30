@@ -16,7 +16,8 @@ import { API_VERSIONS } from '../../Utils/constants';
 import { parseMicroservice } from '../../Utils/ApplicationParser';
 import lget from "lodash/get";
 import CryptoTextBox from '../../CustomComponent/CustomCryptoTextBox';
-import { MiBFactor, prettyBytes } from '../../ECNViewer/utils';
+import { getTextColor, MiBFactor, prettyBytes } from '../../ECNViewer/utils';
+import { StatusColor, StatusType } from '../../Utils/Enums/StatusColor';
 
 
 function MicroservicesList() {
@@ -48,11 +49,6 @@ function MicroservicesList() {
     setSelectedMs(row);
     setIsOpen(true);
   };
-
-  useEffect(() => {
-    console.log(data)
-  }, [data])
-
 
   const handleRestart = async () => {
     try {
@@ -268,7 +264,7 @@ function MicroservicesList() {
       key: 'memoryUsage',
       header: 'Memory Usage',
       render: (row: any) => (
-        <CustomProgressBar value={(row?.status?.memoryUsage)} max={data.reducedAgents.byUUID[row?.iofogUuid]?.systemAvailableMemory} unit='microservice'  />
+        <CustomProgressBar value={(row?.status?.memoryUsage)} max={data.reducedAgents.byUUID[row?.iofogUuid]?.systemAvailableMemory} unit='microservice' />
       ),
     },
     {
@@ -281,17 +277,20 @@ function MicroservicesList() {
         if (status === 'PULLING') {
           return (
             <span className="text-yellow-500 font-semibold">
-              {`${status}${typeof percentage === 'number' ? ` (${percentage.toFixed(2)}%)` : ''}`}
+              {`${status}${typeof percentage === 'number' ? ` (${percentage?.toFixed(2)}%)` : ''}`}
             </span>
           );
         }
 
+        const bgColor = StatusColor[status as StatusType] ?? '#9CA3AF'
+        const textColor = getTextColor(bgColor);
         return (
           <span
-            className={`px-2 py-1 rounded-full text-xs font-semibold ${status === 'RUNNING'
-              ? 'bg-green-600 text-white'
-              : 'bg-red-600 text-white'
-              }`}
+            className="px-2 py-1 rounded-full text-xs font-semibold"
+            style={{
+              backgroundColor: bgColor,
+              color: textColor
+            }}
           >
             {status}
           </span>
@@ -313,14 +312,21 @@ function MicroservicesList() {
     },
     {
       label: 'Status',
-      render: (row: any) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-semibold ${row.status?.status === 'RUNNING' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-            }`}
-        >
-          {row.status?.status || 'UNKNOWN'}
-        </span>
-      ),
+      render: (row: any) => {
+        const bgColor = StatusColor[row.status?.status as StatusType] ?? '#9CA3AF'
+        const textColor = getTextColor(bgColor);
+        return (
+          <span
+            className="px-2 py-1 rounded-full text-xs font-semibold"
+            style={{
+              backgroundColor: bgColor,
+              color: textColor
+            }}
+          >
+            {row.status?.status}
+          </span>
+        );
+      },
     },
     {
       label: 'Ip Address',
@@ -398,14 +404,21 @@ function MicroservicesList() {
     },
     {
       label: 'Status',
-      render: (row: any) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-semibold ${row.status?.status === 'RUNNING' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-            }`}
-        >
-          {row.status?.status || 'UNKNOWN'}
-        </span>
-      ),
+      render: (row: any) => {
+        const bgColor = StatusColor[row.status?.status as StatusType] ?? '#9CA3AF'
+        const textColor = getTextColor(bgColor);
+        return (
+          <span
+            className="px-2 py-1 rounded-full text-xs font-semibold"
+            style={{
+              backgroundColor: bgColor,
+              color: textColor
+            }}
+          >
+            {row.status?.status}
+          </span>
+        );
+      },
     },
     {
       label: 'Error Messages',
@@ -432,11 +445,21 @@ function MicroservicesList() {
     },
     {
       label: 'Exec Status',
-      render: (row: any) => (
-        <span>
-          {row.execStatus.status}
-        </span>
-      ),
+      render: (row: any) => {
+        const bgColor = StatusColor[row.execStatus.status as StatusType] ?? '#9CA3AF'
+        const textColor = getTextColor(bgColor);
+        return (
+          <span
+            className="px-2 py-1 rounded-full text-xs font-semibold"
+            style={{
+              backgroundColor: bgColor,
+              color: textColor
+            }}
+          >
+            {row.execStatus.status}
+          </span>
+        );
+      },
     },
     {
       label: 'Active Exec Session Id',
@@ -449,11 +472,11 @@ function MicroservicesList() {
     },
     {
       label: 'CPU Usage',
-      render: (row: any) => `${(Number(row?.status?.cpuUsage) || 0).toFixed(2)}%`,
+      render: (row: any) => `${(Number(row?.status?.cpuUsage) || 0)?.toFixed(2)}%`,
     },
     {
       label: 'Memory Usage',
-      render: (row: any) => `${prettyBytes((row.status?.memoryUsage || 0 * MiBFactor ))}`,
+      render: (row: any) => `${prettyBytes((row.status?.memoryUsage || 0 * MiBFactor))}`,
     },
     {
       label: 'Ports',

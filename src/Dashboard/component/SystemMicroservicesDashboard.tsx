@@ -111,7 +111,7 @@ const SystemMicroservicesDashboard: React.FC<SystemMicroservicesDashboardProps> 
             title: { text: 'Memory Usage (MB)', style: { color: '#fff' } },
             labels: {
                 style: { colors: '#fff' },
-                formatter: (val: number) => val.toFixed(0),
+                formatter: (val: number) => val?.toFixed(0),
               },
         },
         legend: {

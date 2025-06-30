@@ -10,31 +10,32 @@ import UnsavedChangesModal from '../../CustomComponent/UnsavedChangesModal';
 import AceEditor from "react-ace";
 import ResizableBottomDrawer from '../../CustomComponent/ResizableBottomDrawer';
 import yaml from 'js-yaml';
-import { MiBFactor, prettyBytes } from '../../ECNViewer/utils';
+import { getTextColor, MiBFactor, prettyBytes } from '../../ECNViewer/utils';
+import { StatusColor, StatusType } from '../../Utils/Enums/StatusColor';
 
 // Format duration in human-readable format of duration in milliseconds
 const formatDuration = (milliseconds: number): string => {
     if (!milliseconds || milliseconds <= 0) return 'N/A';
-    
+
     const totalSeconds = Math.floor(milliseconds / 1000);
-    
+
     const days = Math.floor(totalSeconds / (24 * 3600));
     const remainingHours = Math.floor((totalSeconds % (24 * 3600)) / 3600);
     const remainingMinutes = Math.floor((totalSeconds % 3600) / 60);
     const remainingSeconds = totalSeconds % 60;
-    
+
     if (days > 0) {
         return `${days}d${remainingHours}h`;
     }
-    
+
     if (remainingHours > 0) {
         return `${remainingHours}h${remainingMinutes}m`;
     }
-    
+
     if (remainingMinutes > 0) {
         return `${remainingMinutes}m${remainingSeconds}s`;
     }
-    
+
     return `${remainingSeconds}s`;
 };
 
@@ -226,16 +227,22 @@ function NodesList() {
         {
             key: 'daemonStatus',
             header: 'Status',
-            render: (row: any) => (
-                <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold ${row.daemonStatus === 'RUNNING'
-                        ? 'bg-green-600 text-white'
-                        : 'bg-red-600 text-white'
-                        }`}
-                >
-                    {row.daemonStatus}
-                </span>
-            ),
+            render: (row: any) => {
+                const statusKey = row.daemonStatus;
+                const bgColor = StatusColor[statusKey as StatusType] ?? '#9CA3AF';
+                const textColor = getTextColor(bgColor);
+                return (
+                    <span
+                        className="px-2 py-1 rounded-full text-xs font-semibold"
+                        style={{
+                            backgroundColor: bgColor,
+                            color: textColor
+                        }}
+                    >
+                        {row.daemonStatus}
+                    </span>
+                );
+            }
         },
     ];
 
@@ -246,29 +253,39 @@ function NodesList() {
         },
         {
             label: 'Status',
-            render: (row: any) => (
-                <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold ${row.daemonStatus === 'RUNNING'
-                        ? 'bg-green-600 text-white'
-                        : 'bg-red-600 text-white'
-                        }`}
-                >
-                    {row.daemonStatus}
-                </span>
-            ),
+            render: (row: any) => {
+                const bgColor = StatusColor[row.daemonStatus as StatusType] ?? '#9CA3AF'
+                const textColor = getTextColor(bgColor);
+                return (
+                    <span
+                        className="px-2 py-1 rounded-full text-xs font-semibold"
+                        style={{
+                            backgroundColor: bgColor,
+                            color: textColor
+                        }}
+                    >
+                        {row.daemonStatus}
+                    </span>
+                );
+            },
         },
         {
             label: 'Security Status',
-            render: (row: any) => (
-                <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold ${row.securityStatus === 'OK'
-                        ? 'bg-green-600 text-white'
-                        : 'bg-red-600 text-white'
-                        }`}
-                >
-                    {row.securityStatus}
-                </span>
-            ),
+            render: (row: any) => {
+                const bgColor = StatusColor[row.securityStatus as StatusType] ?? '#9CA3AF'
+                const textColor = getTextColor(bgColor);
+                return (
+                    <span
+                        className="px-2 py-1 rounded-full text-xs font-semibold"
+                        style={{
+                            backgroundColor: bgColor,
+                            color: textColor
+                        }}
+                    >
+                        {row.securityStatus}
+                    </span>
+                );
+            },
         },
         {
             label: 'Security Violation Info',
@@ -363,11 +380,11 @@ function NodesList() {
         },
         {
             label: 'CPU Usage',
-            render: (node: any) => `${(Number(node.cpuUsage) || 0).toFixed(2)}%`,
+            render: (node: any) => `${(Number(node.cpuUsage) || 0)?.toFixed(2)}%`,
         },
         {
             label: 'System Total CPU',
-            render: (node: any) => `${node.systemTotalCpu.toFixed(2)}%`,
+            render: (node: any) => `${node.systemTotalCpu?.toFixed(2)}%`,
         },
         {
             label: 'Memory Usage',
@@ -379,7 +396,7 @@ function NodesList() {
         },
         {
             label: 'Disk Usage',
-            render: (node: any) => `${prettyBytes(Number((node.diskUsage * MiBFactor).toFixed(2)) || 0)}`,
+            render: (node: any) => `${prettyBytes(Number((node.diskUsage * MiBFactor)?.toFixed(2)) || 0)}`,
         },
         {
             label: 'System Available Disk',

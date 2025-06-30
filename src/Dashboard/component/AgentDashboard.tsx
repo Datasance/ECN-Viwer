@@ -104,7 +104,7 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({ agentData }) => {
               <div style="padding:8px; color:#fff;">
                 <strong>${bubbleSeries[seriesIndex].name}</strong><br/>
                 Status: ${point.daemonStatus}<br/>
-                CPU: ${point.x.toFixed(2)}%<br/>
+                CPU: ${point.x?.toFixed(2)}%<br/>
                 Memory: ${memoryPretty}<br/>
                 Disk: ${diskPretty}
               </div>
@@ -125,7 +125,7 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({ agentData }) => {
           title: { text: 'Memory Usage (MB)', style: { color: '#fff' } },
           labels: {
             style: { colors: '#fff' },
-            formatter: (val: number) => val.toFixed(0),
+            formatter: (val: number) => val?.toFixed(0),
           },
         },
         theme: { mode: 'dark' as const },

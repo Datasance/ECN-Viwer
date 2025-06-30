@@ -7,7 +7,7 @@ const ApplicationDashboard = ({ applications, title }: any) => {
 
 
     const convertBytesToGB = (bytes: number) => {
-        return (bytes / (1024 ** 3)).toFixed(2);
+        return (bytes / (1024 ** 3))?.toFixed(2);
     };
 
     useEffect(() => {

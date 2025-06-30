@@ -13,6 +13,8 @@ import { parseMicroservice } from '../../Utils/ApplicationParser';
 import { API_VERSIONS } from '../../Utils/constants';
 import lget from 'lodash/get'
 import yaml from "js-yaml";
+import { StatusColor, StatusType } from '../../Utils/Enums/StatusColor';
+import { getTextColor } from '../../ECNViewer/utils';
 
 function SystemApplicationList() {
   const { data } = useData();
@@ -217,14 +219,22 @@ function SystemApplicationList() {
     {
       key: 'isActivated',
       header: 'Activated',
-      render: (row: any) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-semibold ${row.isActivated ? 'bg-green-600 text-white' : 'bg-gray-600 text-white'
-            }`}
-        >
-          {row.isActivated ? 'Active' : 'Inactive'}
-        </span>
-      ),
+      render: (row: any) => {
+        const statusKey = row.isActivated ? StatusType.ACTIVE : StatusType.INACTIVE;
+        const bgColor = StatusColor[statusKey] ?? '#9CA3AF';
+        const textColor = getTextColor(bgColor);
+        return (
+          <span
+            className="px-2 py-1 rounded-full text-xs font-semibold"
+            style={{
+              backgroundColor: bgColor,
+              color: textColor
+            }}
+          >
+            {row.isActivated ? 'Active' : 'Inactive'}
+          </span>
+        );
+      }
     },
     {
       key: 'createdAt',
@@ -244,14 +254,22 @@ function SystemApplicationList() {
     },
     {
       label: 'Activated',
-      render: (row: any) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-semibold ${row.isActivated ? 'bg-green-600 text-white' : 'bg-gray-600 text-white'
-            }`}
-        >
-          {row.isActivated ? 'Active' : 'Inactive'}
-        </span>
-      ),
+      render: (row: any) => {
+        const statusKey = row.isActivated ? StatusType.ACTIVE : StatusType.INACTIVE;
+        const bgColor = StatusColor[statusKey] ?? '#9CA3AF';
+        const textColor = getTextColor(bgColor);
+        return (
+          <span
+            className="px-2 py-1 rounded-full text-xs font-semibold"
+            style={{
+              backgroundColor: bgColor,
+              color: textColor
+            }}
+          >
+            {row.isActivated ? 'Active' : 'Inactive'}
+          </span>
+        );
+      }
     },
     {
       label: 'System',
