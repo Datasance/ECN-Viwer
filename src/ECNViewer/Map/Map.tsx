@@ -373,7 +373,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
     },
     {
       label: 'Disk Usage',
-      render: (node: any) => `${prettyBytes((node.diskUsage * MiBFactor) || 0)}`,
+      render: (node: any) => `${prettyBytes(Number((node.diskUsage * MiBFactor).toFixed(2)) || 0)}`,
     },
     {
       label: 'System Available Disk',

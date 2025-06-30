@@ -19,7 +19,7 @@ const CustomProgressBar = ({
 
   let displayValue = '';
   if (unit === 'agent') {
-    displayValue = `${prettyBytes((value * MiBFactor ))} / ${prettyBytes(max)}`;
+    displayValue = `${prettyBytes(Number((value * MiBFactor).toFixed(2)))} / ${prettyBytes(max)}`;
   } else if (unit === '%') {
     displayValue = `${(value.toFixed(2))} % / ${(max)} %`;
   } else if (unit === 'microservice')
