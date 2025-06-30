@@ -26,14 +26,14 @@ function SystemApplicationList() {
   const [editorDataChanged, setEditorDataChanged] = React.useState<any>();
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
-    const [showStartStopConfirmModal, setShowStartStopConfirmModal] = useState(false);
+  const [showStartStopConfirmModal, setShowStartStopConfirmModal] = useState(false);
 
   const handleRowClick = (row: any) => {
     setSelectedApplication(row);
     setIsOpen(true);
   };
 
-  async function restartFunction(type:boolean) {
+  async function restartFunction(type: boolean) {
     try {
       const res = await request(`/api/v3/application/${selectedApplication.name}`, {
         method: 'PATCH',

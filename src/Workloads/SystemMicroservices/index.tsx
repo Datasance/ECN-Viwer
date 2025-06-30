@@ -16,6 +16,7 @@ import { API_VERSIONS } from '../../Utils/constants';
 import lget from "lodash/get";
 import yaml from "js-yaml";
 import CryptoTextBox from '../../CustomComponent/CustomCryptoTextBox';
+import { MiBFactor, prettyBytes } from '../../ECNViewer/utils';
 
 function SystemMicroserviceList() {
   const { data } = useData();
@@ -230,7 +231,6 @@ function SystemMicroserviceList() {
     {
       key: 'name',
       header: 'Microservice Name',
-      width: 'w-2/12',
       render: (row: any) => (
         <div
           className="cursor-pointer text-blue-400 hover:underline"
@@ -247,7 +247,6 @@ function SystemMicroserviceList() {
     {
       key: 'application',
       header: 'Application',
-      width: 'w-2/12',
     },
     {
       key: 'cpuUsage',
@@ -260,10 +259,9 @@ function SystemMicroserviceList() {
     {
       key: 'memoryUsage',
       header: 'Memory Usage',
-      render: (row: any) => {
-        const usage = Number(row?.status?.memoryUsage || 0) / 1048576;
-        return <CustomProgressBar value={Number(usage.toFixed(2))} max={1024} unit="MB" />;
-      },
+      render: (row: any) => (
+        <CustomProgressBar value={(row?.status?.memoryUsage)} max={data.reducedAgents.byUUID[row?.iofogUuid]?.systemAvailableMemory} unit='microservice'  />
+      ),
     },
     {
       key: 'status',
@@ -297,26 +295,13 @@ function SystemMicroserviceList() {
 
   const slideOverFields = [
     {
-      label: 'Exec Status',
+      label: 'Microservice Details',
       render: () => '',
       isSectionHeader: true,
     },
     {
-      label: 'Status',
-      render: (row: any) => (
-        <span>
-          {row.execStatus.status}
-        </span>
-      ),
-    },
-    {
-      label: 'Exec Session Id',
-      render: (row: any) => row.execStatus.execSessionId || 'N/A',
-    },
-    {
-      label: 'Status',
-      render: () => '',
-      isSectionHeader: true,
+      label: 'uuid',
+      render: (row: any) => row.uuid || 'N/A',
     },
     {
       label: 'Status',
@@ -328,38 +313,6 @@ function SystemMicroserviceList() {
           {row.status?.status || 'UNKNOWN'}
         </span>
       ),
-    },
-    {
-      label: 'Error Messages',
-      render: (node: any) => {
-        return node.status.errorMessage ? <span className="text-white whitespace-pre-wrap break-words">{node.status?.errorMessage}</span> : 'N/A'
-      },
-    },
-    {
-      label: 'Exec Session Ids',
-      render: (row: any) => {
-          return row.status.execSessionIds?.length ? <span className="text-white whitespace-pre-wrap break-words">{row.status.execSessionIds}</span> : 'N/A'
-        }
-    },
-    {
-      label: 'Container Id',
-      render: (row: any) => (
-        <span
-          className="font-semibold truncate"
-          title={row.status.containerId || 'N/A'}
-        >
-          {row.status.containerId || 'N/A'}
-        </span>
-      ),
-    },    
-    {
-      label: 'Microservice Details',
-      render: () => '',
-      isSectionHeader: true,
-    },
-    {
-      label: 'uuid',
-      render: (row: any) => row.uuid || 'N/A',
     },
     {
       label: 'Ip Address',
@@ -404,7 +357,7 @@ function SystemMicroserviceList() {
           </span>
         );
       },
-    },    
+    },
     {
       label: 'Created at',
       render: (row: any) => {
@@ -420,16 +373,67 @@ function SystemMicroserviceList() {
       render: (row: any) => {
         const durationMs = row.status.operatingDuration;
         if (!durationMs) return 'N/A';
-    
+
         const totalSeconds = Math.floor(durationMs / 1000);
         const days = Math.floor(totalSeconds / (24 * 3600));
         const hours = Math.floor((totalSeconds % (24 * 3600)) / 3600);
         const minutes = Math.floor((totalSeconds % 3600) / 60);
         const seconds = totalSeconds % 60;
-    
+
         return `${days}d ${hours}h ${minutes}m ${seconds}s`;
       },
-    },    
+    },
+    {
+      label: 'Status',
+      render: () => '',
+      isSectionHeader: true,
+    },
+    {
+      label: 'Status',
+      render: (row: any) => (
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-semibold ${row.status?.status === 'RUNNING' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+            }`}
+        >
+          {row.status?.status || 'UNKNOWN'}
+        </span>
+      ),
+    },
+    {
+      label: 'Error Messages',
+      render: (node: any) => {
+        return node.status.errorMessage ? <span className="text-white whitespace-pre-wrap break-words">{node.status?.errorMessage}</span> : 'N/A'
+      },
+    },
+    {
+      label: 'Exec Session Ids',
+      render: (row: any) => {
+        return row.status.execSessionIds?.length ? <span className="text-white whitespace-pre-wrap break-words">{row.status.execSessionIds}</span> : 'N/A'
+      }
+    },
+    {
+      label: 'Container Id',
+      render: (row: any) => (
+        <span
+          className="font-semibold truncate"
+          title={row.status.containerId || 'N/A'}
+        >
+          {row.status.containerId || 'N/A'}
+        </span>
+      ),
+    },
+    {
+      label: 'Exec Status',
+      render: (row: any) => (
+        <span>
+          {row.execStatus.status}
+        </span>
+      ),
+    },
+    {
+      label: 'Active Exec Session Id',
+      render: (row: any) => row.execStatus.execSessionId || 'N/A',
+    },
     {
       label: 'Resource Utilization',
       render: () => '',
@@ -441,10 +445,7 @@ function SystemMicroserviceList() {
     },
     {
       label: 'Memory Usage',
-      render: (row: any) => {
-        const mb = Number(row?.status?.memoryUsage || 0) / 1048576;
-        return `${mb.toFixed(2)} MB`;
-      },
+      render: (row: any) => `${prettyBytes((row.status?.memoryUsage || 0 * MiBFactor ))}`,
     },
     {
       label: 'Ports',

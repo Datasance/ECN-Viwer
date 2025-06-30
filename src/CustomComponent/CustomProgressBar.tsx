@@ -1,4 +1,6 @@
+
 import React from 'react';
+import { MiBFactor, prettyBytes } from '../ECNViewer/utils';
 
 const CustomProgressBar = ({
   value,
@@ -16,10 +18,13 @@ const CustomProgressBar = ({
   else if (percent > 70) color = 'bg-yellow-400';
 
   let displayValue = '';
-  if (unit === '%') {
-    displayValue = `${(value).toFixed(2)} / ${max}`;
-  } else {
-    displayValue = `${value} / ${max}`;
+  if (unit === 'agent') {
+    displayValue = `${prettyBytes((value * MiBFactor ))} / ${prettyBytes(max)}`;
+  } else if (unit === '%') {
+    displayValue = `${(value.toFixed(2))} % / ${(max)} %`;
+  } else if (unit === 'microservice')
+  {
+    displayValue = `${prettyBytes((value || 0 * MiBFactor ))} / ${prettyBytes(max)}`;
   }
 
   return (

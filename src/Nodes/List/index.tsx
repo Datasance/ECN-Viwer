@@ -10,6 +10,7 @@ import UnsavedChangesModal from '../../CustomComponent/UnsavedChangesModal';
 import AceEditor from "react-ace";
 import ResizableBottomDrawer from '../../CustomComponent/ResizableBottomDrawer';
 import yaml from 'js-yaml';
+import { MiBFactor, prettyBytes } from '../../ECNViewer/utils';
 
 
 function NodesList() {
@@ -117,7 +118,6 @@ function NodesList() {
                 dockerPruningFrequency: selectedNode?.dockerPruningFrequency,
                 availableDiskThreshold: selectedNode?.availableDiskThreshold,
                 timeZone: selectedNode?.timeZone,
-                tags: selectedNode?.tags,
             },
         };
 
@@ -131,9 +131,8 @@ function NodesList() {
     async function handleYamlUpdate() {
         try {
             const parsed = yaml.load(editorDataChanged) as any;
-
             const patchBody = parsed?.spec ?? {};
-
+            patchBody.tags = parsed?.metadata.tags
             const res = await request(`/api/v3/iofog/${selectedNode?.uuid}`, {
                 method: "PATCH",
                 headers: {
@@ -182,21 +181,21 @@ function NodesList() {
             key: 'memoryUsage',
             header: 'Memory Usage',
             render: (row: any) => (
-                <CustomProgressBar value={row.memoryUsage} max={row.memoryLimit} unit="%" />
+                <CustomProgressBar value={row.memoryUsage} max={row.systemAvailableMemory} unit='agent' />
             ),
         },
         {
             key: 'cpuUsage',
             header: 'CPU Usage',
             render: (row: any) => (
-                <CustomProgressBar value={row.cpuUsage} max={row.cpuLimit} unit="%" />
+                <CustomProgressBar value={row.cpuUsage} max={100} unit="%" />
             ),
         },
         {
             key: 'diskUsage',
             header: 'Disk Usage',
             render: (row: any) => (
-                <CustomProgressBar value={row.diskUsage} max={row.diskLimit} unit="%" />
+                <CustomProgressBar value={row.diskUsage} max={row.systemAvailableDisk} unit='agent' />
             ),
         },
         {
@@ -342,43 +341,24 @@ function NodesList() {
             render: (node: any) => `${(Number(node.cpuUsage) || 0).toFixed(2)}%`,
         },
         {
+            label: 'System Total CPU',
+            render: (node: any) => `${node.systemTotalCpu.toFixed(2)}%`,
+        },
+        {
             label: 'Memory Usage',
-            render: (node: any) => {
-                if (node.memoryUsageMB && node.memoryTotalMB) {
-                    const percentage = ((node.memoryUsageMB / node.memoryTotalMB) * 100).toFixed(2);
-                    return `${Number(node.memoryUsageMB).toFixed(2)} MB / ${Number(node.memoryTotalMB).toFixed(2)} MB (${percentage}%)`;
-                }
-                return `${(Number(node.memoryUsage) || 0).toFixed(2)}%`;
-            },
-        },
-        {
-            label: 'Disk Usage',
-            render: (node: any) => {
-                if (node.diskUsageBytes && node.diskTotalBytes) {
-                    const format = (bytes: number) => {
-                        if (bytes === 0) return '0 B';
-                        const k = 1024;
-                        const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-                        const i = Math.floor(Math.log(bytes) / Math.log(k));
-                        return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
-                    };
-                    const percentage = ((node.diskUsageBytes / node.diskTotalBytes) * 100).toFixed(2);
-                    return `${format(node.diskUsageBytes)} / ${format(node.diskTotalBytes)} (${percentage}%)`;
-                }
-                return `${(Number(node.diskUsage) || 0).toFixed(2)}%`;
-            },
-        },
-        {
-            label: 'System Available Disk',
-            render: (node: any) => `${(Number(node.systemAvailableDisk) || 0).toFixed(2)}%`,
+            render: (node: any) => `${prettyBytes((node.memoryUsage * MiBFactor) || 0)}`,
         },
         {
             label: 'System Available Memory',
-            render: (node: any) => `${(Number(node.systemAvailableMemory) || 0).toFixed(2)}%`,
+            render: (node: any) => `${prettyBytes((node.systemAvailableMemory) || 0)}`,
         },
         {
-            label: 'System Total CPU',
-            render: (node: any) => `${(Number(node.systemTotalCPU) || 0).toFixed(2)}%`,
+            label: 'Disk Usage',
+            render: (node: any) => `${prettyBytes((node.diskUsage * MiBFactor) || 0)}`,
+        },
+        {
+            label: 'System Available Disk',
+            render: (node: any) => `${prettyBytes((node.systemAvailableDisk) || 0)}`,
         },
         {
             label: 'Volume Mounts',
@@ -433,15 +413,15 @@ function NodesList() {
         },
         {
             label: 'Cpu Violation',
-            render: (row: any) => row.cpuViolation || 'N/A',
+            render: (row: any) => row.cpuViolation === "0" ? "false" : "true",
         },
         {
             label: 'Disk Violation',
-            render: (row: any) => row.diskViolation || 'N/A',
+            render: (row: any) => row.diskViolation === "0" ? "false" : "true",
         },
         {
             label: 'Memory Violation',
-            render: (row: any) => row.memoryViolation || 'N/A',
+            render: (row: any) => row.memoryViolation === "0" ? "false" : "true",
         },
         {
             label: 'Is Ready To Rollback',
