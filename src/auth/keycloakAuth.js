@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect } from 'react'
 import { ReactKeycloakProvider, useKeycloak } from '@react-keycloak/web'
 import keycloak from '../Keycloak/keycloakConfig'
+import CustomLoadingModal from '../CustomComponent/CustomLoadingModal'
 
 // Create the authentication context
 const KeycloakAuthContext = createContext(null)
@@ -44,7 +45,13 @@ export const KeycloakAuthProvider = ({ children }) => {
           console.error('Failed to refresh token:', error)
         }
       }}
-      LoadingComponent={<div>Loading...</div>}
+      LoadingComponent={<CustomLoadingModal
+        open={true}
+        message={"Loading ECN-Viewer"}
+        spinnerSize="lg"
+        spinnerColor="text-green-500"
+        overlayOpacity={60}
+    />}
     >
       <KeycloakProviderContent>
         {children}
