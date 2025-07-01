@@ -52,7 +52,6 @@ function MicroservicesList() {
 
   const handleRestart = async () => {
     try {
-      debugger
       const res = await request(
         `/api/v3/microservices/${selectedMs.uuid}/rebuild`,
         {

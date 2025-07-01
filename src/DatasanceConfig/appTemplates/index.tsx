@@ -9,10 +9,12 @@ import UnsavedChangesModal from '../../CustomComponent/UnsavedChangesModal'
 import DeployApplicationTemplate from '../../Catalog/Application/DeployApplicationTemplate'
 import CustomActionModal from '../../CustomComponent/CustomActionModal'
 import AceEditor from "react-ace";
+import CustomLoadingModal from '../../CustomComponent/CustomLoadingModal'
 
 function AppTemplates() {
     const [fetching, setFetching] = React.useState(true)
     const [loading, setLoading] = React.useState(false)
+    const [loadingMessage, setLoadingMessage] = React.useState("Catalog Adding...")
     const [catalog, setCatalog] = React.useState([])
     const { request } = React.useContext(ControllerContext)
     const { pushFeedback } = React.useContext(FeedbackContext)
@@ -55,6 +57,7 @@ function AppTemplates() {
 
     const removeCatalogItem = async (item: any) => {
         try {
+            setLoadingMessage("Catalog Removing...")
             setLoading(true)
             const res = await request(`/api/v3/applicationTemplate/${item.name}`, {
                 method: 'DELETE'
@@ -74,13 +77,9 @@ function AppTemplates() {
         }
     }
 
-    const showDetails = (item: any) => {
-        console.log('Details:', item)
-    }
-
-
     const addCatalogItem = async (item: any) => {
         const newItem = { ...item }
+        setLoadingMessage("Catalog Adding...")
         setLoading(true)
         const response = await request(`/api/v3/applicationTemplate/${newItem.name}`, {
             method: 'PUT',
@@ -301,6 +300,13 @@ function AppTemplates() {
                 title={`${selectedItem?.name} Details`}
                 onCancel={() => { setShowDetailModal(false); }}
                 cancelLabel={"Cancel"}
+            />
+            <CustomLoadingModal
+                open={loading}
+                message={loadingMessage}
+                spinnerSize="lg"
+                spinnerColor="text-green-500"
+                overlayOpacity={60}
             />
         </>
 
