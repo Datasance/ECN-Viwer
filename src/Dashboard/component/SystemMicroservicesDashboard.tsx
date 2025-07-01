@@ -71,6 +71,13 @@ const SystemMicroservicesDashboard: React.FC<SystemMicroservicesDashboardProps> 
     const maxMemory = Math.max(...memoryValues);
     const dynamicYMax = maxMemory > 0 ? Math.ceil(maxMemory * 1.2) : 100;
 
+    // Calculate dynamic max value for x-axis (CPU usage)
+    const cpuValues = allMicroservices.map(msvc =>
+        msvc.status?.cpuUsage ? Number(msvc.status.cpuUsage) : 0
+    );
+    const maxCpu = Math.max(...cpuValues);
+    const dynamicXMax = maxCpu > 0 ? Math.ceil(maxCpu * 1.2) : 100;
+
     const bubbleChartOptions = {
         chart: { type: 'bubble' as const, background: '#333', toolbar: { show: false } },
         dataLabels: { enabled: false },
@@ -99,7 +106,7 @@ const SystemMicroservicesDashboard: React.FC<SystemMicroservicesDashboardProps> 
         },
         xaxis: {
             min: -2,
-            max: 100,
+            max: dynamicXMax,
             tickAmount: 5,
             title: { text: 'CPU Usage (%)', style: { color: '#fff' }, offsetY: -10 },
             labels: { style: { colors: '#fff' } },

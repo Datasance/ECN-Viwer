@@ -74,6 +74,13 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({ agentData }) => {
     const maxMemory = Math.max(...memoryValues);
     const dynamicYMax = maxMemory > 0 ? Math.ceil(maxMemory * 1.2) : 1000; // Add 20% padding
 
+    // Calculate dynamic max value for x-axis (CPU usage)
+    const cpuValues = agentArray.map(agent =>
+        agent.cpuUsage ? Number(agent.cpuUsage) : 0
+    );
+    const maxCpu = Math.max(...cpuValues);
+    const dynamicXMax = maxCpu > 0 ? Math.max(Math.ceil(maxCpu * 1.2), 20) : 100;
+
       const bubbleChartOptions = {
         chart: {
           type: 'bubble' as const,
@@ -113,7 +120,7 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({ agentData }) => {
         },
         xaxis: {
           min: -5,
-          max: 100,
+          max: dynamicXMax,
           tickAmount: 5,
           title: { text: 'CPU Usage (%)', style: { color: '#fff' }, offsetY: -10 },
           labels: { style: { colors: '#fff' } },
