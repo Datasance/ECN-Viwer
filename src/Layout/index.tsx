@@ -274,9 +274,9 @@ export default function Layout() {
                           </a>
                           <a
                             className="font-bold underline underline-offset-2"
-                            href={`/#/api?userToken=${keycloak?.token}&baseUrl=${/^(http:\/\/|https:\/\/)?((\d{1,3}\.){3}\d{1,3}|localhost)(:\d+)?$/.test(window.location.origin)
-                              ? `${window.location.origin.replace(/(:\d+)?$/, `:${window.controllerConfig?.port}`)}/api/v3`
-                              : `${window.location.origin}/api/v3`
+                            href={`/#/api?userToken=${keycloak?.token}&baseUrl=${window.controllerConfig?.port
+                                ? `${window.location.protocol}//${window.location.hostname}:${window.controllerConfig.port}/api/v3`
+                                : `${window.location.origin}/api/v3`
                               }`}
                             target="_parent"
                           >

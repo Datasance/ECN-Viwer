@@ -64,14 +64,12 @@ const SystemMicroservicesDashboard: React.FC<SystemMicroservicesDashboardProps> 
             })),
     }));
 
-    // Calculate dynamic max value for y-axis (memory usage)
-    const memoryValues = allMicroservices.map(msvc => 
+    const memoryValues = allMicroservices.map(msvc =>
         msvc.status?.memoryUsage ? (msvc.status.memoryUsage) / (1024 * 1024) : 0
     );
     const maxMemory = Math.max(...memoryValues);
     const dynamicYMax = maxMemory > 0 ? Math.ceil(maxMemory * 1.2) : 100;
 
-    // Calculate dynamic max value for x-axis (CPU usage)
     const cpuValues = allMicroservices.map(msvc =>
         msvc.status?.cpuUsage ? Number(msvc.status.cpuUsage) : 0
     );
@@ -119,9 +117,10 @@ const SystemMicroservicesDashboard: React.FC<SystemMicroservicesDashboardProps> 
             labels: {
                 style: { colors: '#fff' },
                 formatter: (val: number) => val?.toFixed(0),
-              },
+            },
         },
         legend: {
+            show: true,
             labels: { colors: '#fff' },
         },
         theme: { mode: 'dark' as const },
