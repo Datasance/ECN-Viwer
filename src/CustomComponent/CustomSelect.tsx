@@ -1,5 +1,3 @@
-// src/CustomComponent/CustomSelect.tsx
-import React from 'react';
 import Select, { Props as SelectProps, GroupBase } from 'react-select';
 
 export type CustomSelectProps<OptionType, IsMulti extends boolean = false> = SelectProps<OptionType, IsMulti, GroupBase<OptionType>> & {

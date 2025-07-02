@@ -43,7 +43,6 @@ function SystemMicroserviceList() {
   const [showVolumeDeleteConfirmModal, setShowVolumeDeleteConfirmModal] = useState(false);
   const [selectedPort, setSelectedPort] = useState<any>(null);
   const [selectedVolume, setSelectedVolume] = useState<any>(null);
-  console.log(data)
 
   const handleRowClick = (row: any) => {
     setSelectedMs(row);

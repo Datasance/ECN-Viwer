@@ -9,12 +9,10 @@ type Props = {
 const CryptoTextBox: React.FC<Props> = ({ data }) => {
   const [visible, setVisible] = useState(false);
 
-  // Base64 encode edilmiş hali (şifrelenmiş)
   const encoded = useMemo(() => {
     return btoa(unescape(encodeURIComponent(data)));
   }, [data]);
 
-  // Base64 çözülmüş hali (açık metin)
   const decoded = useMemo(() => {
     try {
       return decodeURIComponent(escape(atob(encoded)));

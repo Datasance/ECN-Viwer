@@ -1,16 +1,10 @@
 import { useData } from '../providers/Data';
 import AgentDashboard from './component/AgentDashboard';
-import { useEffect } from 'react';
-import ApplicationDashboard from './component/ApplicationsDashboard';
 import MicroservicesDashboard from './component/MicroservicesDashboard';
 import SystemMicroservicesDashboard from './component/SystemMicroservicesDashboard';
 
 const Dashboard = () => {
   const { data } = useData();
-  useEffect(() => {
-    console.log(data)
-  }, [data])
-
 
   return (
     <div className=" bg-gray-900 text-white overflow-auto p-2">

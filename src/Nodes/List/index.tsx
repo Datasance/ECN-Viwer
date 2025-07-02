@@ -13,7 +13,6 @@ import yaml from 'js-yaml';
 import { getTextColor, MiBFactor, prettyBytes } from '../../ECNViewer/utils';
 import { StatusColor, StatusType } from '../../Utils/Enums/StatusColor';
 
-// Format duration in human-readable format of duration in milliseconds
 const formatDuration = (milliseconds: number): string => {
     if (!milliseconds || milliseconds <= 0) return 'N/A';
 

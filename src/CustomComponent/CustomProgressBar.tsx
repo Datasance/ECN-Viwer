@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { MiBFactor, prettyBytes } from '../ECNViewer/utils';
 
 const CustomProgressBar = ({

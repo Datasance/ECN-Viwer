@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import CustomDataTable from '../../CustomComponent/CustomDataTable'
 import { ControllerContext } from '../../ControllerProvider'
 import { FeedbackContext } from '../../Utils/FeedbackContext'
@@ -29,6 +29,7 @@ function CatalogMicroservices() {
 
     useEffect(() => {
         fetchCatalog()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const columns = [
@@ -59,12 +60,12 @@ function CatalogMicroservices() {
         {
             key: 'images',
             header: 'x86',
-            render: (row: any) => <span>{row.images.find((x:any) => x.fogTypeId === 1)?.containerImage }</span>,
+            render: (row: any) => <span>{row.images.find((x: any) => x.fogTypeId === 1)?.containerImage}</span>,
         },
         {
             key: 'images',
             header: 'ARM',
-            render: (row: any) => <span>{row.images.find((x:any) => x.fogTypeId === 2)?.containerImage }</span>,
+            render: (row: any) => <span>{row.images.find((x: any) => x.fogTypeId === 2)?.containerImage}</span>,
         },
         {
             key: 'category',

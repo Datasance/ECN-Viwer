@@ -47,6 +47,7 @@ function RouteWatcher() {
       console.log('Refreshing data')
       refreshData()
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return null

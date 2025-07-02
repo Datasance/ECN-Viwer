@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import CustomDataTable from '../../CustomComponent/CustomDataTable'
 import { ControllerContext } from '../../ControllerProvider'
 import { FeedbackContext } from '../../Utils/FeedbackContext'
@@ -29,6 +29,7 @@ function Services() {
 
     useEffect(() => {
         fetchServices()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const columns = [

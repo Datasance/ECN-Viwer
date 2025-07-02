@@ -25,6 +25,7 @@ function AppTemplates() {
 
     useEffect(() => {
         fetchCatalog()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     function mapApplicationTemplate(item: any) {
@@ -286,7 +287,7 @@ function AppTemplates() {
                             onLoad={(editor) => {
                                 editor.renderer.setPadding(10);
                                 editor.renderer.setScrollMargin(10);
-                                editor.getSession().setUseWrapMode(true); 
+                                editor.getSession().setUseWrapMode(true);
                             }}
                             style={{
                                 width: '100%',

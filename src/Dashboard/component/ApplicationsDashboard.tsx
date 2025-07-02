@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import ApexCharts from "react-apexcharts";
 
 const ApplicationDashboard = ({ applications, title }: any) => {
@@ -12,7 +12,7 @@ const ApplicationDashboard = ({ applications, title }: any) => {
 
     useEffect(() => {
         if (!applications || applications.length === 0) return;
-    
+
         const allMicroservices = applications.flatMap((app: any) =>
             app.microservices.map((micro: any) => ({
                 name: micro.name,
@@ -21,11 +21,11 @@ const ApplicationDashboard = ({ applications, title }: any) => {
                 memoryUsage: convertBytesToGB(micro.status.memoryUsage),
             }))
         );
-    
-        const microserviceNames = allMicroservices.map((m:any) => m.name);
-    
+
+        const microserviceNames = allMicroservices.map((m: any) => m.name);
+
         const uniqueMicroservices = [...new Set(microserviceNames)];
-    
+
         const cpuUsageData = applications.map((app: any) => ({
             name: app.name,
             data: uniqueMicroservices.map((msName) => {
@@ -33,7 +33,7 @@ const ApplicationDashboard = ({ applications, title }: any) => {
                 return micro ? micro.status.cpuUsage : null;
             }),
         }));
-    
+
         const memoryUsageData = applications.map((app: any) => ({
             name: app.name,
             data: uniqueMicroservices.map((msName) => {
@@ -41,7 +41,7 @@ const ApplicationDashboard = ({ applications, title }: any) => {
                 return micro ? convertBytesToGB(micro.status.memoryUsage) : null;
             }),
         }));
-    
+
         setChartDataCpu({
             cpuUsage: {
                 series: cpuUsageData,
@@ -121,7 +121,7 @@ const ApplicationDashboard = ({ applications, title }: any) => {
             },
         });
     }, [applications]);
-    
+
 
     if (applications && applications.length === 0) return <div>Loading...</div>;
 
@@ -129,30 +129,30 @@ const ApplicationDashboard = ({ applications, title }: any) => {
 
     return (
         <div className="bg-gray-800 p-6 rounded-xl">
-    <h1 className="text-3xl font-bold text-white mb-6 text-start">
-        {`${applications?.length} ${title}${applications?.length > 1 ? "s" : ""}`}
-    </h1>
+            <h1 className="text-3xl font-bold text-white mb-6 text-start">
+                {`${applications?.length} ${title}${applications?.length > 1 ? "s" : ""}`}
+            </h1>
 
-    <div className="flex flex-col md:flex-row justify-between gap-6">
-        <div id="cpu-usage-chart" className="w-full md:basis-1/2">
-            <ApexCharts
-                options={chartDataCpu.cpuUsage.options}
-                series={chartDataCpu.cpuUsage.series}
-                type="bar"
-                height={200}
-            />
-        </div>
+            <div className="flex flex-col md:flex-row justify-between gap-6">
+                <div id="cpu-usage-chart" className="w-full md:basis-1/2">
+                    <ApexCharts
+                        options={chartDataCpu.cpuUsage.options}
+                        series={chartDataCpu.cpuUsage.series}
+                        type="bar"
+                        height={200}
+                    />
+                </div>
 
-        <div id="memory-usage-chart" className="w-full md:basis-1/2">
-            <ApexCharts
-                options={chartDataMemory.memoryUsage.options}
-                series={chartDataMemory.memoryUsage.series}
-                type="bar"
-                height={200}
-            />
+                <div id="memory-usage-chart" className="w-full md:basis-1/2">
+                    <ApexCharts
+                        options={chartDataMemory.memoryUsage.options}
+                        series={chartDataMemory.memoryUsage.series}
+                        type="bar"
+                        height={200}
+                    />
+                </div>
+            </div>
         </div>
-    </div>
-</div>
 
     );
 
