@@ -12,6 +12,8 @@ import AceEditor from "react-ace";
 import ResizableBottomDrawer from '../../CustomComponent/ResizableBottomDrawer';
 import yaml from 'js-yaml';
 import { MiBFactor, prettyBytes } from '../utils';
+import { StatusColor, StatusType } from '../../Utils/Enums/StatusColor';
+import { getTextColor } from '../../ECNViewer/utils';
 
 interface CustomLeafletProps {
   collapsed: boolean;
@@ -486,6 +488,26 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
             header: 'Application Name',
             formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
           },
+          {
+            key: 'isActivated',
+            header: 'Status',
+            render: (row: any) => {
+              const statusKey = row.isActivated ? StatusType.ACTIVE : StatusType.INACTIVE;
+              const bgColor = StatusColor[statusKey] ?? '#9CA3AF';
+              const textColor = getTextColor(bgColor);
+              return (
+                <span
+                  className="px-2 py-1 rounded-full text-xs font-semibold"
+                  style={{
+                    backgroundColor: bgColor,
+                    color: textColor
+                  }}
+                >
+                  {row.isActivated ? 'ACTIVE' : 'INACTIVE'}
+                </span>
+              );
+            }
+          },
         ];
 
         return (
@@ -540,7 +562,21 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
           {
             key: 'status',
             header: 'Status',
-            formatter: ({ row }: any) => <span className="text-white">{row.status}</span>,
+            render: (row: any) => {
+              const bgColor = StatusColor[row.status as StatusType] ?? '#9CA3AF'
+              const textColor = getTextColor(bgColor);
+              return (
+                <span
+                  className="px-2 py-1 rounded-full text-xs font-semibold"
+                  style={{
+                    backgroundColor: bgColor,
+                    color: textColor
+                  }}
+                >
+                  {row.status}
+                </span>
+              );
+            },
           },
           {
             key: 'agent',

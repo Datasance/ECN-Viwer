@@ -508,6 +508,26 @@ function NodesList() {
                         header: 'Application Name',
                         formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
                     },
+                    {
+                        key: 'isActivated',
+                        header: 'Status',
+                        render: (row: any) => {
+                          const statusKey = row.isActivated ? StatusType.ACTIVE : StatusType.INACTIVE;
+                          const bgColor = StatusColor[statusKey] ?? '#9CA3AF';
+                          const textColor = getTextColor(bgColor);
+                          return (
+                            <span
+                              className="px-2 py-1 rounded-full text-xs font-semibold"
+                              style={{
+                                backgroundColor: bgColor,
+                                color: textColor
+                              }}
+                            >
+                              {row.isActivated ? 'ACTIVE' : 'INACTIVE'}
+                            </span>
+                          );
+                        }
+                      },
                 ];
 
                 return (
@@ -560,9 +580,23 @@ function NodesList() {
                         formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
                     },
                     {
-                        key: 'status',
-                        header: 'Status',
-                        formatter: ({ row }: any) => <span className="text-white">{row.status}</span>,
+                      key: 'status',
+                      header: 'Status',
+                      render: (row: any) => {
+                        const bgColor = StatusColor[row.status as StatusType] ?? '#9CA3AF'
+                        const textColor = getTextColor(bgColor);
+                        return (
+                          <span
+                            className="px-2 py-1 rounded-full text-xs font-semibold"
+                            style={{
+                              backgroundColor: bgColor,
+                              color: textColor
+                            }}
+                          >
+                            {row.status}
+                          </span>
+                        );
+                      },
                     },
                     {
                         key: 'agent',

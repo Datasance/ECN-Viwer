@@ -231,7 +231,7 @@ function SystemApplicationList() {
               color: textColor
             }}
           >
-            {row.isActivated ? 'Active' : 'Inactive'}
+            {row.isActivated ? 'ACTIVE' : 'INACTIVE'}
           </span>
         );
       }
@@ -266,7 +266,7 @@ function SystemApplicationList() {
               color: textColor
             }}
           >
-            {row.isActivated ? 'Active' : 'Inactive'}
+            {row.isActivated ? 'ACTIVE' : 'INACTIVE'}
           </span>
         );
       }
@@ -278,7 +278,7 @@ function SystemApplicationList() {
           className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${row.isSystem ? 'bg-blue-100 text-blue-800' : 'bg-gray-200 text-gray-700'
             }`}
         >
-          {row.isSystem ? 'System' : 'User'}
+          {row.isSystem ? 'SYSTEM' : 'USER'}
         </span>
       ),
     },
@@ -506,10 +506,10 @@ function SystemApplicationList() {
         open={showStartStopConfirmModal}
         onCancel={() => setShowStartStopConfirmModal(false)}
         onConfirm={handleStartStop}
-        title={`${!selectedApplication?.isActivated ? 'Active' : 'Inactive'} ${selectedApplication?.name}`}
+        title={`${!selectedApplication?.isActivated ? 'ACTIVE' : 'INACTIVE'} ${selectedApplication?.name}`}
         message={"This is not reversible."}
         cancelLabel={"Cancel"}
-        confirmLabel={`${!selectedApplication?.isActivated ? 'Active' : 'Inactive'}`}
+        confirmLabel={`${!selectedApplication?.isActivated ? 'ACTIVE' : 'INACTIVE'}`}
       />
     </div>
   );
