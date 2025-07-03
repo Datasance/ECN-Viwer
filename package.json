@@ -1,6 +1,6 @@
 {
   "name": "@datasance/ecn-viewer",
-  "version": "v0.5.4",
+  "version": "v1.0.0-alpha",
   "description": "Datasance ioFog Edge Cloud Network Viewer project  \\nCopyright (c) 2023 Datasance Teknoloji A.S.",
   "main": "index.js",
   "author": "Emirhan Durmus",
@@ -57,7 +57,7 @@
   "proxy": "http://localhost:5555",
   "scripts": {
     "start": "npm run build && npm run prod",
-    "start-dev": "cp orange-config.js ./public/controller-config.js && concurrently 'PORT=5555 nodemon server/index.js' 'react-scripts --openssl-legacy-provider start'",
+    "start-dev": "cp controller-config.prod.js ./public/controller-config.js && react-scripts --openssl-legacy-provider start",
     "prod": "node server/index.js",
     "build": "cp controller-config.prod.js ./public/controller-config.js && react-scripts build",
     "test": "CI=true react-scripts test",
