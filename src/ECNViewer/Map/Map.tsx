@@ -27,26 +27,26 @@ type OptionType = {
 // Format duration in human-readable format of duration in milliseconds
 const formatDuration = (milliseconds: number): string => {
   if (!milliseconds || milliseconds <= 0) return 'N/A';
-  
+
   const totalSeconds = Math.floor(milliseconds / 1000);
-  
+
   const days = Math.floor(totalSeconds / (24 * 3600));
   const remainingHours = Math.floor((totalSeconds % (24 * 3600)) / 3600);
   const remainingMinutes = Math.floor((totalSeconds % 3600) / 60);
   const remainingSeconds = totalSeconds % 60;
-  
+
   if (days > 0) {
-      return `${days}d${remainingHours}h`;
+    return `${days}d${remainingHours}h`;
   }
-  
+
   if (remainingHours > 0) {
-      return `${remainingHours}h${remainingMinutes}m`;
+    return `${remainingHours}h${remainingMinutes}m`;
   }
-  
+
   if (remainingMinutes > 0) {
-      return `${remainingMinutes}m${remainingSeconds}s`;
+    return `${remainingMinutes}m${remainingSeconds}s`;
   }
-  
+
   return `${remainingSeconds}s`;
 };
 
@@ -533,6 +533,143 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
             app.microservices?.some((msvc: any) => msvc.iofogUuid === node.uuid)
         );
         const microservices = agentApplications?.microservices || [];
+
+        if (!Array.isArray(microservices) || microservices.length === 0) {
+          return <div className="text-sm text-gray-400">No microservices available.</div>;
+        }
+        const tableData = microservices.map((ms: any, index: number) => ({
+          key: `${ms.uuid}-${index}`,
+          name: ms.name || '-',
+          status: ms.status?.status || '-',
+          agent: data.activeAgents?.find((a: any) => a.uuid === ms.iofogUuid)?.name ?? '-',
+          ports: Array.isArray(ms.ports) ? (
+            ms.ports.map((p: any, i: number) => (
+              <div key={i}>
+                {`${p.internal}:${p.external}/${p.protocol}`}
+              </div>
+            ))
+          ) : (
+            '-'
+          )
+        }));
+
+        const columns = [
+          {
+            key: 'name',
+            header: 'Name',
+            formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
+          },
+          {
+            key: 'status',
+            header: 'Status',
+            render: (row: any) => {
+              const bgColor = StatusColor[row.status as StatusType] ?? '#9CA3AF'
+              const textColor = getTextColor(bgColor);
+              return (
+                <span
+                  className="px-2 py-1 rounded-full text-xs font-semibold"
+                  style={{
+                    backgroundColor: bgColor,
+                    color: textColor
+                  }}
+                >
+                  {row.status}
+                </span>
+              );
+            },
+          },
+          {
+            key: 'agent',
+            header: 'Agent',
+            formatter: ({ row }: any) => <span className="text-white">{row.agent}</span>,
+          },
+          {
+            key: 'ports',
+            header: 'Ports',
+            formatter: ({ row }: any) => (
+              <span className="text-white whitespace-pre-wrap break-words">{row.ports}</span>
+            ),
+          },
+        ];
+
+        return (
+          <CustomDataTable
+            columns={columns}
+            data={tableData}
+            getRowKey={(row: any) => row.key}
+          />
+        );
+      },
+    },
+    {
+      label: 'System Applications',
+      render: () => '',
+      isSectionHeader: true,
+    },
+    {
+      label: '',
+      isFullSection: true,
+      render: (node: any) => {
+        const agentApplications = data?.systemApplications?.filter(
+          (app: any) =>
+            app.microservices?.some((msvc: any) => msvc.iofogUuid === node.uuid)
+        );
+
+        if (!agentApplications || agentApplications.length === 0) {
+          return <div className="text-sm text-gray-400">No applications found for this agent.</div>;
+        }
+
+        const localColumns = [
+          {
+            key: 'name',
+            header: 'Application Name',
+            formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
+          },
+          {
+            key: 'isActivated',
+            header: 'Status',
+            render: (row: any) => {
+              const statusKey = row.isActivated ? StatusType.ACTIVE : StatusType.INACTIVE;
+              const bgColor = StatusColor[statusKey] ?? '#9CA3AF';
+              const textColor = getTextColor(bgColor);
+              return (
+                <span
+                  className="px-2 py-1 rounded-full text-xs font-semibold"
+                  style={{
+                    backgroundColor: bgColor,
+                    color: textColor
+                  }}
+                >
+                  {row.isActivated ? 'ACTIVE' : 'INACTIVE'}
+                </span>
+              );
+            }
+          },
+        ];
+
+        return (
+          <CustomDataTable
+            columns={localColumns}
+            data={agentApplications}
+            getRowKey={(row: any) => row.uuid}
+          />
+        );
+      },
+    },
+    {
+      label: 'System Microservices',
+      render: () => '',
+      isSectionHeader: true,
+    },
+    {
+      label: '',
+      isFullSection: true,
+      render: (node: any) => {
+        const systemAgentApplications = data?.systemApplications?.find(
+          (app: any) =>
+            app.microservices?.some((msvc: any) => msvc.iofogUuid === node.uuid)
+        );
+        const microservices = systemAgentApplications?.microservices || [];
 
         if (!Array.isArray(microservices) || microservices.length === 0) {
           return <div className="text-sm text-gray-400">No microservices available.</div>;
