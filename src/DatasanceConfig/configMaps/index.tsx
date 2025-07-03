@@ -48,7 +48,7 @@ function ConfigMaps() {
         {
             key: 'immutable',
             header: 'immutable',
-            render: (row: any) => <span>{row.immutable || '-'}</span>,
+            render: (row: any) => <span>{row.immutable.toString() || '-'}</span>,
         },
     ];
 
