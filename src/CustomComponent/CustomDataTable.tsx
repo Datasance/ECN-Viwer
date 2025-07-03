@@ -88,7 +88,7 @@ export default function CustomDataTable<T>({
             </tr>
           </thead>
           <tbody>
-            {filteredData.length > 0 ? (
+            {filteredData && filteredData.length > 0 ? (
               filteredData.map(row => {
                 const rowKey = getRowKey(row);
                 const isExpanded = expandedRows.has(rowKey);

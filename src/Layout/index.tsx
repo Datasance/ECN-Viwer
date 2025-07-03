@@ -32,6 +32,7 @@ import Map from '../ECNViewer/Map/Map'
 import AppTemplates from '../DatasanceConfig/appTemplates/index'
 import CatalogMicroservices from '../DatasanceConfig/catalogMicroservices'
 import ConfigMaps from '../DatasanceConfig/configMaps'
+import VolumeMounts from '../DatasanceConfig/volumeMounts'
 import SecretsMicroservices from '../DatasanceConfig/secret'
 import Certificates from '../DatasanceConfig/certificates'
 import Services from '../DatasanceConfig/services'
@@ -211,6 +212,13 @@ export default function Layout() {
                           </MenuItem>
                         )}
                       </NavLink>
+                      <NavLink to="/config/VolumeMounts">
+                        {({ isActive }) => (
+                          <MenuItem active={isActive}>
+                            Volume Mounts
+                          </MenuItem>
+                        )}
+                      </NavLink>
                       <NavLink to="/config/certificates">
                         {({ isActive }) => (
                           <MenuItem active={isActive}>
@@ -335,6 +343,7 @@ export default function Layout() {
               <Route path="/config/CatalogMicroservices" Component={CatalogMicroservices} />
               <Route path="/config/ConfigMaps" Component={ConfigMaps} />
               <Route path="/config/secret" Component={SecretsMicroservices} />
+              <Route path="/config/VolumeMounts" Component={VolumeMounts} />
               <Route path="/config/certificates" Component={Certificates} />
               <Route path="/config/services" Component={Services} />
               <Route Component={() => <Navigate to="/dashboard" />} />
