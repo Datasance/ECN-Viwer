@@ -28,7 +28,6 @@ import MicroservicesList from '../Workloads/Microservices'
 import SystemMicroservicesList from '../Workloads/SystemMicroservices'
 import ApplicationList from '../Workloads/Applications'
 import SystemApplicationList from '../Workloads/SystemApplications'
-import Map from '../ECNViewer/Map/Map'
 import AppTemplates from '../DatasanceConfig/appTemplates/index'
 import CatalogMicroservices from '../DatasanceConfig/catalogMicroservices'
 import ConfigMaps from '../DatasanceConfig/configMaps'
@@ -36,6 +35,7 @@ import VolumeMounts from '../DatasanceConfig/volumeMounts'
 import SecretsMicroservices from '../DatasanceConfig/secret'
 import Certificates from '../DatasanceConfig/certificates'
 import Services from '../DatasanceConfig/services'
+import Map from '../Nodes/Map/Map'
 
 const controllerJson = window.controllerConfig || null
 
@@ -283,8 +283,8 @@ export default function Layout() {
                           </a>
                           <a
                             className="font-bold underline underline-offset-2"
-                            href={`/#/api?authToken=${keycloak?.token}&baseUrl=${window.controllerConfig?.port
-                                ? `${window.location.protocol}//${window.location.hostname}:${window.controllerConfig.port}/api/v3`
+                            href={`/#/api?authToken=${keycloak?.token}&baseUrl=${window.controllerConfig?.url === undefined
+                                ? `${window.location.protocol}//${window.location.hostname}:${window?.controllerConfig?.port}/api/v3`
                                 : `${window.location.origin}/api/v3`
                               }`}
                             target="_parent"

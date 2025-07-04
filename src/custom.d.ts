@@ -26,6 +26,7 @@ declare module "*.svg" {
     keycloakRealm?: string
     port?: number
     dev?: boolean
+    url?: string
   }
   
   interface Window {
