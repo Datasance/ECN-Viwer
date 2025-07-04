@@ -211,8 +211,24 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
   async function handleYamlUpdate() {
     try {
       const parsed = yaml.load(editorDataChanged) as any;
-      const patchBody = parsed?.spec ?? {};
-      patchBody.tags = parsed?.metadata.tags
+      const spec = parsed?.spec ?? {};
+      const metadata = parsed?.metadata ?? {};
+      
+      // Create patch body with all spec properties
+      const patchBody = { ...spec };
+      
+      // Add tags from metadata
+      patchBody.tags = metadata.tags;
+      
+      // Flatten routerConfig if it exists
+      if (spec.routerConfig) {
+        patchBody.routerMode = spec.routerConfig.routerMode;
+        patchBody.messagingPort = spec.routerConfig.messagingPort;
+        patchBody.edgeRouterPort = spec.routerConfig.edgeRouterPort;
+        patchBody.interRouterPort = spec.routerConfig.interRouterPort;
+        delete patchBody.routerConfig;
+      }
+      
       const res = await request(`/api/v3/iofog/${selectedNode?.uuid}`, {
         method: "PATCH",
         headers: {

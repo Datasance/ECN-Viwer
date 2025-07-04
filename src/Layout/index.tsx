@@ -35,7 +35,7 @@ import VolumeMounts from '../DatasanceConfig/volumeMounts'
 import SecretsMicroservices from '../DatasanceConfig/secret'
 import Certificates from '../DatasanceConfig/certificates'
 import Services from '../DatasanceConfig/services'
-import Map from '../Nodes/Map/Map'
+import Map from '../ECNViewer/Map/Map'
 
 const controllerJson = window.controllerConfig || null
 
