@@ -342,6 +342,7 @@ function ApplicationList() {
           name: ms.name || '-',
           status: ms.status?.status || '-',
           agent: data.activeAgents?.find((a: any) => a.uuid === ms.iofogUuid)?.name ?? '-',
+          agentId: ms.iofogUuid,
           ports: Array.isArray(ms.ports) ? (
             ms.ports.map((p: any, i: number) => (
               <div key={i}>
@@ -377,7 +378,17 @@ function ApplicationList() {
           {
             key: 'agent',
             header: 'Agent',
-            formatter: ({ row }: any) => <span className="text-white">{row.agent}</span>,
+            render: (row: any) => {
+              if (!row?.name) return <span className="text-gray-400">No name</span>;
+              return (
+                <NavLink
+                  to={`/nodes/list?agentId=${encodeURIComponent(row.agentId)}`}
+                  className="text-blue-400 underline cursor-pointer"
+                >
+                  {row.agent}
+                </NavLink>
+              );
+            },
           },
           {
             key: 'ports',
