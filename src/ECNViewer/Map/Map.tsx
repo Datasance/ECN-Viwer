@@ -14,6 +14,7 @@ import yaml from 'js-yaml';
 import { MiBFactor, prettyBytes } from '../utils';
 import { StatusColor, StatusType } from '../../Utils/Enums/StatusColor';
 import { getTextColor } from '../../ECNViewer/utils';
+import { NavLink } from 'react-router-dom';
 
 interface CustomLeafletProps {
   collapsed: boolean;
@@ -253,508 +254,557 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
 
   const slideOverFields = [
     {
-      label: 'uuid',
-      render: (row: any) => row.uuid || 'N/A',
+        label: 'uuid',
+        render: (row: any) => row.uuid || 'N/A',
     },
     {
-      label: 'Status',
-      render: (row: any) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-semibold ${row.daemonStatus === 'RUNNING'
-            ? 'bg-green-600 text-white'
-            : 'bg-red-600 text-white'
-            }`}
-        >
-          {row.daemonStatus}
-        </span>
-      ),
+        label: 'Status',
+        render: (row: any) => {
+            const bgColor = StatusColor[row.daemonStatus as StatusType] ?? '#9CA3AF'
+            const textColor = getTextColor(bgColor);
+            return (
+                <span
+                    className="px-2 py-1 rounded-full text-xs font-semibold"
+                    style={{
+                        backgroundColor: bgColor,
+                        color: textColor
+                    }}
+                >
+                    {row.daemonStatus}
+                </span>
+            );
+        },
     },
     {
-      label: 'Security Status',
-      render: (row: any) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-semibold ${row.securityStatus === 'OK'
-            ? 'bg-green-600 text-white'
-            : 'bg-red-600 text-white'
-            }`}
-        >
-          {row.securityStatus}
-        </span>
-      ),
+        label: 'Security Status',
+        render: (row: any) => {
+            const bgColor = StatusColor[row.securityStatus as StatusType] ?? '#9CA3AF'
+            const textColor = getTextColor(bgColor);
+            return (
+                <span
+                    className="px-2 py-1 rounded-full text-xs font-semibold"
+                    style={{
+                        backgroundColor: bgColor,
+                        color: textColor
+                    }}
+                >
+                    {row.securityStatus}
+                </span>
+            );
+        },
     },
     {
-      label: 'Security Violation Info',
-      render: (node: any) => {
-        return node.warningMessage ? <span className="text-white whitespace-pre-wrap break-words">{node.securityViolationInfo}</span> : 'N/A'
-      },
+        label: 'Security Violation Info',
+        render: (node: any) => {
+            return node.warningMessage ? <span className="text-white whitespace-pre-wrap break-words">{node.securityViolationInfo}</span> : 'N/A'
+        },
     },
     {
-      label: 'Warning Message',
-      render: (node: any) => {
-        return node.warningMessage ? <span className="text-white whitespace-pre-wrap break-words">{node.warningMessage}</span> : 'N/A'
-      },
+        label: 'Warning Message',
+        render: (node: any) => {
+            return node.warningMessage ? <span className="text-white whitespace-pre-wrap break-words">{node.warningMessage}</span> : 'N/A'
+        },
     },
     {
-      label: 'Last Active',
-      render: (node: any) => {
-        const lastActive = node.lastActive || node.updated || node.timestamp;
-        if (!lastActive) return 'N/A';
+        label: 'Last Active',
+        render: (node: any) => {
+            const lastActive = node.lastActive || node.updated || node.timestamp;
+            if (!lastActive) return 'N/A';
 
-        const date = new Date(lastActive);
-        const timeAgo = formatDistanceToNow(date, { addSuffix: true });
-        const formattedDate = format(date, 'PPpp');
+            const date = new Date(lastActive);
+            const timeAgo = formatDistanceToNow(date, { addSuffix: true });
+            const formattedDate = format(date, 'PPpp');
 
-        return `${timeAgo} (${formattedDate})`;
-      },
+            return `${timeAgo} (${formattedDate})`;
+        },
     },
     {
-      label: 'Description',
-      render: (node: any) => { return node.description || 'N/A' },
+        label: 'Description',
+        render: (node: any) => { return node.description || 'N/A' },
     },
     {
-      label: 'Up Time',
-      render: (node: any) => { return formatDuration(node.daemonOperatingDuration) },
+        label: 'Up Time',
+        render: (node: any) => { return formatDuration(node.daemonOperatingDuration) },
     },
     {
-      label: 'Agent Details',
-      render: () => '',
-      isSectionHeader: true,
+        label: 'Agent Details',
+        render: () => '',
+        isSectionHeader: true,
     },
     {
-      label: 'Host',
-      render: (node: any) => node.host || 'N/A',
+        label: 'Host',
+        render: (node: any) => node.host || 'N/A',
     },
     {
-      label: 'Version',
-      render: (node: any) => node.version || 'N/A',
+        label: 'Version',
+        render: (node: any) => node.version || 'N/A',
     },
     {
-      label: 'Mode',
-      render: (node: any) => node.isSystem ? "System" : 'Node',
+        label: 'Mode',
+        render: (node: any) => node.isSystem ? "System" : 'Node',
     },
     {
-      label: 'Deployment Type',
-      render: (node: any) => node.deploymentType || 'N/A',
+        label: 'Deployment Type',
+        render: (node: any) => node.deploymentType || 'N/A',
     },
     {
-      label: 'Container Engine',
-      render: (node: any) => node.containerEngine || 'N/A',
+        label: 'Container Engine',
+        render: (node: any) => node.containerEngine || 'N/A',
     },
     {
-      label: 'Arch',
-      render: (node: any) => node.fogTypeId === 0 ? "Auto" : node.fogTypeId === 1 ? "x86" : "arm",
+        label: 'Arch',
+        render: (node: any) => node.fogTypeId === 0 ? "Auto" : node.fogTypeId === 1 ? "x86" : "arm",
     },
     {
-      label: 'IP Address',
-      render: (node: any) => node.ipAddress || 'N/A',
+        label: 'IP Address',
+        render: (node: any) => node.ipAddress || 'N/A',
     },
     {
-      label: 'IP Address External',
-      render: (node: any) => node.ipAddressExternal || 'N/A',
+        label: 'IP Address External',
+        render: (node: any) => node.ipAddressExternal || 'N/A',
     },
     {
-      label: 'Tags',
-      render: (node: any) => {
-        return node.tags && node.tags?.length > 0 ? <span className="text-white whitespace-pre-wrap break-words">{node.tags}</span> : ""
-      },
+        label: 'Tags',
+        render: (node: any) => {
+            return node.tags && node.tags?.length > 0 ? <span className="text-white whitespace-pre-wrap break-words">{node.tags}</span> : ""
+        },
     },
     {
-      label: 'Created',
-      render: (node: any) => {
-        const created = node.created || node.creationTimestamp;
-        if (!created) return 'N/A';
-        const date = new Date(created);
-        const formattedDate = format(date, 'PPpp');
-        return `${formatDistanceToNow(date, { addSuffix: true })} (${formattedDate})`;
-      },
+        label: 'Created',
+        render: (node: any) => {
+            const created = node.created || node.creationTimestamp;
+            if (!created) return 'N/A';
+            const date = new Date(created);
+            const formattedDate = format(date, 'PPpp');
+            return `${formatDistanceToNow(date, { addSuffix: true })} (${formattedDate})`;
+        },
     },
     {
-      label: 'Resource Utilization',
-      render: () => '',
-      isSectionHeader: true,
+        label: 'Resource Utilization',
+        render: () => '',
+        isSectionHeader: true,
     },
     {
-      label: 'CPU Usage',
-      render: (node: any) => `${(Number(node.cpuUsage) || 0)?.toFixed(2)}%`,
+        label: 'CPU Usage',
+        render: (node: any) => `${(Number(node.cpuUsage) || 0)?.toFixed(2)}%`,
     },
     {
-      label: 'System Total CPU',
-      render: (node: any) => `${node.systemTotalCpu?.toFixed(2)}%`,
+        label: 'System Total CPU',
+        render: (node: any) => `${node.systemTotalCpu?.toFixed(2)}%`,
     },
     {
-      label: 'Memory Usage',
-      render: (node: any) => `${prettyBytes((node.memoryUsage * MiBFactor) || 0)}`,
+        label: 'Memory Usage',
+        render: (node: any) => `${prettyBytes((node.memoryUsage * MiBFactor) || 0)}`,
     },
     {
-      label: 'System Available Memory',
-      render: (node: any) => `${prettyBytes((node.systemAvailableMemory) || 0)}`,
+        label: 'System Available Memory',
+        render: (node: any) => `${prettyBytes((node.systemAvailableMemory) || 0)}`,
     },
     {
-      label: 'Disk Usage',
-      render: (node: any) => `${prettyBytes(Number((node.diskUsage * MiBFactor)?.toFixed(2)) || 0)}`,
+        label: 'Disk Usage',
+        render: (node: any) => `${prettyBytes(Number((node.diskUsage * MiBFactor)?.toFixed(2)) || 0)}`,
     },
     {
-      label: 'System Available Disk',
-      render: (node: any) => `${prettyBytes((node.systemAvailableDisk) || 0)}`,
+        label: 'System Available Disk',
+        render: (node: any) => `${prettyBytes((node.systemAvailableDisk) || 0)}`,
     },
     {
-      label: 'Volume Mounts',
-      render: () => '',
-      isSectionHeader: true,
+        label: 'Volume Mounts',
+        render: () => '',
+        isSectionHeader: true,
     },
     {
-      label: '',
-      isFullSection: true,
-      render: (node: any) => {
+        label: '',
+        isFullSection: true,
+        render: (node: any) => {
 
-        if (!node.volumeMounts || node.volumeMounts === 0) {
-          return <div className="text-sm text-gray-400">No volume mounts found for this agent.</div>;
-        }
+            if (!node.volumeMounts || node.volumeMounts === 0) {
+                return <div className="text-sm text-gray-400">No volume mounts found for this agent.</div>;
+            }
 
-        const localColumns = [
-          {
-            key: 'name',
-            header: 'Name',
-            formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
-          },
-          {
-            key: 'version',
-            header: 'Version',
-            formatter: ({ row }: any) => <span className="text-white">{row.version}</span>,
-          },
-          {
-            key: 'configMapName',
-            header: 'Config Map Name',
-            formatter: ({ row }: any) => <span className="text-white">{row.configMapName}</span>,
-          },
-          {
-            key: 'secretName',
-            header: 'Secret Name',
-            formatter: ({ row }: any) => <span className="text-white">{row.secretName}</span>,
-          },
-        ];
+            const localColumns = [
+                {
+                    key: 'name',
+                    header: 'Name',
+                    formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
+                },
+                {
+                    key: 'version',
+                    header: 'Version',
+                    formatter: ({ row }: any) => <span className="text-white">{row.version}</span>,
+                },
+                {
+                    key: 'configMapName',
+                    header: 'Config Map Name',
+                    formatter: ({ row }: any) => <span className="text-white">{row.configMapName}</span>,
+                },
+                {
+                    key: 'secretName',
+                    header: 'Secret Name',
+                    formatter: ({ row }: any) => <span className="text-white">{row.secretName}</span>,
+                },
+            ];
 
-        return (
-          <CustomDataTable
-            columns={localColumns}
-            data={node.volumeMounts}
-            getRowKey={(row: any) => row.uuid}
-          />
-        );
-      },
+            return (
+                <CustomDataTable
+                    columns={localColumns}
+                    data={node.volumeMounts}
+                    getRowKey={(row: any) => row.uuid}
+                />
+            );
+        },
     },
     {
-      label: 'Status',
-      render: () => '',
-      isSectionHeader: true,
+        label: 'Status',
+        render: () => '',
+        isSectionHeader: true,
     },
     {
-      label: 'Cpu Violation',
-      render: (row: any) => row.cpuViolation === "0" ? "false" : "true",
+        label: 'Cpu Violation',
+        render: (row: any) => row.cpuViolation === "0" ? "false" : "true",
     },
     {
-      label: 'Disk Violation',
-      render: (row: any) => row.diskViolation === "0" ? "false" : "true",
+        label: 'Disk Violation',
+        render: (row: any) => row.diskViolation === "0" ? "false" : "true",
     },
     {
-      label: 'Memory Violation',
-      render: (row: any) => row.memoryViolation === "0" ? "false" : "true",
+        label: 'Memory Violation',
+        render: (row: any) => row.memoryViolation === "0" ? "false" : "true",
     },
     {
-      label: 'Is Ready To Rollback',
-      render: (row: any) => <span>{row.isReadyToRollback.toString()}</span>,
+        label: 'Is Ready To Rollback',
+        render: (row: any) => <span>{row.isReadyToRollback.toString()}</span>,
     },
     {
-      label: 'Is Ready To Upgrade',
-      render: (row: any) => <span>{row.isReadyToUpgrade.toString()}</span>,
+        label: 'Is Ready To Upgrade',
+        render: (row: any) => <span>{row.isReadyToUpgrade.toString()}</span>,
     },
     // {
     //     label: 'Last Command Time',
     //     render: (row: any) => row.lastCommandTime || 'N/A',
     // },
     {
-      label: 'Last Status Time',
-      render: (row: any) => <span>{new Date(row.lastStatusTime).toLocaleString()}</span>,
+        label: 'Last Status Time',
+        render: (row: any) => <span>{new Date(row.lastStatusTime).toLocaleString()}</span>,
     },
     {
-      label: 'Processed Messages',
-      render: (row: any) => row.processedMessages || 'N/A',
+        label: 'Processed Messages',
+        render: (row: any) => row.processedMessages || 'N/A',
     },
     {
-      label: 'Applications',
-      render: () => '',
-      isSectionHeader: true,
+        label: 'Applications',
+        render: () => '',
+        isSectionHeader: true,
     },
     {
-      label: '',
-      isFullSection: true,
-      render: (node: any) => {
-        const agentApplications = data?.applications?.filter(
-          (app: any) =>
-            app.microservices?.some((msvc: any) => msvc.iofogUuid === node.uuid)
-        );
+        label: '',
+        isFullSection: true,
+        render: (node: any) => {
+            const agentApplications = data?.applications?.filter(
+                (app: any) =>
+                    app.microservices?.some((msvc: any) => msvc.iofogUuid === node.uuid)
+            );
 
-        if (!agentApplications || agentApplications.length === 0) {
-          return <div className="text-sm text-gray-400">No applications found for this agent.</div>;
-        }
-
-        const localColumns = [
-          {
-            key: 'name',
-            header: 'Application Name',
-            formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
-          },
-          {
-            key: 'isActivated',
-            header: 'Status',
-            render: (row: any) => {
-              const statusKey = row.isActivated ? StatusType.ACTIVE : StatusType.INACTIVE;
-              const bgColor = StatusColor[statusKey] ?? '#9CA3AF';
-              const textColor = getTextColor(bgColor);
-              return (
-                <span
-                  className="px-2 py-1 rounded-full text-xs font-semibold"
-                  style={{
-                    backgroundColor: bgColor,
-                    color: textColor
-                  }}
-                >
-                  {row.isActivated ? 'ACTIVE' : 'INACTIVE'}
-                </span>
-              );
+            if (!agentApplications || agentApplications.length === 0) {
+                return <div className="text-sm text-gray-400">No applications found for this agent.</div>;
             }
-          },
-        ];
+            const localColumns = [
+                {
+                    key: 'name',
+                    header: 'Application Name',
+                    render: (row: any) => {
+                        if (!row?.name) return <span className="text-gray-400">No name</span>;
+                        return (
+                            <NavLink
+                                to={`/Workloads/ApplicationList?applicationId=${encodeURIComponent(row.id)}`}
+                                className="text-blue-400 underline cursor-pointer"
+                            >
+                                {row.name}
+                            </NavLink>
+                        );
+                    },
+                },
+                {
+                    key: 'isActivated',
+                    header: 'Status',
+                    render: (row: any) => {
+                        const statusKey = row.isActivated ? StatusType.ACTIVE : StatusType.INACTIVE;
+                        const bgColor = StatusColor[statusKey] ?? '#9CA3AF';
+                        const textColor = getTextColor(bgColor);
+                        return (
+                            <span
+                                className="px-2 py-1 rounded-full text-xs font-semibold"
+                                style={{
+                                    backgroundColor: bgColor,
+                                    color: textColor
+                                }}
+                            >
+                                {row.isActivated ? 'ACTIVE' : 'INACTIVE'}
+                            </span>
+                        );
+                    }
+                },
+            ];
 
-        return (
-          <CustomDataTable
-            columns={localColumns}
-            data={agentApplications}
-            getRowKey={(row: any) => row.uuid}
-          />
-        );
-      },
+            return (
+                <CustomDataTable
+                    columns={localColumns}
+                    data={agentApplications}
+                    getRowKey={(row: any) => row.uuid}
+                />
+            );
+        },
     },
     {
-      label: 'Microservices',
-      render: () => '',
-      isSectionHeader: true,
+        label: 'Microservices',
+        render: () => '',
+        isSectionHeader: true,
     },
     {
-      label: '',
-      isFullSection: true,
-      render: (node: any) => {
-        const agentApplications = data?.applications?.find(
-          (app: any) =>
-            app.microservices?.some((msvc: any) => msvc.iofogUuid === node.uuid)
-        );
-        const microservices = agentApplications?.microservices || [];
+        label: '',
+        isFullSection: true,
+        render: (node: any) => {
+            const agentApplications = data?.applications?.find(
+                (app: any) =>
+                    app.microservices?.some((msvc: any) => msvc.iofogUuid === node.uuid)
+            );
+            const microservices = agentApplications?.microservices || [];
 
-        if (!Array.isArray(microservices) || microservices.length === 0) {
-          return <div className="text-sm text-gray-400">No microservices available.</div>;
-        }
-        const tableData = microservices.map((ms: any, index: number) => ({
-          key: `${ms.uuid}-${index}`,
-          name: ms.name || '-',
-          status: ms.status?.status || '-',
-          agent: data.activeAgents?.find((a: any) => a.uuid === ms.iofogUuid)?.name ?? '-',
-          ports: Array.isArray(ms.ports) ? (
-            ms.ports.map((p: any, i: number) => (
-              <div key={i}>
-                {`${p.internal}:${p.external}/${p.protocol}`}
-              </div>
-            ))
-          ) : (
-            '-'
-          )
-        }));
-
-        const columns = [
-          {
-            key: 'name',
-            header: 'Name',
-            formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
-          },
-          {
-            key: 'status',
-            header: 'Status',
-            render: (row: any) => {
-              const bgColor = StatusColor[row.status as StatusType] ?? '#9CA3AF'
-              const textColor = getTextColor(bgColor);
-              return (
-                <span
-                  className="px-2 py-1 rounded-full text-xs font-semibold"
-                  style={{
-                    backgroundColor: bgColor,
-                    color: textColor
-                  }}
-                >
-                  {row.status}
-                </span>
-              );
-            },
-          },
-          {
-            key: 'agent',
-            header: 'Agent',
-            formatter: ({ row }: any) => <span className="text-white">{row.agent}</span>,
-          },
-          {
-            key: 'ports',
-            header: 'Ports',
-            formatter: ({ row }: any) => (
-              <span className="text-white whitespace-pre-wrap break-words">{row.ports}</span>
-            ),
-          },
-        ];
-
-        return (
-          <CustomDataTable
-            columns={columns}
-            data={tableData}
-            getRowKey={(row: any) => row.key}
-          />
-        );
-      },
-    },
-    {
-      label: 'System Applications',
-      render: () => '',
-      isSectionHeader: true,
-    },
-    {
-      label: '',
-      isFullSection: true,
-      render: (node: any) => {
-        const agentApplications = data?.systemApplications?.filter(
-          (app: any) =>
-            app.microservices?.some((msvc: any) => msvc.iofogUuid === node.uuid)
-        );
-
-        if (!agentApplications || agentApplications.length === 0) {
-          return <div className="text-sm text-gray-400">No applications found for this agent.</div>;
-        }
-
-        const localColumns = [
-          {
-            key: 'name',
-            header: 'Application Name',
-            formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
-          },
-          {
-            key: 'isActivated',
-            header: 'Status',
-            render: (row: any) => {
-              const statusKey = row.isActivated ? StatusType.ACTIVE : StatusType.INACTIVE;
-              const bgColor = StatusColor[statusKey] ?? '#9CA3AF';
-              const textColor = getTextColor(bgColor);
-              return (
-                <span
-                  className="px-2 py-1 rounded-full text-xs font-semibold"
-                  style={{
-                    backgroundColor: bgColor,
-                    color: textColor
-                  }}
-                >
-                  {row.isActivated ? 'ACTIVE' : 'INACTIVE'}
-                </span>
-              );
+            if (!Array.isArray(microservices) || microservices.length === 0) {
+                return <div className="text-sm text-gray-400">No microservices available.</div>;
             }
-          },
-        ];
+            const tableData = microservices.map((ms: any, index: number) => ({
+                key: `${ms.uuid}`,
+                name: ms.name || '-',
+                status: ms.status?.status || '-',
+                agent: data.activeAgents?.find((a: any) => a.uuid === ms.iofogUuid)?.name ?? '-',
+                ports: Array.isArray(ms.ports) ? (
+                    ms.ports.map((p: any, i: number) => (
+                        <div key={i}>
+                            {`${p.internal}:${p.external}/${p.protocol}`}
+                        </div>
+                    ))
+                ) : (
+                    '-'
+                )
+            }));
 
-        return (
-          <CustomDataTable
-            columns={localColumns}
-            data={agentApplications}
-            getRowKey={(row: any) => row.uuid}
-          />
-        );
-      },
+            const columns = [
+                {
+                    key: 'name',
+                    header: 'Name',
+                    render: (row: any) => {
+                        if (!row?.name) return <span className="text-gray-400">No name</span>;
+                        return (
+                            <NavLink
+                                to={`/Workloads/MicroservicesList?microserviceId=${encodeURIComponent(row.key)}`}
+                                className="text-blue-400 underline cursor-pointer"
+                            >
+                                {row.name}
+                            </NavLink>
+                        );
+                    },
+                },
+                {
+                    key: 'status',
+                    header: 'Status',
+                    render: (row: any) => {
+                        const bgColor = StatusColor[row.status as StatusType] ?? '#9CA3AF'
+                        const textColor = getTextColor(bgColor);
+                        return (
+                            <span
+                                className="px-2 py-1 rounded-full text-xs font-semibold"
+                                style={{
+                                    backgroundColor: bgColor,
+                                    color: textColor
+                                }}
+                            >
+                                {row.status}
+                            </span>
+                        );
+                    },
+                },
+                {
+                    key: 'agent',
+                    header: 'Agent',
+                    formatter: ({ row }: any) => <span className="text-white">{row.agent}</span>,
+                },
+                {
+                    key: 'ports',
+                    header: 'Ports',
+                    formatter: ({ row }: any) => (
+                        <span className="text-white whitespace-pre-wrap break-words">{row.ports}</span>
+                    ),
+                },
+            ];
+
+            return (
+                <CustomDataTable
+                    columns={columns}
+                    data={tableData}
+                    getRowKey={(row: any) => row.key}
+                />
+            );
+        },
     },
     {
-      label: 'System Microservices',
-      render: () => '',
-      isSectionHeader: true,
+        label: 'System Applications',
+        render: () => '',
+        isSectionHeader: true,
     },
     {
-      label: '',
-      isFullSection: true,
-      render: (node: any) => {
-        const systemAgentApplications = data?.systemApplications?.find(
-          (app: any) =>
-            app.microservices?.some((msvc: any) => msvc.iofogUuid === node.uuid)
-        );
-        const microservices = systemAgentApplications?.microservices || [];
+        label: '',
+        isFullSection: true,
+        render: (node: any) => {
+            const agentApplications = data?.systemApplications?.filter(
+                (app: any) =>
+                    app.microservices?.some((msvc: any) => msvc.iofogUuid === node.uuid)
+            );
 
-        if (!Array.isArray(microservices) || microservices.length === 0) {
-          return <div className="text-sm text-gray-400">No microservices available.</div>;
-        }
-        const tableData = microservices.map((ms: any, index: number) => ({
-          key: `${ms.uuid}-${index}`,
-          name: ms.name || '-',
-          status: ms.status?.status || '-',
-          agent: data.activeAgents?.find((a: any) => a.uuid === ms.iofogUuid)?.name ?? '-',
-          ports: Array.isArray(ms.ports) ? (
-            ms.ports.map((p: any, i: number) => (
-              <div key={i}>
-                {`${p.internal}:${p.external}/${p.protocol}`}
-              </div>
-            ))
-          ) : (
-            '-'
-          )
-        }));
+            if (!agentApplications || agentApplications.length === 0) {
+                return <div className="text-sm text-gray-400">No applications found for this agent.</div>;
+            }
 
-        const columns = [
-          {
-            key: 'name',
-            header: 'Name',
-            formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
-          },
-          {
-            key: 'status',
-            header: 'Status',
-            render: (row: any) => {
-              const bgColor = StatusColor[row.status as StatusType] ?? '#9CA3AF'
-              const textColor = getTextColor(bgColor);
-              return (
-                <span
-                  className="px-2 py-1 rounded-full text-xs font-semibold"
-                  style={{
-                    backgroundColor: bgColor,
-                    color: textColor
-                  }}
-                >
-                  {row.status}
-                </span>
-              );
-            },
-          },
-          {
-            key: 'agent',
-            header: 'Agent',
-            formatter: ({ row }: any) => <span className="text-white">{row.agent}</span>,
-          },
-          {
-            key: 'ports',
-            header: 'Ports',
-            formatter: ({ row }: any) => (
-              <span className="text-white whitespace-pre-wrap break-words">{row.ports}</span>
-            ),
-          },
-        ];
+            const localColumns = [
+                {
+                    key: 'name',
+                    header: 'Application Name',
+                    render: (row: any) => {
+                        if (!row?.name) return <span className="text-gray-400">No name</span>;
+                        return (
+                            <NavLink
+                                to={`/Workloads/SystemApplicationList?applicationId=${encodeURIComponent(row.id)}`}
+                                className="text-blue-400 underline cursor-pointer"
+                            >
+                                {row.name}
+                            </NavLink>
+                        );
+                    },
+                },
+                {
+                    key: 'isActivated',
+                    header: 'Status',
+                    render: (row: any) => {
+                        const statusKey = row.isActivated ? StatusType.ACTIVE : StatusType.INACTIVE;
+                        const bgColor = StatusColor[statusKey] ?? '#9CA3AF';
+                        const textColor = getTextColor(bgColor);
+                        return (
+                            <span
+                                className="px-2 py-1 rounded-full text-xs font-semibold"
+                                style={{
+                                    backgroundColor: bgColor,
+                                    color: textColor
+                                }}
+                            >
+                                {row.isActivated ? 'ACTIVE' : 'INACTIVE'}
+                            </span>
+                        );
+                    }
+                },
+            ];
 
-        return (
-          <CustomDataTable
-            columns={columns}
-            data={tableData}
-            getRowKey={(row: any) => row.key}
-          />
-        );
-      },
+            return (
+                <CustomDataTable
+                    columns={localColumns}
+                    data={agentApplications}
+                    getRowKey={(row: any) => row.uuid}
+                />
+            );
+        },
     },
-  ];
+    {
+        label: 'System Microservices',
+        render: () => '',
+        isSectionHeader: true,
+    },
+    {
+        label: '',
+        isFullSection: true,
+        render: (node: any) => {
+            const systemAgentApplications = data?.systemApplications?.find(
+                (app: any) =>
+                    app.microservices?.some((msvc: any) => msvc.iofogUuid === node.uuid)
+            );
+            const microservices = systemAgentApplications?.microservices || [];
+
+            if (!Array.isArray(microservices) || microservices.length === 0) {
+                return <div className="text-sm text-gray-400">No microservices available.</div>;
+            }
+            const tableData = microservices.map((ms: any, index: number) => ({
+                key: `${ms.uuid}`,
+                name: ms.name || '-',
+                status: ms.status?.status || '-',
+                agent: data.activeAgents?.find((a: any) => a.uuid === ms.iofogUuid)?.name ?? '-',
+                ports: Array.isArray(ms.ports) ? (
+                    ms.ports.map((p: any, i: number) => (
+                        <div key={i}>
+                            {`${p.internal}:${p.external}/${p.protocol}`}
+                        </div>
+                    ))
+                ) : (
+                    '-'
+                )
+            }));
+
+            const columns = [
+                {
+                    key: 'name',
+                    header: 'Name',
+                    render: (row: any) => {
+                        if (!row?.name) return <span className="text-gray-400">No name</span>;
+                        return (
+                            <NavLink
+                                to={`/Workloads/SystemMicroservicesList?microserviceId=${encodeURIComponent(row.key)}`}
+                                className="text-blue-400 underline cursor-pointer"
+                            >
+                                {row.name}
+                            </NavLink>
+                        );
+                    },
+                },
+                {
+                    key: 'status',
+                    header: 'Status',
+                    render: (row: any) => {
+                        const bgColor = StatusColor[row.status as StatusType] ?? '#9CA3AF'
+                        const textColor = getTextColor(bgColor);
+                        return (
+                            <span
+                                className="px-2 py-1 rounded-full text-xs font-semibold"
+                                style={{
+                                    backgroundColor: bgColor,
+                                    color: textColor
+                                }}
+                            >
+                                {row.status}
+                            </span>
+                        );
+                    },
+                },
+                {
+                    key: 'agent',
+                    header: 'Agent',
+                    formatter: ({ row }: any) => <span className="text-white">{row.agent}</span>,
+                },
+                {
+                    key: 'ports',
+                    header: 'Ports',
+                    formatter: ({ row }: any) => (
+                        <span className="text-white whitespace-pre-wrap break-words">{row.ports}</span>
+                    ),
+                },
+            ];
+
+            return (
+                <CustomDataTable
+                    columns={columns}
+                    data={tableData}
+                    getRowKey={(row: any) => row.key}
+                />
+            );
+        },
+    },
+];
 
   return (
     <div className="h-full w-full flex flex-col">
