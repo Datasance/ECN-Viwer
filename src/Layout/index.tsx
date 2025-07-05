@@ -48,7 +48,7 @@ function RouteWatcher() {
       console.log('Refreshing data')
       refreshData()
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return null
@@ -284,8 +284,8 @@ export default function Layout() {
                           <a
                             className="font-bold underline underline-offset-2"
                             href={`/#/api?authToken=${keycloak?.token}&baseUrl=${window.controllerConfig?.url === undefined
-                                ? `${window.location.protocol}//${window.location.hostname}:${window?.controllerConfig?.port}/api/v3`
-                                : `${window.location.origin}/api/v3`
+                              ? `${window.location.protocol}//${window.location.hostname}:${window?.controllerConfig?.port}/api/v3`
+                              : `${window.location.origin}/api/v3`
                               }`}
                             target="_parent"
                           >

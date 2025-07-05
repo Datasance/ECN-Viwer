@@ -18,6 +18,8 @@ import lget from "lodash/get";
 import CryptoTextBox from '../../CustomComponent/CustomCryptoTextBox';
 import { getTextColor, MiBFactor, prettyBytes } from '../../ECNViewer/utils';
 import { StatusColor, StatusType } from '../../Utils/Enums/StatusColor';
+import { useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
 
 function MicroservicesList() {
@@ -44,6 +46,20 @@ function MicroservicesList() {
       appCreatedAt: app.createdAt,
     }))
   );
+
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const microserviceId = params.get('microserviceId');
+
+  useEffect(() => {
+    if (microserviceId && flattenedMicroservices) {
+      const found = flattenedMicroservices.find((a: any) => a.uuid === microserviceId);
+      if (found) {
+        setSelectedMs(found);
+        setIsOpen(true);
+      }
+    }
+  }, [microserviceId]);
 
   const handleRowClick = (row: any) => {
     setSelectedMs(row);
@@ -339,12 +355,30 @@ function MicroservicesList() {
       label: 'Agent',
       render: (row: any) => {
         const agent = data.reducedAgents.byUUID[row.iofogUuid];
-        return agent?.name || 'N/A';
-      }
+        if (!agent) return <span className="text-gray-400">N/A</span>;
+        return (
+          <NavLink
+            to={`/nodes/list?agentId=${encodeURIComponent(row.iofogUuid)}`}
+            className="text-blue-400 underline cursor-pointer"
+          >
+            {agent.name}
+          </NavLink>
+        );
+      },
     },
     {
       label: 'Application',
-      render: (row: any) => row.application || 'N/A',
+      render: (row: any) => {
+        if (!row?.name) return <span className="text-gray-400">No name</span>;
+        return (
+          <NavLink
+            to={`/Workloads/ApplicationList?applicationId=${encodeURIComponent(row.applicationId)}`}
+            className="text-blue-400 underline cursor-pointer"
+          >
+            {row.application}
+          </NavLink>
+        );
+      },
     },
     {
       label: 'Name',
@@ -445,7 +479,7 @@ function MicroservicesList() {
     {
       label: 'Exec Status',
       render: (row: any) => {
-        const bgColor = StatusColor[row.execStatus.status as StatusType] ?? '#9CA3AF'
+        const bgColor = StatusColor[row.execStatus?.status as StatusType] ?? '#9CA3AF'
         const textColor = getTextColor(bgColor);
         return (
           <span
@@ -455,14 +489,14 @@ function MicroservicesList() {
               color: textColor
             }}
           >
-            {row.execStatus.status}
+            {row.execStatus?.status ?? "UNKNOWN"}
           </span>
         );
       },
     },
     {
       label: 'Active Exec Session Id',
-      render: (row: any) => row.execStatus.execSessionId || 'N/A',
+      render: (row: any) => row.execStatus?.execSessionId || 'N/A',
     },
     {
       label: 'Resource Utilization',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useData } from '../../providers/Data';
 import CustomDataTable from '../../CustomComponent/CustomDataTable';
 import SlideOver from '../../CustomComponent/SlideOver';
@@ -15,6 +15,9 @@ import { API_VERSIONS } from '../../Utils/constants';
 import yaml from "js-yaml";
 import { StatusColor, StatusType } from '../../Utils/Enums/StatusColor';
 import { getTextColor } from '../../ECNViewer/utils';
+import { useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
+
 
 function ApplicationList() {
   const { data } = useData();
@@ -28,6 +31,20 @@ function ApplicationList() {
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [showStartStopConfirmModal, setShowStartStopConfirmModal] = useState(false);
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const applicationId = params.get('applicationId');
+
+  useEffect(() => {
+    if (applicationId && data?.applications) {
+      const found = data.applications.find((a: any) => a.id === parseInt(applicationId));
+      if (found) {
+        setSelectedApplication(found);
+        setIsOpen(true);
+      }
+    }
+  }, [applicationId]);
+
 
   const handleRowClick = (row: any) => {
     setSelectedApplication(row);
@@ -321,7 +338,7 @@ function ApplicationList() {
           return <div className="text-sm text-gray-400">No microservices available.</div>;
         }
         const tableData = microservices.map((ms: any, index: number) => ({
-          key: `${ms.uuid}-${index}`,
+          key: `${ms.uuid}`,
           name: ms.name || '-',
           status: ms.status?.status || '-',
           agent: data.activeAgents?.find((a: any) => a.uuid === ms.iofogUuid)?.name ?? '-',
@@ -340,7 +357,17 @@ function ApplicationList() {
           {
             key: 'name',
             header: 'Name',
-            formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
+            render: (row: any) => {
+              if (!row?.name) return <span className="text-gray-400">No name</span>;
+              return (
+                <NavLink
+                  to={`/Workloads/MicroservicesList?microserviceId=${encodeURIComponent(row.key)}`}
+                  className="text-blue-400 underline cursor-pointer"
+                >
+                  {row.name}
+                </NavLink>
+              );
+            },
           },
           {
             key: 'status',

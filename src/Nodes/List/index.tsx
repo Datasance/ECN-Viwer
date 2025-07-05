@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useData } from '../../providers/Data';
 import CustomDataTable from '../../CustomComponent/CustomDataTable';
 import CustomProgressBar from '../../CustomComponent/CustomProgressBar';
@@ -12,6 +12,8 @@ import ResizableBottomDrawer from '../../CustomComponent/ResizableBottomDrawer';
 import yaml from 'js-yaml';
 import { getTextColor, MiBFactor, prettyBytes } from '../../ECNViewer/utils';
 import { StatusColor, StatusType } from '../../Utils/Enums/StatusColor';
+import { NavLink } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 const formatDuration = (milliseconds: number): string => {
     if (!milliseconds || milliseconds <= 0) return 'N/A';
@@ -50,6 +52,19 @@ function NodesList() {
     const [editorIsChanged, setEditorIsChanged] = React.useState(false);
     const [editorDataChanged, setEditorDataChanged] = React.useState<any>()
     const [yamlDump, setyamlDump] = useState<any>()
+    const location = useLocation();
+    const params = new URLSearchParams(location.search);
+    const agentId = params.get('agentId');
+
+    useEffect(() => {
+        if (agentId && data?.reducedAgents) {
+            const found = data?.reducedAgents.byUUID[agentId];
+            if (found) {
+                setSelectedNode(found);
+                setIsOpen(true);
+            }
+        }
+    }, [agentId]);
 
     const handleRowClick = (row: any) => {
         setSelectedNode(row);
@@ -155,25 +170,25 @@ function NodesList() {
 
     async function handleYamlUpdate() {
         try {
-          const parsed = yaml.load(editorDataChanged) as any;
-          const spec = parsed?.spec ?? {};
-          const metadata = parsed?.metadata ?? {};
-          
-          // Create patch body with all spec properties
-          const patchBody = { ...spec };
-          
-          // Add tags from metadata
-          patchBody.tags = metadata.tags;
-          
-          // Flatten routerConfig if it exists
-          if (spec.routerConfig) {
-            patchBody.routerMode = spec.routerConfig.routerMode;
-            patchBody.messagingPort = spec.routerConfig.messagingPort;
-            patchBody.edgeRouterPort = spec.routerConfig.edgeRouterPort;
-            patchBody.interRouterPort = spec.routerConfig.interRouterPort;
-            delete patchBody.routerConfig;
-          }
-          
+            const parsed = yaml.load(editorDataChanged) as any;
+            const spec = parsed?.spec ?? {};
+            const metadata = parsed?.metadata ?? {};
+
+            // Create patch body with all spec properties
+            const patchBody = { ...spec };
+
+            // Add tags from metadata
+            patchBody.tags = metadata.tags;
+
+            // Flatten routerConfig if it exists
+            if (spec.routerConfig) {
+                patchBody.routerMode = spec.routerConfig.routerMode;
+                patchBody.messagingPort = spec.routerConfig.messagingPort;
+                patchBody.edgeRouterPort = spec.routerConfig.edgeRouterPort;
+                patchBody.interRouterPort = spec.routerConfig.interRouterPort;
+                delete patchBody.routerConfig;
+            }
+
             const res = await request(`/api/v3/iofog/${selectedNode?.uuid}`, {
                 method: "PATCH",
                 headers: {
@@ -517,12 +532,21 @@ function NodesList() {
                 if (!agentApplications || agentApplications.length === 0) {
                     return <div className="text-sm text-gray-400">No applications found for this agent.</div>;
                 }
-
                 const localColumns = [
                     {
                         key: 'name',
                         header: 'Application Name',
-                        formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
+                        render: (row: any) => {
+                            if (!row?.name) return <span className="text-gray-400">No name</span>;
+                            return (
+                                <NavLink
+                                    to={`/Workloads/ApplicationList?applicationId=${encodeURIComponent(row.id)}`}
+                                    className="text-blue-400 underline cursor-pointer"
+                                >
+                                    {row.name}
+                                </NavLink>
+                            );
+                        },
                     },
                     {
                         key: 'isActivated',
@@ -574,7 +598,7 @@ function NodesList() {
                     return <div className="text-sm text-gray-400">No microservices available.</div>;
                 }
                 const tableData = microservices.map((ms: any, index: number) => ({
-                    key: `${ms.uuid}-${index}`,
+                    key: `${ms.uuid}`,
                     name: ms.name || '-',
                     status: ms.status?.status || '-',
                     agent: data.activeAgents?.find((a: any) => a.uuid === ms.iofogUuid)?.name ?? '-',
@@ -593,7 +617,17 @@ function NodesList() {
                     {
                         key: 'name',
                         header: 'Name',
-                        formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
+                        render: (row: any) => {
+                            if (!row?.name) return <span className="text-gray-400">No name</span>;
+                            return (
+                                <NavLink
+                                    to={`/Workloads/MicroservicesList?microserviceId=${encodeURIComponent(row.key)}`}
+                                    className="text-blue-400 underline cursor-pointer"
+                                >
+                                    {row.name}
+                                </NavLink>
+                            );
+                        },
                     },
                     {
                         key: 'status',
@@ -659,7 +693,17 @@ function NodesList() {
                     {
                         key: 'name',
                         header: 'Application Name',
-                        formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
+                        render: (row: any) => {
+                            if (!row?.name) return <span className="text-gray-400">No name</span>;
+                            return (
+                                <NavLink
+                                    to={`/Workloads/SystemApplicationList?applicationId=${encodeURIComponent(row.id)}`}
+                                    className="text-blue-400 underline cursor-pointer"
+                                >
+                                    {row.name}
+                                </NavLink>
+                            );
+                        },
                     },
                     {
                         key: 'isActivated',
@@ -711,7 +755,7 @@ function NodesList() {
                     return <div className="text-sm text-gray-400">No microservices available.</div>;
                 }
                 const tableData = microservices.map((ms: any, index: number) => ({
-                    key: `${ms.uuid}-${index}`,
+                    key: `${ms.uuid}`,
                     name: ms.name || '-',
                     status: ms.status?.status || '-',
                     agent: data.activeAgents?.find((a: any) => a.uuid === ms.iofogUuid)?.name ?? '-',
@@ -730,7 +774,17 @@ function NodesList() {
                     {
                         key: 'name',
                         header: 'Name',
-                        formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
+                        render: (row: any) => {
+                            if (!row?.name) return <span className="text-gray-400">No name</span>;
+                            return (
+                                <NavLink
+                                    to={`/Workloads/SystemMicroservicesList?microserviceId=${encodeURIComponent(row.key)}`}
+                                    className="text-blue-400 underline cursor-pointer"
+                                >
+                                    {row.name}
+                                </NavLink>
+                            );
+                        },
                     },
                     {
                         key: 'status',

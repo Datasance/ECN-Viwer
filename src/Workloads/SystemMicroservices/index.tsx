@@ -18,6 +18,8 @@ import yaml from "js-yaml";
 import CryptoTextBox from '../../CustomComponent/CustomCryptoTextBox';
 import { getTextColor, MiBFactor, prettyBytes } from '../../ECNViewer/utils';
 import { StatusColor, StatusType } from '../../Utils/Enums/StatusColor';
+import { useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
 function SystemMicroserviceList() {
   const { data } = useData();
@@ -43,6 +45,19 @@ function SystemMicroserviceList() {
   const [showVolumeDeleteConfirmModal, setShowVolumeDeleteConfirmModal] = useState(false);
   const [selectedPort, setSelectedPort] = useState<any>(null);
   const [selectedVolume, setSelectedVolume] = useState<any>(null);
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const microserviceId = params.get('microserviceId');
+
+  useEffect(() => {
+    if (microserviceId && flattenedMicroservices) {
+      const found = flattenedMicroservices.find((a: any) => a.uuid === microserviceId);
+      if (found) {
+        setSelectedMs(found);
+        setIsOpen(true);
+      }
+    }
+  }, [microserviceId]);
 
   const handleRowClick = (row: any) => {
     setSelectedMs(row);
@@ -335,12 +350,30 @@ function SystemMicroserviceList() {
       label: 'Agent',
       render: (row: any) => {
         const agent = data.reducedAgents.byUUID[row.iofogUuid];
-        return agent?.name || 'N/A';
-      }
+        if (!agent) return <span className="text-gray-400">N/A</span>;
+        return (
+          <NavLink
+            to={`/nodes/list?agentId=${encodeURIComponent(row.iofogUuid)}`}
+            className="text-blue-400 underline cursor-pointer"
+          >
+            {agent.name}
+          </NavLink>
+        );
+      },
     },
     {
       label: 'Application',
-      render: (row: any) => row.application || 'N/A',
+      render: (row: any) => {
+        if (!row?.name) return <span className="text-gray-400">No name</span>;
+        return (
+          <NavLink
+            to={`/Workloads/SystemApplicationList?applicationId=${encodeURIComponent(row.applicationId)}`}
+            className="text-blue-400 underline cursor-pointer"
+          >
+            {row.application}
+          </NavLink>
+        );
+      },
     },
     {
       label: 'Name',
