@@ -385,10 +385,6 @@ function MicroservicesList() {
       render: (row: any) => row.name || 'N/A',
     },
     {
-      label: 'Namespace',
-      render: (row: any) => row.namespace || 'N/A',
-    },
-    {
       label: 'Start Time',
       render: (row: any) => {
         const startTime = row.status.startTime;
