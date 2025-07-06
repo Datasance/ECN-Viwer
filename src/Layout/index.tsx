@@ -281,6 +281,9 @@ export default function Layout() {
                           <a className="font-bold underline underline-offset-2" href="https://docs.datasance.com" target="_blank" rel="noreferrer">
                             DOCS
                           </a>
+                          <a className="font-bold underline underline-offset-2" href="https://github.com/Datasance" target="_blank" rel="noreferrer">
+                            GitHub
+                          </a>
                           <a
                             className="font-bold underline underline-offset-2"
                             href={`/#/api?authToken=${keycloak?.token}&baseUrl=${window.controllerConfig?.url === undefined
