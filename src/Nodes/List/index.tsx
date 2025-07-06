@@ -497,6 +497,10 @@ function NodesList() {
             isSectionHeader: true,
         },
         {
+            label: 'GPS Status',
+            render: (node: any) => { return node.gpsStatus || 'N/A' },
+        },
+        {
             label: 'Cpu Violation',
             render: (row: any) => row.cpuViolation === "0" ? "false" : "true",
         },
