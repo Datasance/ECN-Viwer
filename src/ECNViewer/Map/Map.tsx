@@ -153,6 +153,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
   };
 
   const handleEditYaml = () => {
+    const fogType = selectedNode?.fogTypeId === 0 ? "Auto" : selectedNode?.fogTypeId === 1 ? "x86" : "arm";
     const yamlDump = {
       apiVersion: 'datasance.com/v3',
       kind: 'AgentConfig',
@@ -162,11 +163,12 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
       },
       spec: {
         name: selectedNode?.name,
+        host: selectedNode?.host,
         location: selectedNode?.location,
         latitude: selectedNode?.latitude,
         longitude: selectedNode?.longitude,
         description: selectedNode?.description,
-        fogType: selectedNode?.fogType,
+        fogType: fogType,
         networkInterface: selectedNode?.networkInterface,
         dockerUrl: selectedNode?.dockerUrl,
         containerEngine: selectedNode?.containerEngine,
@@ -225,10 +227,21 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
       if (spec.routerConfig) {
         patchBody.routerMode = spec.routerConfig.routerMode;
         patchBody.messagingPort = spec.routerConfig.messagingPort;
-        patchBody.edgeRouterPort = spec.routerConfig.edgeRouterPort;
-        patchBody.interRouterPort = spec.routerConfig.interRouterPort;
+        
+        // Include router properties if they exist in the YAML
+        if (spec.routerConfig.edgeRouterPort !== undefined) {
+          patchBody.edgeRouterPort = spec.routerConfig.edgeRouterPort;
+        }
+        if (spec.routerConfig.interRouterPort !== undefined) {
+          patchBody.interRouterPort = spec.routerConfig.interRouterPort;
+        }
+        
         delete patchBody.routerConfig;
       }
+      
+      // Add required fields that might be missing
+      const fogType = spec?.fogType === "Auto" ? 0 : spec?.fogType === "x86" ? 1 : 2;
+      patchBody.fogType = fogType;
       
       const res = await request(`/api/v3/iofog/${selectedNode?.uuid}`, {
         method: "PATCH",
