@@ -64,7 +64,7 @@ export const getMicroserviceYAMLFromJSON = ({
         }
       ),
       container: {
-        annotations: {},
+        annotations: JSON.parse(microservice.annotations || '{}'),
         rootHostAccess: microservice.rootHostAccess,
         runAsUser: microservice?.runAsUser ?? '',
         ipcMode: microservice?.ipcMode ?? '',
@@ -80,7 +80,15 @@ export const getMicroserviceYAMLFromJSON = ({
         }),
         env: (microservice.env || []).map((env: any) => {
           const { id, ...rest } = env;
-          return rest;
+          // Remove null values from valueFromSecret and valueFromConfigMap
+          const cleanedEnv: any = { ...rest };
+          if (cleanedEnv.valueFromSecret === null) {
+            delete cleanedEnv.valueFromSecret;
+          }
+          if (cleanedEnv.valueFromConfigMap === null) {
+            delete cleanedEnv.valueFromConfigMap;
+          }
+          return cleanedEnv;
         }),
         extraHosts: (microservice.extraHosts || []).map((eH: any) => {
           const { id, ...rest } = eH;

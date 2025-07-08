@@ -64,7 +64,7 @@ export const getApplicationYAMLFromJSON = ({
         }
       ),
       container: {
-        annotations: {},
+        annotations: JSON.parse(ms.annotations || '{}'),
         rootHostAccess: ms.rootHostAccess ?? false,
         runAsUser: ms.runAsUser ?? null,
         ipcMode: ms?.ipcMode ?? '',
@@ -80,7 +80,16 @@ export const getApplicationYAMLFromJSON = ({
         }),
         env: (ms.env || []).map((env: any) => {
           const { id, ...rest } = env;
-          return rest;
+          // Remove null values from valueFromSecret and valueFromConfigMap
+          const cleanedEnv: any = { ...rest };
+          // Only remove the property if it's explicitly null or undefined
+          if (cleanedEnv.valueFromSecret === null || cleanedEnv.valueFromSecret === undefined) {
+            delete cleanedEnv.valueFromSecret;
+          }
+          if (cleanedEnv.valueFromConfigMap === null || cleanedEnv.valueFromConfigMap === undefined) {
+            delete cleanedEnv.valueFromConfigMap;
+          }
+          return cleanedEnv;
         }),
         extraHosts: (ms.extraHosts || []).map((eH: any) => {
           const { id, ...rest } = eH;
