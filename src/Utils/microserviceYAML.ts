@@ -92,10 +92,7 @@ export const getMicroserviceYAMLFromJSON = ({
           }
           return p;
         }),
-        commands: (microservice.cmd || []).map((cmd: any) => {
-          const { id, ...rest } = cmd;
-          return rest;
-        }),
+        commands: Array.isArray(microservice.cmd) ? [...microservice.cmd] : [],
       },
       msRoutes: {
         pubTags: microservice?.pubTags ?? [],
