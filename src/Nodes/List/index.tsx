@@ -882,6 +882,7 @@ function NodesList() {
                     mode="yaml"
                     theme="monokai"
                     defaultValue={yamlDump}
+                    showPrintMargin={false} 
                     onLoad={function (editor) {
                         editor.renderer.setPadding(10);
                         editor.renderer.setScrollMargin(10);

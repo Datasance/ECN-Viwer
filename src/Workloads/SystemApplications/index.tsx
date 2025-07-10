@@ -499,10 +499,12 @@ function SystemApplicationList() {
 
       >
         <AceEditor
-          setOptions={{ useWorker: false }}
+          setOptions={{ useWorker: false, tabSize: 2 }}      
           mode="yaml"
           theme="monokai"
           defaultValue={yamlDump}
+          showPrintMargin={false}
+          showGutter={true} 
           onLoad={function (editor) {
             editor.renderer.setPadding(10);
             editor.renderer.setScrollMargin(10);
