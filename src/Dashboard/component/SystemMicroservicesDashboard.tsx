@@ -58,7 +58,7 @@ const SystemMicroservicesDashboard: React.FC<SystemMicroservicesDashboardProps> 
             .filter(msvc => (msvc.status?.status?.toUpperCase() || 'UNKNOWN') === status)
             .map(msvc => ({
                 x: (msvc.status?.cpuUsage || 0 * 1) || 0,
-                y: prettyBytes(msvc.status?.memoryUsage || 0 * MiBFactor) || 0,
+                y: msvc.status?.memoryUsage ? msvc.status.memoryUsage / (1024 * 1024) : 0,
                 z: 10,
                 name: msvc.name,
             })),

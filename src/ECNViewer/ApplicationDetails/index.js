@@ -633,7 +633,7 @@ export default function ApplicationDetails({
             </div>
           </div>
           <AceEditor
-            setOptions={{ useWorker: false }}
+            setOptions={{ useWorker: false, tabSize: 2 }}
             mode="yaml"
             theme="monokai"
             defaultValue={yamlDump}

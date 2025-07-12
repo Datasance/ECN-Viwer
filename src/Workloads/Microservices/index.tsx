@@ -450,6 +450,12 @@ function MicroservicesList() {
       },
     },
     {
+      label: 'Health Check Status',
+      render: (row: any) => {
+        return row.status?.healthStatus ? <span className="text-white whitespace-pre-wrap break-words">{row.status?.healthStatus}</span> : 'N/A'
+      },
+    },
+    {
       label: 'Error Messages',
       render: (node: any) => {
         return node.status.errorMessage ? <span className="text-white whitespace-pre-wrap break-words">{node.status?.errorMessage}</span> : 'N/A'
@@ -774,7 +780,7 @@ function MicroservicesList() {
 
       >
         <AceEditor
-          setOptions={{ useWorker: false }}
+          setOptions={{ useWorker: false, tabSize: 2  }}
           mode="yaml"
           theme="monokai"
           defaultValue={yamlDump}

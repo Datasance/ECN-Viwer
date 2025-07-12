@@ -870,7 +870,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
 
       >
         <AceEditor
-          setOptions={{ useWorker: false }}
+          setOptions={{ useWorker: false, tabSize: 2  }}
           mode="yaml"
           theme="monokai"
           defaultValue={yamlDump}

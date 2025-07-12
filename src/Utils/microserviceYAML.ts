@@ -100,7 +100,10 @@ export const getMicroserviceYAMLFromJSON = ({
           }
           return p;
         }),
+        cpuSetCpus: microservice?.cpuSetCpus ?? '',
+        memoryLimit: microservice?.memoryLimit ?? '',
         commands: Array.isArray(microservice.cmd) ? [...microservice.cmd] : [],
+        healthCheck: microservice?.healthCheck ?? {},
       },
       msRoutes: {
         pubTags: microservice?.pubTags ?? [],

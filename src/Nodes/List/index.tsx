@@ -878,7 +878,7 @@ function NodesList() {
 
             >
                 <AceEditor
-                    setOptions={{ useWorker: false }}
+                    setOptions={{ useWorker: false, tabSize: 2  }}
                     mode="yaml"
                     theme="monokai"
                     defaultValue={yamlDump}
