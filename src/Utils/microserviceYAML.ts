@@ -101,7 +101,7 @@ export const getMicroserviceYAMLFromJSON = ({
           return p;
         }),
         cpuSetCpus: microservice?.cpuSetCpus ?? '',
-        memoryLimit: microservice?.memoryLimit ?? '',
+        ...(microservice?.memoryLimit !== undefined && microservice?.memoryLimit !== null && { memoryLimit: microservice.memoryLimit }),
         commands: Array.isArray(microservice.cmd) ? [...microservice.cmd] : [],
         healthCheck: microservice?.healthCheck ?? {},
       },

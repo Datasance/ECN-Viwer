@@ -103,7 +103,7 @@ export const getApplicationYAMLFromJSON = ({
         }),
         commands: Array.isArray(ms.cmd) ? [...ms.cmd] : [],
         cpuSetCpus: ms?.cpuSetCpus ?? '',
-        memoryLimit: ms?.memoryLimit ?? '',
+        ...(ms?.memoryLimit !== undefined && ms?.memoryLimit !== null && { memoryLimit: ms.memoryLimit }),
         healthCheck: ms?.healthCheck ?? {},
       },
       msRoutes: {
