@@ -6,6 +6,9 @@ import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
 import EditOutlinedIcon from '@material-ui/icons/EditOutlined';
 import PlayCircleFilledOutlined from '@material-ui/icons/PlayCircleFilledOutlined';
 import StopOutlined from '@material-ui/icons/StopOutlined';
+import PublishOutlined from '@material-ui/icons/PublishOutlined';
+import DescriptionOutlined from '@material-ui/icons/DescriptionOutlined';
+
 
 type Field<T> = {
   label: string;
@@ -25,6 +28,8 @@ type SlideOverProps<T> = {
   onStartStop?: () => void;
   startStopValue?: string;
   onEditYaml?: () => void;
+  onPublish?: () => void;
+  onDetails?: () => void;
   customWidth?: number;
 };
 
@@ -39,6 +44,8 @@ const SlideOver = <T,>({
   startStopValue,
   onDelete,
   onEditYaml,
+  onPublish,
+  onDetails,
   customWidth
 }: SlideOverProps<T>) => {
   const [width, setWidth] = useState(customWidth ? customWidth : 480);
@@ -110,6 +117,16 @@ const SlideOver = <T,>({
                       {title || 'Details'}
                     </Dialog.Title>
                     <div className="flex items-center gap-2">
+                      {onPublish && (
+                        <button onClick={onPublish} className="hover:text-green-600 hover:bg-white rounded">
+                          <PublishOutlined fontSize="small" />
+                        </button>
+                      )}
+                      {onDetails && (
+                        <button onClick={onDetails} className="hover:text-green-600 hover:bg-white rounded">
+                          <DescriptionOutlined fontSize="small" />
+                        </button>
+                      )}
                       {onEditYaml && (
                         <button onClick={onEditYaml} className="hover:text-green-600 hover:bg-white rounded">
                           <EditOutlinedIcon fontSize="small" />

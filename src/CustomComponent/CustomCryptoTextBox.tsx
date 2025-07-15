@@ -1,39 +1,95 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useLayoutEffect } from 'react';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import VisibilityOffIcon from '@material-ui/icons/VisibilityOff';
+import FileCopyIcon from '@material-ui/icons/FileCopy';
+import CheckIcon from '@material-ui/icons/Check';
 
 type Props = {
   data: string;
+  mode: 'plain' | 'encrypted';
 };
 
-const CryptoTextBox: React.FC<Props> = ({ data }) => {
+const CryptoTextBox: React.FC<Props> = ({ data, mode }) => {
   const [visible, setVisible] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const lineHeightRef = useRef<number>(0);
+  const [rows, setRows] = useState(1);
 
   const encoded = useMemo(() => {
-    return btoa(unescape(encodeURIComponent(data)));
-  }, [data]);
+    try {
+      return mode === 'plain'
+        ? btoa(unescape(encodeURIComponent(data)))
+        : data;
+    } catch {
+      return 'Invalid base64';
+    }
+  }, [data, mode]);
 
   const decoded = useMemo(() => {
     try {
-      return decodeURIComponent(escape(atob(encoded)));
+      return mode === 'plain'
+        ? data
+        : decodeURIComponent(escape(atob(data)));
     } catch {
-      return 'Invalid data';
+      return 'Invalid base64';
     }
-  }, [encoded]);
+  }, [data, mode]);
+
+  const displayValue = visible ? decoded : encoded;
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(displayValue);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  useLayoutEffect(() => {
+    if (!visible) {
+      setRows(1);
+      return;
+    }
+    const ta = textareaRef.current;
+    if (!ta) return;
+
+    if (!lineHeightRef.current) {
+      const lh = parseFloat(getComputedStyle(ta).lineHeight || '20');
+      lineHeightRef.current = lh || 20;
+    }
+
+    const neededRows = Math.ceil(ta.scrollHeight / lineHeightRef.current);
+    setRows(Math.max(1, neededRows));
+  }, [displayValue, visible]);
 
   return (
-    <div className="relative w-full max-w-md">
-      <input
-        type="text"
-        value={visible ? decoded : encoded}
+    <div className="relative w-full">
+      <textarea
+        ref={textareaRef}
         readOnly
-        className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:outline-none wrap-break-word"
+        value={displayValue}
+        rows={rows}
+        className="w-full resize-none px-4 py-2 pr-20 border border-gray-300 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:outline-none break-words whitespace-pre-wrap"
+        style={{ wordBreak: 'break-word', height: 'auto', overflow: 'hidden' }}
       />
+
       <button
         onClick={() => setVisible(!visible)}
-        className="absolute top-1/2 right-2 -translate-y-1/2 text-gray-300 hover:text-white bg-gray-800"
+        className="absolute top-1/2 right-12 -translate-y-1/2 text-gray-300 hover:text-white bg-gray-800"
+        title="Toggle visibility"
       >
         {visible ? <VisibilityOffIcon /> : <VisibilityIcon />}
+      </button>
+
+      <button
+        onClick={handleCopy}
+        className="absolute top-1/2 right-2 -translate-y-1/2 text-gray-300 hover:text-white bg-gray-800"
+        title={copied ? 'Copied!' : 'Copy to clipboard'}
+      >
+        {copied ? <CheckIcon /> : <FileCopyIcon />}
       </button>
     </div>
   );

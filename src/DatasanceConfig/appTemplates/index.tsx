@@ -10,6 +10,9 @@ import DeployApplicationTemplate from '../../Catalog/Application/DeployApplicati
 import CustomActionModal from '../../CustomComponent/CustomActionModal'
 import AceEditor from "react-ace";
 import CustomLoadingModal from '../../CustomComponent/CustomLoadingModal'
+import SlideOver from '../../CustomComponent/SlideOver'
+import { format, formatDistanceToNow } from 'date-fns';
+import ResizableBottomDrawer from '../../CustomComponent/ResizableBottomDrawer'
 
 function AppTemplates() {
     const [fetching, setFetching] = React.useState(true)
@@ -22,11 +25,23 @@ function AppTemplates() {
     const [showDeployModal, setShowDeployModal] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [selectedItem, setselectedItem] = useState<any>()
+    const [isOpen, setIsOpen] = useState(false);
+    const [selectedApplicationTemplate, setSelectedApplicationTemplate] = useState<any | null>(null);
+    const [isBottomDrawerOpen, setIsBottomDrawerOpen] = useState(false);
+    const [editorIsChanged, setEditorIsChanged] = React.useState(false);
+    const [editorDataChanged, setEditorDataChanged] = React.useState<any>()
+    const [yamlDump, setyamlDump] = useState<any>()
 
     useEffect(() => {
         fetchCatalog()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
+
+    const handleRowClick = (row: any) => {
+        if (row.name) {
+            fetchCatalogItem(row.name)
+        }
+    };
 
     function mapApplicationTemplate(item: any) {
         return {
@@ -49,6 +64,25 @@ function AppTemplates() {
             }
             const catalogItems = (await catalogItemsResponse.json()).applicationTemplates
             setCatalog(catalogItems.map((item: any) => mapApplicationTemplate(item)))
+            setFetching(false)
+        } catch (e: any) {
+            pushFeedback({ message: e.message, type: 'error' })
+            setFetching(false)
+        }
+    }
+
+    async function fetchCatalogItem(apptemplateName: string) {
+        try {
+            setFetching(true)
+            const catalogItemResponse = await request(`/api/v3/applicationTemplate/${apptemplateName}`)
+            if (!catalogItemResponse.ok) {
+                pushFeedback({ message: catalogItemResponse.statusText, type: 'error' })
+                setFetching(false)
+                return
+            }
+            const catalogItems = (await catalogItemResponse.json())
+            setSelectedApplicationTemplate(catalogItems);
+            setIsOpen(true);
             setFetching(false)
         } catch (e: any) {
             pushFeedback({ message: e.message, type: 'error' })
@@ -155,54 +189,116 @@ function AppTemplates() {
         }
     }
 
+    async function handleYamlUpdate() {
+        try {
+            const parsed = yaml.load(editorDataChanged) as any;
+
+            const res = await request(`/api/v3/applicationTemplate/${selectedApplicationTemplate?.name}`, {
+                method: "PATCH",
+                headers: {
+                    "content-type": "application/json",
+                },
+                body: JSON.stringify(parsed),
+            });
+
+            if (!res.ok) {
+                pushFeedback({ message: res.statusText, type: "error" });
+            } else {
+                pushFeedback({ message: `${selectedApplicationTemplate?.name} Updated`, type: "success" });
+                setIsBottomDrawerOpen(false);
+                setEditorIsChanged(false);
+                setEditorDataChanged(null);
+                setIsOpen(false);
+            }
+        } catch (e: any) {
+            pushFeedback({ message: e.message, type: "error", uuid: "error" });
+        }
+    }
+
+    const handleEditYaml = () => {
+        if (!selectedApplicationTemplate) return;
+
+        const { name, description, variables, application } = selectedApplicationTemplate;
+
+        const yamlDump = {
+            apiVersion: 'datasance.com/v3',
+            kind: 'ApplicationTemplate',
+            metadata: {
+                name: name,
+            },
+            spec: {
+                description: description,
+                variables: variables.map((v: any) => ({
+                    key: v.key,
+                    description: v.description,
+                })),
+                application: {
+                    microservices: application.microservices.map((ms: any) => {
+                        const configObject = ms.config ? JSON.parse(ms.config) : {};
+                        const images = {
+                            x86: '',
+                            arm: '',
+                            registry: 'remote',
+                        };
+                        ms.images?.forEach((img: any) => {
+                            if (img.fogTypeId === 1) images.x86 = img.containerImage;
+                            else if (img.fogTypeId === 2) images.arm = img.containerImage;
+                        });
+
+                        const container: any = {
+                            volumes: ms.volumes ?? ms.volumeMappings ?? [],
+                            ports: ms.ports ?? [],
+                            env: ms.env ?? [],
+                        };
+
+                        if (ms.rootHostAccess !== undefined) {
+                            container.rootHostAccess = ms.rootHostAccess;
+                        }
+                        if (ms.runAsUser) {
+                            container.runAsUser = ms.runAsUser;
+                        }
+                        if (ms.commands?.length) {
+                            container.commands = ms.commands;
+                        } else if (ms.cmd?.length) {
+                            container.commands = ms.cmd;
+                        }
+
+                        return {
+                            name: ms.name,
+                            agent: {
+                                name: ms.agentName,
+                            },
+                            config: configObject,
+                            images,
+                            container,
+                        };
+                    }),
+                },
+            },
+        };
+
+        const yamlString = yaml.dump(yamlDump, { noRefs: true, indent: 2 });
+        setyamlDump(yamlString);
+        setIsBottomDrawerOpen(true);
+    };
+
     const columns = [
         {
             key: 'name',
             header: 'Name',
             render: (row: any) => (
-                <span>{row.name || '-'}</span>
+                <div
+                    className="cursor-pointer text-blue-400 hover:underline"
+                    onClick={() => handleRowClick(row)}
+                >
+                    {row.name}
+                </div>
             ),
         },
         {
             key: 'description',
             header: 'Description',
             render: (row: any) => <span>{row.description || '-'}</span>,
-        },
-        {
-            key: 'microservices',
-            header: 'Microservices',
-            render: (row: any) => {
-                const microservices = row?.application?.microservices || [];
-                if (microservices.length === 0) return <span>-</span>;
-
-                return (
-                    <div className="flex flex-col space-y-1">
-                        {microservices.map((ms: any, index: number) => (
-                            <div key={index} className="text-sm text-white bg-gray-700 px-2 py-1 rounded">
-                                {ms.name}
-                            </div>
-                        ))}
-                    </div>
-                );
-            },
-        },
-        {
-            key: 'variables',
-            header: 'Variables',
-            render: (row: any) => {
-                const variables = row?.variables || [];
-                if (variables.length === 0) return <span>-</span>;
-
-                return (
-                    <div className="max-h-64 overflow-y-auto flex flex-col space-y-1 pr-1 custom-scroll">
-                        {variables.map((v: any, index: number) => (
-                            <div key={index} className="text-xs text-gray-100 bg-gray-800 px-2 py-1 rounded">
-                                <strong>{v.key}</strong>: {v.description}
-                            </div>
-                        ))}
-                    </div>
-                );
-            },
         },
         {
             key: 'actions',
@@ -242,6 +338,144 @@ function AppTemplates() {
         }
     ];
 
+    const slideOverFields = [
+        {
+            label: 'Application Template Name',
+            render: (row: any) => row.name || 'N/A',
+        },
+        {
+            label: 'Id',
+            render: (row: any) => row.id || 'N/A',
+        },
+        {
+            label: 'Description',
+            render: (row: any) => row.description || 'N/A',
+        },
+        {
+            label: 'Schema Version',
+            render: (row: any) => row.schemaVersion || 'N/A',
+        },
+        {
+            label: 'Created',
+            render: (row: any) => {
+                if (!row.createdAt) return 'N/A';
+                const date = new Date(row.createdAt);
+                return (
+                    <>
+                        {formatDistanceToNow(date, { addSuffix: true })} <br />
+                        <span className="text-xs text-gray-400">{format(date, 'PPpp')}</span>
+                    </>
+                );
+            },
+        },
+        {
+            label: 'Updated',
+            render: (row: any) => {
+                if (!row.updatedAt) return 'N/A';
+                const date = new Date(row.updatedAt);
+                return (
+                    <>
+                        {formatDistanceToNow(date, { addSuffix: true })} <br />
+                        <span className="text-xs text-gray-400">{format(date, 'PPpp')}</span>
+                    </>
+                );
+            },
+        },
+        {
+            label: 'Microservices',
+            render: () => '',
+            isSectionHeader: true,
+        },
+        {
+            label: '',
+            isFullSection: true,
+            render: (node: any) => {
+                const microservices = node?.application?.microservices || [];
+
+                if (!Array.isArray(microservices) || microservices.length === 0) {
+                    return <div className="text-sm text-gray-400">No microservices available.</div>;
+                }
+
+                const tableData = microservices.map((route: any, index: number) => ({
+                    name: route.name || '-',
+                    from: route.from || '-',
+                    to: route.to || '-',
+                    key: `${route.name || 'route'}-${index}`,
+                }));
+
+                const columns = [
+                    {
+                        key: 'name',
+                        header: 'Name',
+                        formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
+                    },
+                ];
+
+                return (
+                    <CustomDataTable
+                        columns={columns}
+                        data={tableData}
+                        getRowKey={(row: any) => row.key}
+                    />
+                );
+            },
+        },
+        {
+            label: 'Variables',
+            render: () => '',
+            isSectionHeader: true,
+        },
+        {
+            label: '',
+            isFullSection: true,
+            render: (node: any) => {
+                const variables = node?.variables || [];
+
+                if (!Array.isArray(variables) || variables.length === 0) {
+                    return <div className="text-sm text-gray-400">No variables available.</div>;
+                }
+
+                const tableData = variables.map((route: any, index: number) => ({
+                    id: route.id,
+                    key: route.key,
+                    applicationTemplateId: route.applicationTemplateId,
+                    description: route.description,
+                }));
+
+                const columns = [
+                    {
+                        key: 'id',
+                        header: 'Id',
+                        formatter: ({ row }: any) => <span className="text-white">{row.id}</span>,
+                    },
+                    {
+                        key: 'key',
+                        header: 'Key',
+                        formatter: ({ row }: any) => <span className="text-white">{row.key}</span>,
+                    },
+                    {
+                        key: 'applicationTemplateId',
+                        header: 'Application Template Id',
+                        formatter: ({ row }: any) => <span className="text-white">{row.applicationTemplateId}</span>,
+                    },
+                    {
+                        key: 'description',
+                        header: 'Description',
+                        formatter: ({ row }: any) => <span className="text-white">{row.description}</span>,
+                    },
+                ];
+
+                return (
+                    <CustomDataTable
+                        columns={columns}
+                        data={tableData}
+                        getRowKey={(row: any) => row.key}
+                    />
+                );
+            },
+        }
+    ];
+
     return (
         <>
             <div className="bg-gray-900 text-white overflow-auto p-4">
@@ -258,28 +492,75 @@ function AppTemplates() {
                     closeMenuRowKey={selectedItem}
                 />
             </div>
+            <SlideOver
+                open={isOpen}
+                onClose={() => setIsOpen(false)}
+                onPublish={() => setShowDeployModal(true)}
+                onDelete={() => setShowDeleteConfirmModal(true)}
+                onEditYaml={handleEditYaml}
+                title={selectedApplicationTemplate?.name || 'Application Templates Details'}
+                data={selectedApplicationTemplate}
+                fields={slideOverFields}
+                customWidth={600}
+            />
+            <ResizableBottomDrawer
+                open={isBottomDrawerOpen}
+                isEdit={editorIsChanged}
+                onClose={() => { setIsBottomDrawerOpen(false); setEditorIsChanged(false); setEditorDataChanged(null) }}
+                onSave={() => handleYamlUpdate()}
+                title={`${selectedApplicationTemplate?.name} Template`}
+                showUnsavedChangesModal
+                unsavedModalTitle='Changes Not Saved'
+                unsavedModalMessage='Are you sure you want to exit? All unsaved changes will be lost.'
+                unsavedModalCancelLabel='Stay'
+                unsavedModalConfirmLabel='Exit Anyway'
+
+            >
+                <AceEditor
+                    setOptions={{ useWorker: false }}
+                    mode="yaml"
+                    theme="monokai"
+                    defaultValue={yamlDump}
+                    showPrintMargin={false}
+                    onLoad={function (editor) {
+                        editor.renderer.setPadding(10);
+                        editor.renderer.setScrollMargin(10);
+                    }}
+                    style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "4px",
+                    }}
+                    onChange={function editorChanged(editor: any) {
+                        setEditorIsChanged(true)
+                        setEditorDataChanged(editor)
+                    }}
+                />
+            </ResizableBottomDrawer>
             <UnsavedChangesModal
                 open={showDeleteConfirmModal}
                 onCancel={() => { setShowDeleteConfirmModal(false); }}
-                onConfirm={() => removeCatalogItem(selectedItem)}
-                title={`Delete ${selectedItem?.name}`}
+                onConfirm={() => removeCatalogItem(selectedApplicationTemplate)}
+                title={`Delete ${selectedApplicationTemplate?.name}`}
                 message={"This is not reversible."}
                 cancelLabel={"Cancel"}
                 confirmLabel={"Delete"}
             />
             <CustomActionModal
                 open={showDeployModal}
-                child={<DeployApplicationTemplate template={selectedItem} close={() => setShowDeployModal(false)} />}
-                title={`Deploy ${selectedItem?.name}`}
+                child={<DeployApplicationTemplate template={selectedApplicationTemplate} close={() => setShowDeployModal(false)} />}
+                title={`Deploy ${selectedApplicationTemplate?.name}`}
             />
             <CustomActionModal
                 open={showDetailModal}
                 child={
                     <div className="w-full h-[70vh] min-h-[400px]">
                         <AceEditor
-                            mode="json"
+                            mode="yaml"
                             theme="monokai"
-                            value={selectedItem ? JSON.stringify(selectedItem, null, 2) : ''}
+                            value={
+                                selectedApplicationTemplate ? yaml.dump(selectedApplicationTemplate) : ''
+                            }
                             setOptions={{
                                 useWorker: false,
                                 wrap: true,
@@ -296,12 +577,11 @@ function AppTemplates() {
                                 borderRadius: '4px',
                             }}
                         />
-
                     </div>
                 }
                 title={`${selectedItem?.name} Details`}
-                onCancel={() => { setShowDetailModal(false); }}
-                cancelLabel={"Cancel"}
+                onCancel={() => setShowDetailModal(false)}
+                cancelLabel="Cancel"
             />
             <CustomLoadingModal
                 open={loading}

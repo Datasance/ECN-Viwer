@@ -670,7 +670,7 @@ function MicroservicesList() {
 
         const envData = envVars.map((env: any, index: number) => ({
           keyName: env.key,
-          value: <CryptoTextBox data={env.value} />,
+          value: <CryptoTextBox data={env.value} mode='plain' />,
           key: `${env.key}-${index}`,
         }));
 

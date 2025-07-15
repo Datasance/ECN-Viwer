@@ -176,29 +176,24 @@ function NodesList() {
             const spec = parsed?.spec ?? {};
             const metadata = parsed?.metadata ?? {};
 
-            // Create patch body with all spec properties
             const patchBody = { ...spec };
 
-            // Add tags from metadata
             patchBody.tags = metadata.tags;
 
-            // Flatten routerConfig if it exists
             if (spec.routerConfig) {
                 patchBody.routerMode = spec.routerConfig.routerMode;
                 patchBody.messagingPort = spec.routerConfig.messagingPort;
-                
-                // Only include these properties if they exist in the YAML
+
                 if (spec.routerConfig.edgeRouterPort !== undefined) {
-                patchBody.edgeRouterPort = spec.routerConfig.edgeRouterPort;
+                    patchBody.edgeRouterPort = spec.routerConfig.edgeRouterPort;
                 }
                 if (spec.routerConfig.interRouterPort !== undefined) {
-                patchBody.interRouterPort = spec.routerConfig.interRouterPort;
+                    patchBody.interRouterPort = spec.routerConfig.interRouterPort;
                 }
-                
+
                 delete patchBody.routerConfig;
             }
 
-            // Add required fields that might be missing
             const fogType = spec?.fogType === "Auto" ? 0 : spec?.fogType === "x86" ? 1 : 2;
             patchBody.fogType = fogType;
 
@@ -463,7 +458,17 @@ function NodesList() {
                     {
                         key: 'name',
                         header: 'Name',
-                        formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
+                        render: (row: any) => {
+                            if (!row?.name) return <span className="text-gray-400">No name</span>;
+                            return (
+                                <NavLink
+                                    to={`/config/VolumeMounts?volumeMountName=${encodeURIComponent(row.name)}`}
+                                    className="text-blue-400 underline cursor-pointer"
+                                >
+                                    {row.name}
+                                </NavLink>
+                            );
+                        },
                     },
                     {
                         key: 'version',
@@ -882,7 +887,7 @@ function NodesList() {
                     mode="yaml"
                     theme="monokai"
                     defaultValue={yamlDump}
-                    showPrintMargin={false} 
+                    showPrintMargin={false}
                     onLoad={function (editor) {
                         editor.renderer.setPadding(10);
                         editor.renderer.setScrollMargin(10);
