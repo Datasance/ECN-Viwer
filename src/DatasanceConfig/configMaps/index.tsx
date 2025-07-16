@@ -4,9 +4,12 @@ import { ControllerContext } from '../../ControllerProvider'
 import { FeedbackContext } from '../../Utils/FeedbackContext'
 import SlideOver from '../../CustomComponent/SlideOver'
 import AceEditor from "react-ace";
+import "ace-builds/src-noconflict/theme-tomorrow";
+import "ace-builds/src-noconflict/mode-yaml";
 import yaml from 'js-yaml';
 import ResizableBottomDrawer from '../../CustomComponent/ResizableBottomDrawer'
 import { useLocation } from 'react-router-dom';
+import lget from 'lodash/get'
 
 function ConfigMaps() {
     const [fetching, setFetching] = React.useState(true)
@@ -14,7 +17,7 @@ function ConfigMaps() {
     const { request } = React.useContext(ControllerContext)
     const { pushFeedback } = React.useContext(FeedbackContext)
     const [isOpen, setIsOpen] = useState(false);
-    const [selectedConfigMap, setselectedConfigMap] = useState<any | null>(null);
+    const [selectedConfigMap, setSelectedConfigMap] = useState<any | null>(null);
     const [isBottomDrawerOpen, setIsBottomDrawerOpen] = useState(false);
     const [editorIsChanged, setEditorIsChanged] = React.useState(false);
     const [editorDataChanged, setEditorDataChanged] = React.useState<any>()
@@ -67,7 +70,7 @@ function ConfigMaps() {
                 return
             }
             const responseItem = (await itemResponse.json())
-            setselectedConfigMap(responseItem);
+            setSelectedConfigMap(responseItem);
             setIsOpen(true);
             setFetching(false)
         } catch (e: any) {
@@ -81,23 +84,75 @@ function ConfigMaps() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
+
+    class LiteralString {
+        constructor(public value: string) {}
+        toString() {
+          return this.value;
+        }
+    }
+    
     const handleEditYaml = () => {
-        if (!selectedConfigMap) return;
-        const yamlString = yaml.dump(selectedConfigMap, { noRefs: true, indent: 2 });
-        setyamlDump(yamlString);
-        setIsBottomDrawerOpen(true);
+    const data = selectedConfigMap?.data || {};
+    
+    const yamlObj = {
+        apiVersion: 'datasance.com/v3',
+        kind: 'ConfigMap',
+        metadata: {
+        name: selectedConfigMap?.name,
+        },
+        spec: {
+        immutable: selectedConfigMap?.immutable,
+        },
+        data: data,
     };
+    
+    const yamlString = yaml.dump(yamlObj, {
+        noRefs: true,
+        indent: 2,
+        lineWidth: -1,
+        styles: {
+        '!!str': (value: any) =>
+            value instanceof LiteralString ? '|' : 'plain',
+        },
+    });
+    
+    setyamlDump(yamlString);
+    setIsBottomDrawerOpen(true);
+    };
+
+    const parseConfigMap = async (doc: any) => {
+        if (doc.apiVersion !== 'datasance.com/v3') {
+            return [{}, `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v3`]
+        }
+        if (doc.kind !== 'ConfigMap') {
+            return [{}, `Invalid kind ${doc.kind}`]
+        }
+        if (!doc.metadata || !doc.data) {
+            return [{}, 'Invalid YAML format']
+        }
+        const configMap = {
+            name: lget(doc, 'metadata.name', lget(doc, 'spec.name', undefined)),
+            immutable: lget(doc, 'spec.immutable', false),
+            data: lget(doc, 'data', {})
+        }
+
+        return [configMap]
+    }
 
     async function handleYamlUpdate() {
         try {
             const parsed = yaml.load(editorDataChanged) as any;
-
+            const [configMap, err] = await parseConfigMap(parsed)
+            if (err) {
+                return pushFeedback({ message: err, type: 'error' })
+            }
             const res = await request(`/api/v3/configmaps/${selectedConfigMap?.name}`, {
                 method: "PATCH",
                 headers: {
                     "content-type": "application/json",
                 },
-                body: JSON.stringify(parsed),
+                body: JSON.stringify(configMap),
             });
 
             if (!res.ok) {
@@ -115,11 +170,6 @@ function ConfigMaps() {
     }
 
     const columns = [
-        {
-            key: 'id',
-            header: 'id',
-            render: (row: any) => <span>{row.id || '-'}</span>,
-        },
         {
             key: 'name',
             header: 'Name',
@@ -141,8 +191,9 @@ function ConfigMaps() {
 
     const slideOverFields = [
         {
-            label: 'Id',
-            render: (row: any) => row.id || 'N/A',
+            label: 'Config Map Details',
+            render: () => '',
+            isSectionHeader: true,
         },
         {
             label: 'Name',
@@ -200,8 +251,9 @@ function ConfigMaps() {
                                     </h2>
                                     <AceEditor
                                         mode="yaml"
-                                        theme="monokai"
+                                        theme="tomorrow"
                                         value={finalContent.toString()}
+                                        showPrintMargin={false}
                                         setOptions={{
                                             useWorker: false,
                                             wrap: true,
@@ -253,7 +305,7 @@ function ConfigMaps() {
                     isEdit={editorIsChanged}
                     onClose={() => { setIsBottomDrawerOpen(false); setEditorIsChanged(false); setEditorDataChanged(null) }}
                     onSave={() => handleYamlUpdate()}
-                    title={`${selectedConfigMap?.name} Template`}
+                    title={`${selectedConfigMap?.name} Config Map`}
                     showUnsavedChangesModal
                     unsavedModalTitle='Changes Not Saved'
                     unsavedModalMessage='Are you sure you want to exit? All unsaved changes will be lost.'
@@ -262,9 +314,13 @@ function ConfigMaps() {
 
                 >
                     <AceEditor
-                        setOptions={{ useWorker: false }}
+                        setOptions={{
+                            useWorker: false,
+                            wrap: true,
+                            tabSize: 2,
+                        }}
                         mode="yaml"
-                        theme="monokai"
+                        theme="tomorrow"
                         defaultValue={yamlDump}
                         showPrintMargin={false}
                         onLoad={function (editor) {

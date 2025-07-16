@@ -6,7 +6,7 @@ import SlideOver from '../../CustomComponent/SlideOver'
 import CryptoTextBox from '../../CustomComponent/CustomCryptoTextBox'
 import { useLocation } from 'react-router-dom';
 
-function SecretsMicroservices() {
+function Secrets() {
     const [fetching, setFetching] = React.useState(true)
     const [secrets, setSecrets] = React.useState([])
     const { request } = React.useContext(ControllerContext)
@@ -79,11 +79,6 @@ function SecretsMicroservices() {
 
     const columns = [
         {
-            key: 'id',
-            header: 'id',
-            render: (row: any) => <span>{row.id || '-'}</span>,
-        },
-        {
             key: 'name',
             header: 'Name',
             render: (row: any) => (
@@ -103,8 +98,9 @@ function SecretsMicroservices() {
     ];
     const slideOverFields = [
         {
-            label: 'Id',
-            render: (row: any) => row.id || 'N/A',
+            label: 'Secret Details',
+            render: () => '',
+            isSectionHeader: true,
         },
         {
             label: 'Secret Name',
@@ -142,16 +138,13 @@ function SecretsMicroservices() {
                                 parsed = rawValue;
                             }
                             return (
-                                <div
-                                    key={index}
-                                    className="py-3 sm:grid sm:grid-cols-[minmax(120px,150px)_1fr] sm:gap-2 flex flex-col"
-                                >
-                                    <dt className="text-sm font-medium text-gray-300 content-center">
+                                <div key={index} className="py-3 flex flex-col">
+                                    <div className="text-sm font-medium text-gray-300 mb-1">
                                         {key}
-                                    </dt>
-                                    <dd className="mt-1 text-sm text-white sm:mt-0 truncate min-h-6">
-                                        <CryptoTextBox data={parsed} mode='plain' />
-                                    </dd>
+                                    </div>
+                                    <div className="text-sm text-white break-all bg-gray-800 rounded px-2 py-1">
+                                        <CryptoTextBox data={parsed} mode={node.type === 'tls' ? 'encrypted' : 'plain'} />
+                                    </div>
                                 </div>
                             );
                         })}
@@ -187,4 +180,4 @@ function SecretsMicroservices() {
     )
 }
 
-export default SecretsMicroservices
+export default Secrets

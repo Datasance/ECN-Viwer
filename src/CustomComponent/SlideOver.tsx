@@ -158,7 +158,6 @@ const SlideOver = <T,>({
                   </div>
 
                   <div className="p-4 space-y-4">
-                    <h2 className="text-sm text-gray-400">Properties</h2>
                     {data ? (
                       <dl className="divide-y divide-gray-700">
                         {fields.map((field, idx) =>

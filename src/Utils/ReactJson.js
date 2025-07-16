@@ -54,7 +54,7 @@ export default function ReactJson(props) {
       </div> : null}
       <ReactJSONView
         {...props}
-        theme="monokai"
+        theme="tomorrow"
         style={{ padding: "15px", borderRadius: "4px", overflow: "auto" }}
         onEdit={props?.reactJsonViewOnEdit ? (e) => props?.reactJsonViewOnEdit(e) : null}
         onAdd={props?.reactJsonViewOnEdit ? (e) => props?.reactJsonViewOnEdit(e) : null}

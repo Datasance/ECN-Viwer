@@ -5,6 +5,7 @@ import { FeedbackContext } from '../../Utils/FeedbackContext'
 import SlideOver from '../../CustomComponent/SlideOver'
 import { format, formatDistanceToNow } from 'date-fns';
 import CryptoTextBox from '../../CustomComponent/CustomCryptoTextBox'
+import { NavLink, useLocation } from 'react-router-dom'
 
 function Certificates() {
     const [fetching, setFetching] = React.useState(true)
@@ -12,13 +13,26 @@ function Certificates() {
     const { request } = React.useContext(ControllerContext)
     const { pushFeedback } = React.useContext(FeedbackContext)
     const [isOpen, setIsOpen] = useState(false);
-    const [selectedCertificate, setselectedCertificate] = useState<any | null>(null);
+    const [selectedCertificate, setSelectedCertificate] = useState<any | null>(null);
+    const location = useLocation();
+    const params = new URLSearchParams(location.search);
+    const certificateName = params.get('name');
 
     const handleRowClick = (row: any) => {
         if (row.name) {
             fetchCertificateItem(row.name)
         }
     };
+
+    useEffect(() => {
+        if (certificateName && certificates) {
+            const found = certificates.find((cert: any) => cert.name === certificateName);
+            if (found) {
+                handleRowClick(found);
+                setIsOpen(true);
+            }
+        }
+    }, [certificateName, certificates]);
 
     async function fetchCertificates() {
         try {
@@ -48,7 +62,7 @@ function Certificates() {
                 return
             }
             const responseItem = (await itemResponse.json())
-            setselectedCertificate(responseItem);
+            setSelectedCertificate(responseItem);
             setIsOpen(true);
             setFetching(false)
         } catch (e: any) {
@@ -82,24 +96,9 @@ function Certificates() {
             render: (row: any) => <span>{row.isCA.toString()}</span>,
         },
         {
-            key: 'validFrom',
-            header: 'Valid From',
-            render: (row: any) => <span>{new Date(row.validFrom).toLocaleString()}</span>,
-        },
-        {
-            key: 'validTo',
-            header: 'Valid To',
-            render: (row: any) => <span>{new Date(row.validTo).toLocaleString()}</span>,
-        },
-        {
             key: 'caName',
             header: 'ca name',
             render: (row: any) => <span>{row.caName || '-'}</span>,
-        },
-        {
-            key: 'daysRemaining',
-            header: 'Days Remaining',
-            render: (row: any) => <span>{new Date(row.daysRemaining).toLocaleString()}</span>,
         },
         {
             key: 'isExpired',
@@ -110,12 +109,27 @@ function Certificates() {
 
     const slideOverFields = [
         {
+            label: 'Certificate Details',
+            render: () => '',
+            isSectionHeader: true,
+        },
+        {
             label: 'Certificate Name',
             render: (row: any) => row.name || 'N/A',
         },
         {
             label: 'Ca Name',
-            render: (row: any) => row.caName || 'N/A',
+            render: (row: any) => {
+                if (!row.caName) return <span className="text-gray-400">N/A</span>;
+                return (
+                    <NavLink
+                        to={`/config/certificates?name=${encodeURIComponent(row.caName)}`}
+                        className="text-blue-400 underline cursor-pointer"
+                    >
+                        {row.caName}
+                    </NavLink>
+                );
+            },
         },
         {
             label: 'Is CA',
@@ -160,15 +174,8 @@ function Certificates() {
             },
         },
         {
-            label: 'System',
-            render: (row: any) => (
-                <span
-                    className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${row.isSystem ? 'bg-blue-100 text-blue-800' : 'bg-gray-200 text-gray-700'
-                        }`}
-                >
-                    {row.isSystem ? 'SYSTEM' : 'USER'}
-                </span>
-            ),
+            label: 'Days Remaining',
+            render: (row: any) => row.daysRemaining || 'N/A',
         },
         {
             label: 'Data',
@@ -198,17 +205,14 @@ function Certificates() {
                                 parsed = rawValue;
                             }
                             return (
-                                <div
-                                    key={index}
-                                    className="py-3 sm:grid sm:grid-cols-[minmax(120px,150px)_1fr] sm:gap-2 flex flex-col"
-                                >
-                                    <dt className="text-sm font-medium text-gray-300 content-center">
-                                        {key}
-                                    </dt>
-                                    <dd className="mt-1 text-sm text-white sm:mt-0 truncate min-h-6">
-                                        <CryptoTextBox data={parsed} mode='plain' />
-                                    </dd>
+                                <div key={index} className="py-3 flex flex-col">
+                                <div className="text-sm font-medium text-gray-300 mb-1">
+                                    {key}
                                 </div>
+                                <div className="text-sm text-white break-all bg-gray-800 rounded px-2 py-1">
+                                    <CryptoTextBox data={parsed} mode={'plain'} />
+                                </div>
+                            </div>
                             );
                         })}
                     </div>
@@ -233,7 +237,7 @@ function Certificates() {
                 <SlideOver
                     open={isOpen}
                     onClose={() => setIsOpen(false)}
-                    title={selectedCertificate?.name || 'Config Map Details'}
+                    title={selectedCertificate?.name || 'Certificate Details'}
                     data={selectedCertificate}
                     fields={slideOverFields}
                     customWidth={600}

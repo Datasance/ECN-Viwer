@@ -38,6 +38,9 @@ const CryptoTextBox: React.FC<Props> = ({ data, mode }) => {
 
   const displayValue = visible ? decoded : encoded;
 
+  // Remove trailing newlines for display
+  const trimmedDisplayValue = useMemo(() => displayValue.replace(/\n+$/, ''), [displayValue]);
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(displayValue);
@@ -61,16 +64,21 @@ const CryptoTextBox: React.FC<Props> = ({ data, mode }) => {
       lineHeightRef.current = lh || 20;
     }
 
-    const neededRows = Math.ceil(ta.scrollHeight / lineHeightRef.current);
+    // Adjust for padding and border
+    const style = getComputedStyle(ta);
+    const padding = parseFloat(style.paddingTop || '0') + parseFloat(style.paddingBottom || '0');
+    const border = parseFloat(style.borderTopWidth || '0') + parseFloat(style.borderBottomWidth || '0');
+    const contentHeight = ta.scrollHeight - padding - border;
+    const neededRows = Math.ceil(contentHeight / lineHeightRef.current);
     setRows(Math.max(1, neededRows));
-  }, [displayValue, visible]);
+  }, [trimmedDisplayValue, visible]);
 
   return (
     <div className="relative w-full">
       <textarea
         ref={textareaRef}
         readOnly
-        value={displayValue}
+        value={trimmedDisplayValue}
         rows={rows}
         className="w-full resize-none px-4 py-2 pr-20 border border-gray-300 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:outline-none break-words whitespace-pre-wrap"
         style={{ wordBreak: 'break-word', height: 'auto', overflow: 'hidden' }}

@@ -22,6 +22,9 @@ if [ -f ${DISTRO_NAME} ]; then
     echoInfo "Removing old Distro file"
     rm ${DISTRO_NAME}
 fi
+jq 'del(.publishConfig)' package.json > temp.json && mv temp.json package.json
+cd package/ && jq 'del(.publishConfig)' package.json > temp.json && mv temp.json package.json && cd ..
+echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
 npm install --force
 echoInfo "Building production app"
 npm run build 
@@ -45,3 +48,4 @@ npm publish ${DISTRO_NAME} --access public
 
 
 echoInfo "Distro packaging complete!"
+rm ~/.npmrc

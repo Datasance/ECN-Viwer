@@ -6,6 +6,8 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { useController } from '../../ControllerProvider';
 import { useFeedback } from '../../Utils/FeedbackContext';
 import AceEditor from "react-ace";
+import "ace-builds/src-noconflict/theme-tomorrow";
+import "ace-builds/src-noconflict/mode-yaml";
 import ResizableBottomDrawer from '../../CustomComponent/ResizableBottomDrawer';
 import { dumpApplicationYAML } from '../../Utils/applicationYAML';
 import UnsavedChangesModal from '../../CustomComponent/UnsavedChangesModal';
@@ -500,7 +502,7 @@ function ApplicationList() {
         <AceEditor
           setOptions={{ useWorker: false, tabSize: 2  }}
           mode="yaml"
-          theme="monokai"
+          theme="tomorrow"
           defaultValue={yamlDump}
           showPrintMargin={false} 
           onLoad={function (editor) {

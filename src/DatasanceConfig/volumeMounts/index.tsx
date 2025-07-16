@@ -108,16 +108,16 @@ function VolumeMounts() {
             header: 'version',
             render: (row: any) => <span>{row.version || '-'}</span>,
         },
-        {
-            key: 'uuid',
-            header: 'uuid',
-            render: (row: any) => <span>{row.uuid || '-'}</span>,
-        },
     ];
 
     const slideOverFields = [
         {
-            label: 'Volume Mount Name',
+            label: 'Volume Mount Details',
+            render: () => '',
+            isSectionHeader: true,
+        },
+        {
+            label: 'Name',
             render: (row: any) => row.name || 'N/A',
         },
         {

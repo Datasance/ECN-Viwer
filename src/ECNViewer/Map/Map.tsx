@@ -9,6 +9,8 @@ import { useController } from '../../ControllerProvider';
 import UnsavedChangesModal from '../../CustomComponent/UnsavedChangesModal';
 import CustomSelect from '../../CustomComponent/CustomSelect';
 import AceEditor from "react-ace";
+import "ace-builds/src-noconflict/theme-tomorrow";
+import "ace-builds/src-noconflict/mode-yaml";
 import ResizableBottomDrawer from '../../CustomComponent/ResizableBottomDrawer';
 import yaml from 'js-yaml';
 import { MiBFactor, prettyBytes } from '../utils';
@@ -112,6 +114,27 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
         deleteAgent();
     };
 
+    const renderTags = (tags: any) => {
+        if (!tags) return 'N/A';
+        
+        // Handle both string and array cases
+        const tagArray = Array.isArray(tags) ? tags : [tags];
+        
+        if (tagArray.length === 0) return 'N/A';
+        
+        return (
+            <div className="flex flex-wrap gap-1">
+                {tagArray.map((tag: string, index: number) => (
+                    <span 
+                        key={index}
+                        className="inline-block bg-blue-600 text-white text-xs px-2 py-1 rounded"
+                    >
+                        {tag}
+                    </span>
+                ))}
+            </div>
+        );
+    };
 
     const rebootAgent = async () => {
         try {
@@ -378,9 +401,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
         },
         {
             label: 'Tags',
-            render: (node: any) => {
-                return node.tags && node.tags?.length > 0 ? <span className="text-white whitespace-pre-wrap break-words">{node.tags}</span> : ""
-            },
+            render: (row: any) => renderTags(row.tags),
         },
         {
             label: 'Created',
@@ -459,12 +480,32 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
                     {
                         key: 'configMapName',
                         header: 'Config Map Name',
-                        formatter: ({ row }: any) => <span className="text-white">{row.configMapName}</span>,
+                        render: (row: any) => {
+                            if (!row?.configMapName) return <span className="text-gray-400">No config map name</span>;
+                            return (
+                                <NavLink
+                                    to={`/config/ConfigMaps?configMapName=${encodeURIComponent(row.configMapName)}`}
+                                    className="text-blue-400 underline cursor-pointer"
+                                >
+                                    {row.configMapName}
+                                </NavLink>
+                            );
+                        },
                     },
                     {
                         key: 'secretName',
                         header: 'Secret Name',
-                        formatter: ({ row }: any) => <span className="text-white">{row.secretName}</span>,
+                        render: (row: any) => {
+                            if (!row?.secretName) return <span className="text-gray-400">No secret name</span>;
+                            return (
+                                <NavLink
+                                    to={`/config/Secrets?secretName=${encodeURIComponent(row.secretName)}`}
+                                    className="text-blue-400 underline cursor-pointer"
+                                >
+                                    {row.secretName}
+                                </NavLink>
+                            );
+                        },
                     },
                 ];
 
@@ -882,7 +923,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
                 <AceEditor
                     setOptions={{ useWorker: false, tabSize: 2 }}
                     mode="yaml"
-                    theme="monokai"
+                    theme="tomorrow"
                     defaultValue={yamlDump}
                     showPrintMargin={false}
                     onLoad={function (editor) {

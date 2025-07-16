@@ -9,6 +9,8 @@ import UnsavedChangesModal from '../../CustomComponent/UnsavedChangesModal'
 import DeployApplicationTemplate from '../../Catalog/Application/DeployApplicationTemplate'
 import CustomActionModal from '../../CustomComponent/CustomActionModal'
 import AceEditor from "react-ace";
+import "ace-builds/src-noconflict/theme-tomorrow";
+import "ace-builds/src-noconflict/mode-yaml";
 import CustomLoadingModal from '../../CustomComponent/CustomLoadingModal'
 import SlideOver from '../../CustomComponent/SlideOver'
 import { format, formatDistanceToNow } from 'date-fns';
@@ -134,6 +136,28 @@ function AppTemplates() {
         }
     }
 
+    const updateCatalogItem = async (item: any) => {
+        const newItem = { ...item }
+        const response = await request(`/api/v3/applicationTemplate/${newItem.name}`, {
+            method: 'PATCH',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(newItem)
+        })
+        if (response.ok) {
+            pushFeedback({ message: `${selectedApplicationTemplate?.name} Updated`, type: "success" });
+            setIsBottomDrawerOpen(false);
+            setEditorIsChanged(false);
+            setEditorDataChanged(null);
+            setIsOpen(false);
+        } else {
+            pushFeedback({ message: response.statusText, type: 'error' })
+
+        }
+    }
+
     const parseApplication = async (applicationYAML: any) => {
         return {
             ...applicationYAML,
@@ -192,25 +216,13 @@ function AppTemplates() {
     async function handleYamlUpdate() {
         try {
             const parsed = yaml.load(editorDataChanged) as any;
-
-            const res = await request(`/api/v3/applicationTemplate/${selectedApplicationTemplate?.name}`, {
-                method: "PATCH",
-                headers: {
-                    "content-type": "application/json",
-                },
-                body: JSON.stringify(parsed),
-            });
-
-            if (!res.ok) {
-                pushFeedback({ message: res.statusText, type: "error" });
-            } else {
-                pushFeedback({ message: `${selectedApplicationTemplate?.name} Updated`, type: "success" });
-                setIsBottomDrawerOpen(false);
-                setEditorIsChanged(false);
-                setEditorDataChanged(null);
-                setIsOpen(false);
+            const [catalogItem, err] = await parseApplicationTemplate(parsed)
+            if (err) {
+                return pushFeedback({ message: err, type: 'error' })
             }
+            updateCatalogItem(catalogItem)
         } catch (e: any) {
+            console.error({ e })
             pushFeedback({ message: e.message, type: "error", uuid: "error" });
         }
     }
@@ -340,20 +352,17 @@ function AppTemplates() {
 
     const slideOverFields = [
         {
-            label: 'Application Template Name',
-            render: (row: any) => row.name || 'N/A',
+            label: 'Application Template Details',
+            render: () => '',
+            isSectionHeader: true,
         },
         {
-            label: 'Id',
-            render: (row: any) => row.id || 'N/A',
+            label: 'Name',
+            render: (row: any) => row.name || 'N/A',
         },
         {
             label: 'Description',
             render: (row: any) => row.description || 'N/A',
-        },
-        {
-            label: 'Schema Version',
-            render: (row: any) => row.schemaVersion || 'N/A',
         },
         {
             label: 'Created',
@@ -519,7 +528,7 @@ function AppTemplates() {
                 <AceEditor
                     setOptions={{ useWorker: false }}
                     mode="yaml"
-                    theme="monokai"
+                    theme="tomorrow"
                     defaultValue={yamlDump}
                     showPrintMargin={false}
                     onLoad={function (editor) {
@@ -557,7 +566,7 @@ function AppTemplates() {
                     <div className="w-full h-[70vh] min-h-[400px]">
                         <AceEditor
                             mode="yaml"
-                            theme="monokai"
+                            theme="tomorrow"
                             value={
                                 selectedApplicationTemplate ? yaml.dump(selectedApplicationTemplate) : ''
                             }

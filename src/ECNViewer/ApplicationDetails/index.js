@@ -32,7 +32,7 @@ import MicroservicesTable from "../MicroservicesTable";
 import yaml from "js-yaml";
 
 import AceEditor from "react-ace";
-import "ace-builds/src-noconflict/theme-monokai";
+import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/mode-yaml";
 
 import { useFeedback } from "../../Utils/FeedbackContext";
@@ -635,7 +635,7 @@ export default function ApplicationDetails({
           <AceEditor
             setOptions={{ useWorker: false, tabSize: 2 }}
             mode="yaml"
-            theme="monokai"
+            theme="tomorrow"
             defaultValue={yamlDump}
             onLoad={function (editor) {
               editor.renderer.setPadding(10);
