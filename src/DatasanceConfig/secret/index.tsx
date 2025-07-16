@@ -245,7 +245,7 @@ function Secrets() {
                 <CustomDataTable
                     columns={columns}
                     data={secrets}
-                    getRowKey={(row: any) => row.id}
+                    getRowKey={(row: any) => row.name}
                 />
                 <SlideOver
                     open={isOpen}

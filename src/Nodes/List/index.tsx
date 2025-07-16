@@ -519,7 +519,7 @@ function NodesList() {
                             if (!row?.secretName) return <span className="text-gray-400">No secret name</span>;
                             return (
                                 <NavLink
-                                    to={`/config/Secrets?secretName=${encodeURIComponent(row.secretName)}`}
+                                    to={`/config/secret?secretName=${encodeURIComponent(row.secretName)}`}
                                     className="text-blue-400 underline cursor-pointer"
                                 >
                                     {row.secretName}
