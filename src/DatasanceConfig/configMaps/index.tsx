@@ -257,6 +257,7 @@ function ConfigMaps() {
                                         setOptions={{
                                             useWorker: false,
                                             wrap: true,
+                                            tabSize: 2,
                                         }}
                                         onLoad={(editor) => {
                                             editor.renderer.setPadding(10);
