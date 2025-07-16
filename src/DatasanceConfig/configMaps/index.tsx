@@ -83,42 +83,41 @@ function ConfigMaps() {
         fetchConfigMaps()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
-
-
-    class LiteralString {
-        constructor(public value: string) {}
-        toString() {
-          return this.value;
-        }
-    }
     
     const handleEditYaml = () => {
-    const data = selectedConfigMap?.data || {};
-    
-    const yamlObj = {
-        apiVersion: 'datasance.com/v3',
-        kind: 'ConfigMap',
-        metadata: {
-        name: selectedConfigMap?.name,
-        },
-        spec: {
-        immutable: selectedConfigMap?.immutable,
-        },
-        data: data,
-    };
-    
-    const yamlString = yaml.dump(yamlObj, {
-        noRefs: true,
-        indent: 2,
-        lineWidth: -1,
-        styles: {
-        '!!str': (value: any) =>
-            value instanceof LiteralString ? '|' : 'plain',
-        },
-    });
-    
-    setyamlDump(yamlString);
-    setIsBottomDrawerOpen(true);
+        const { name, immutable, data = {} } = selectedConfigMap || {};
+
+        // 1. Dump the header without data
+        const yamlObj = {
+            apiVersion: 'datasance.com/v3',
+            kind: 'ConfigMap',
+            metadata: { name },
+            spec: { immutable },
+        };
+        let yamlHeader = yaml.dump(yamlObj, {
+            noRefs: true,
+            indent: 2,
+            lineWidth: -1,
+        }).trimEnd();
+
+        // 2. Manually build the data section
+        let dataSection = 'data:\n';
+        for (const [key, value] of Object.entries(data)) {
+            if (typeof value === 'string' && value.includes('\n')) {
+                dataSection += `  ${key}: |\n`;
+                for (const line of value.split('\n')) {
+                    dataSection += `    ${line}\n`;
+                }
+            } else {
+                dataSection += `  ${key}: ${value}\n`;
+            }
+        }
+
+        // 3. Combine header and data section
+        const yamlString = `${yamlHeader}\n${dataSection}`;
+
+        setyamlDump(yamlString);
+        setIsBottomDrawerOpen(true);
     };
 
     const parseConfigMap = async (doc: any) => {

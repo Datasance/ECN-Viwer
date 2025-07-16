@@ -148,6 +148,10 @@ function Certificates() {
             render: (row: any) => row.subject || 'N/A',
         },
         {
+            label: 'Hosts',
+            render: (row: any) => row.hosts || 'N/A',
+        },
+        {
             label: 'Valid From',
             render: (row: any) => {
                 if (!row.validFrom) return 'N/A';
@@ -207,7 +211,7 @@ function Certificates() {
                             return (
                                 <div key={index} className="py-3 flex flex-col">
                                 <div className="text-sm font-medium text-gray-300 mb-1">
-                                    {key}
+                                    {key}:
                                 </div>
                                 <div className="text-sm text-white break-all bg-gray-800 rounded px-2 py-1">
                                     <CryptoTextBox data={parsed} mode={'plain'} />
