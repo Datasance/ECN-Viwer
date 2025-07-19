@@ -3987,6 +3987,40 @@ paths:
           description: Internal Server Error
 
   "/volumeMounts/{name}/link":
+    get:
+      tags:
+        - VolumeMounts
+      summary: Gets volume mount link info
+      operationId: getVolumeMountLink
+      parameters:
+        - in: path
+          name: name
+          description: Volume mount name
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  fogUuids:
+                    type: array
+                    items:
+                      type: string
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
     post:
       tags:
         - VolumeMounts
@@ -5539,7 +5573,7 @@ components:
           maxLength: 255
         type:
           type: string
-          enum: [opaque, tls]
+          enum: [Opaque, tls]
         data:
           type: object
     SecretUpdate:
@@ -5565,7 +5599,7 @@ components:
           type: string
         type:
           type: string
-          enum: [opaque, tls]
+          enum: [Opaque, tls]
         data:
           type: object
         created_at:
@@ -5596,7 +5630,7 @@ components:
                 type: string
               type:
                 type: string
-                enum: [opaque, tls]
+                enum: [Opaque, tls]
               created_at:
                 type: string
                 format: date-time

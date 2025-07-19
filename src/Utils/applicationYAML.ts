@@ -106,6 +106,7 @@ export const getApplicationYAMLFromJSON = ({
         ...(ms?.memoryLimit !== undefined && ms?.memoryLimit !== null && { memoryLimit: ms.memoryLimit }),
         healthCheck: ms?.healthCheck ?? {},
       },
+      schedule: ms?.schedule ?? 50,
       msRoutes: {
         pubTags: ms.pubTags ?? [],
         subTags: ms.subTags ?? [],

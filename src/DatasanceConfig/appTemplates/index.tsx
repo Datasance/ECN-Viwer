@@ -231,6 +231,90 @@ function AppTemplates() {
         if (!selectedApplicationTemplate) return;
 
         const { name, description, variables, application } = selectedApplicationTemplate;
+        const microservices = application.microservices?.map((ms: any) => {
+            let parsedConfig: any = {};
+            try {
+              parsedConfig =
+                typeof ms?.config === 'string' ? JSON.parse(ms.config) : ms.config || {};
+            } catch (e) {
+              console.warn(`Failed to parse config for ${ms.name}:`, e);
+              parsedConfig = ms.config;
+            }
+        
+            return {
+              name: ms.name,
+              agent: {
+                name: ms.agentName
+              },
+              images: (ms.images || []).reduce(
+                (acc: any, image: any) => {
+                  switch (image.fogTypeId) {
+                    case 1:
+                      acc.x86 = image.containerImage;
+                      break;
+                    case 2:
+                      acc.arm = image.containerImage;
+                      break;
+                  }
+                  return acc;
+                },
+                {
+                  registry: ms.registryId ?? null,
+                  catalogItemId: ms.catalogItemId ?? null,
+                }
+              ),
+              container: {
+                annotations: JSON.parse(ms.annotations || '{}'),
+                rootHostAccess: ms.rootHostAccess ?? false,
+                runAsUser: ms.runAsUser ?? null,
+                ipcMode: ms?.ipcMode ?? '',
+                pidMode: ms?.pidMode ?? '',
+                platform: ms.platform ?? null,
+                runtime: ms.runtime ?? null,
+                cdiDevices: ms.cdiDevices ?? [],
+                capAdd: ms.capAdd ?? [],
+                capDrop: ms.capDrop ?? [],
+                volumes: (ms.volumeMappings || []).map((vm: any) => {
+                  const { id, ...rest } = vm;
+                  return rest;
+                }),
+                env: (ms.env || []).map((env: any) => {
+                  const { id, ...rest } = env;
+                  // Remove null values from valueFromSecret and valueFromConfigMap
+                  const cleanedEnv: any = { ...rest };
+                  // Only remove the property if it's explicitly null or undefined
+                  if (cleanedEnv.valueFromSecret === null || cleanedEnv.valueFromSecret === undefined) {
+                    delete cleanedEnv.valueFromSecret;
+                  }
+                  if (cleanedEnv.valueFromConfigMap === null || cleanedEnv.valueFromConfigMap === undefined) {
+                    delete cleanedEnv.valueFromConfigMap;
+                  }
+                  return cleanedEnv;
+                }),
+                extraHosts: (ms.extraHosts || []).map((eH: any) => {
+                  const { id, ...rest } = eH;
+                  return rest;
+                }),
+                ports: ms.ports ?? [],
+                commands: Array.isArray(ms.cmd) ? [...ms.cmd] : [],
+                cpuSetCpus: ms?.cpuSetCpus ?? '',
+                ...(ms?.memoryLimit !== undefined && ms?.memoryLimit !== null && { memoryLimit: ms.memoryLimit }),
+                healthCheck: ms?.healthCheck ?? {},
+              },
+              schedule: ms?.schedule ?? 50,
+              msRoutes: {
+                pubTags: ms.pubTags ?? [],
+                subTags: ms.subTags ?? [],
+              },
+              config: parsedConfig,
+            };
+          });
+        
+          const routes = application.routes?.map((r: any) => ({
+            name: r.name,
+            from: r.from,
+            to: r.to,
+          }));
 
         const yamlDump = {
             apiVersion: 'datasance.com/v3',
@@ -245,46 +329,8 @@ function AppTemplates() {
                     description: v.description,
                 })),
                 application: {
-                    microservices: application.microservices.map((ms: any) => {
-                        const configObject = ms.config ? JSON.parse(ms.config) : {};
-                        const images = {
-                            x86: '',
-                            arm: '',
-                            registry: 'remote',
-                        };
-                        ms.images?.forEach((img: any) => {
-                            if (img.fogTypeId === 1) images.x86 = img.containerImage;
-                            else if (img.fogTypeId === 2) images.arm = img.containerImage;
-                        });
-
-                        const container: any = {
-                            volumes: ms.volumes ?? ms.volumeMappings ?? [],
-                            ports: ms.ports ?? [],
-                            env: ms.env ?? [],
-                        };
-
-                        if (ms.rootHostAccess !== undefined) {
-                            container.rootHostAccess = ms.rootHostAccess;
-                        }
-                        if (ms.runAsUser) {
-                            container.runAsUser = ms.runAsUser;
-                        }
-                        if (ms.commands?.length) {
-                            container.commands = ms.commands;
-                        } else if (ms.cmd?.length) {
-                            container.commands = ms.cmd;
-                        }
-
-                        return {
-                            name: ms.name,
-                            agent: {
-                                name: ms.agentName,
-                            },
-                            config: configObject,
-                            images,
-                            container,
-                        };
-                    }),
+                    microservices: microservices,
+                    routes: routes
                 },
             },
         };
