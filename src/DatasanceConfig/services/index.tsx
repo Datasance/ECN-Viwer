@@ -57,10 +57,7 @@ function Services() {
 
     const renderTags = (tags: any) => {
         if (!tags) return 'N/A';
-        
-        // Handle both string and array cases
         const tagArray = Array.isArray(tags) ? tags : [tags];
-        
         if (tagArray.length === 0) return 'N/A';
         
         return (

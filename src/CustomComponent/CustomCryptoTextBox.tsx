@@ -37,8 +37,6 @@ const CryptoTextBox: React.FC<Props> = ({ data, mode }) => {
   }, [data, mode]);
 
   const displayValue = visible ? decoded : encoded;
-
-  // Remove trailing newlines for display
   const trimmedDisplayValue = useMemo(() => displayValue.replace(/\n+$/, ''), [displayValue]);
 
   const handleCopy = async () => {
@@ -63,8 +61,6 @@ const CryptoTextBox: React.FC<Props> = ({ data, mode }) => {
       const lh = parseFloat(getComputedStyle(ta).lineHeight || '20');
       lineHeightRef.current = lh || 20;
     }
-
-    // Adjust for padding and border
     const style = getComputedStyle(ta);
     const padding = parseFloat(style.paddingTop || '0') + parseFloat(style.paddingBottom || '0');
     const border = parseFloat(style.borderTopWidth || '0') + parseFloat(style.borderBottomWidth || '0');

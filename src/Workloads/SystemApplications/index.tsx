@@ -488,7 +488,6 @@ function SystemApplicationList() {
         startStopValue={selectedApplication?.isActivated}
       />
       <ResizableBottomDrawer
-        // TODO: System Applications YAML Editor do not neeed save button!
         open={isBottomDrawerOpen}
         isEdit={editorIsChanged}
         onClose={() => { setIsBottomDrawerOpen(false); setEditorIsChanged(false); setEditorDataChanged(null) }}

@@ -42,7 +42,7 @@ const UnsavedChangesModal = ({
                         <Dialog.Title className="text-lg font-semibold">
                             {title}
                         </Dialog.Title>
-                        <div className="mt-2 text-sm text-gray-700">
+                        <div className="mt-2 text-sm text-gray-700 whitespace-pre-line" >
                             {message}
                         </div>
                         <div className="mt-4 flex justify-end space-x-2">

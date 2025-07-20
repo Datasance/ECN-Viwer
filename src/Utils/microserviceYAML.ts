@@ -80,7 +80,6 @@ export const getMicroserviceYAMLFromJSON = ({
         }),
         env: (microservice.env || []).map((env: any) => {
           const { id, ...rest } = env;
-          // Remove null values from valueFromSecret and valueFromConfigMap
           const cleanedEnv: any = { ...rest };
           if (cleanedEnv.valueFromSecret === null) {
             delete cleanedEnv.valueFromSecret;

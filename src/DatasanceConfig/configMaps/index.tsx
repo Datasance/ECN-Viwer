@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import React, { useEffect, useState } from 'react'
 import CustomDataTable from '../../CustomComponent/CustomDataTable'
 import { ControllerContext } from '../../ControllerProvider'
@@ -10,6 +11,8 @@ import yaml from 'js-yaml';
 import ResizableBottomDrawer from '../../CustomComponent/ResizableBottomDrawer'
 import { useLocation } from 'react-router-dom';
 import lget from 'lodash/get'
+import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
+import EditOutlinedIcon from '@material-ui/icons/EditOutlined';
 
 function ConfigMaps() {
     const [fetching, setFetching] = React.useState(true)
@@ -25,6 +28,8 @@ function ConfigMaps() {
     const location = useLocation();
     const params = new URLSearchParams(location.search);
     const configMapName = params.get('configMapName');
+    const [dirtyEditors, setDirtyEditors] = React.useState<Record<string, boolean>>({});
+    const [editorValues, setEditorValues] = React.useState<Record<string, string>>({});
 
     const handleRowClick = (row: any) => {
         if (row.name) {
@@ -83,11 +88,10 @@ function ConfigMaps() {
         fetchConfigMaps()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
-    
+
     const handleEditYaml = () => {
         const { name, immutable, data = {} } = selectedConfigMap || {};
 
-        // 1. Dump the header without data
         const yamlObj = {
             apiVersion: 'datasance.com/v3',
             kind: 'ConfigMap',
@@ -100,7 +104,6 @@ function ConfigMaps() {
             lineWidth: -1,
         }).trimEnd();
 
-        // 2. Manually build the data section
         let dataSection = 'data:\n';
         for (const [key, value] of Object.entries(data)) {
             if (typeof value === 'string' && value.includes('\n')) {
@@ -113,7 +116,6 @@ function ConfigMaps() {
             }
         }
 
-        // 3. Combine header and data section
         const yamlString = `${yamlHeader}\n${dataSection}`;
 
         setyamlDump(yamlString);
@@ -168,6 +170,134 @@ function ConfigMaps() {
         }
     }
 
+    const handleSave = async (key: string, updatedYamlString: string) => {
+        try {
+            const { name, immutable, data = {} } = selectedConfigMap || {};
+
+            const yamlObj = {
+                apiVersion: 'datasance.com/v3',
+                kind: 'ConfigMap',
+                metadata: { name },
+                spec: { immutable },
+            };
+
+            const yamlHeader = yaml.dump(yamlObj, {
+                noRefs: true,
+                indent: 2,
+                lineWidth: -1,
+            }).trimEnd();
+
+            let dataSection = 'data:\n';
+            for (const [dataKey, value] of Object.entries(data)) {
+                if (typeof value === 'string' && value.includes('\n')) {
+                    dataSection += `  ${dataKey}: |\n`;
+                    for (const line of value.split('\n')) {
+                        dataSection += `    ${line}\n`;
+                    }
+                } else {
+                    dataSection += `  ${dataKey}: ${value}\n`;
+                }
+            }
+
+            const yamlString = `${yamlHeader}\n${dataSection}`;
+            const parsedObj = yaml.load(yamlString) as any;
+
+            if (!parsedObj?.data) {
+                parsedObj.data = {};
+            }
+
+            parsedObj.data[key] = updatedYamlString;
+
+            const [configMap, err] = await parseConfigMap(parsedObj);
+            if (err) {
+                return pushFeedback({ message: err, type: 'error' });
+            }
+
+            const res = await request(`/api/v3/configmaps/${selectedConfigMap?.name}`, {
+                method: "PATCH",
+                headers: {
+                    "content-type": "application/json",
+                },
+                body: JSON.stringify(configMap),
+            });
+
+            if (!res.ok) {
+                pushFeedback({ message: res.statusText, type: "error" });
+            } else {
+                pushFeedback({ message: `${selectedConfigMap?.name} Updated`, type: "success" });
+                setIsBottomDrawerOpen(false);
+                setEditorIsChanged(false);
+                setEditorDataChanged(null);
+                setIsOpen(false);
+            }
+        } catch (e: any) {
+            pushFeedback({ message: e.message, type: "error", uuid: "error" });
+        }
+    };
+
+    const handleDelete = async (key: string) => {
+        try {
+            const { name, immutable, data = {} } = selectedConfigMap || {};
+    
+            const yamlObj = {
+                apiVersion: 'datasance.com/v3',
+                kind: 'ConfigMap',
+                metadata: { name },
+                spec: { immutable },
+            };
+    
+            const yamlHeader = yaml.dump(yamlObj, {
+                noRefs: true,
+                indent: 2,
+                lineWidth: -1,
+            }).trimEnd();
+    
+            let dataSection = 'data:\n';
+            for (const [dataKey, value] of Object.entries(data)) {
+                if (dataKey === key) continue;
+    
+                if (typeof value === 'string' && value.includes('\n')) {
+                    dataSection += `  ${dataKey}: |\n`;
+                    for (const line of value.split('\n')) {
+                        dataSection += `    ${line}\n`;
+                    }
+                } else {
+                    dataSection += `  ${dataKey}: ${value}\n`;
+                }
+            }
+    
+            const yamlString = `${yamlHeader}\n${dataSection}`;
+            const parsedObj = yaml.load(yamlString) as any;
+    
+            const [configMap, err] = await parseConfigMap(parsedObj);
+            if (err) {
+                return pushFeedback({ message: err, type: 'error' });
+            }
+    
+            const res = await request(`/api/v3/configmaps/${selectedConfigMap?.name}`, {
+                method: "PATCH",
+                headers: {
+                    "content-type": "application/json",
+                },
+                body: JSON.stringify(configMap),
+            });
+    
+            if (!res.ok) {
+                pushFeedback({ message: res.statusText, type: "error" });
+            } else {
+                pushFeedback({ message: `${selectedConfigMap?.name} Deleted key ${key}`, type: "success" });
+                setIsBottomDrawerOpen(false);
+                setEditorIsChanged(false);
+                setEditorDataChanged(null);
+                setIsOpen(false);
+            }
+        } catch (e: any) {
+            pushFeedback({ message: e.message, type: "error", uuid: "error" });
+        }
+    };
+    
+
+
     const columns = [
         {
             key: 'name',
@@ -213,6 +343,12 @@ function ConfigMaps() {
             render: (node: any) => {
                 const entries = Object.entries(node?.data || {});
 
+                const handleChange = (key: string, newValue: string, originalValue: string) => {
+                    setEditorValues((prev) => ({ ...prev, [key]: newValue }));
+                    const isDirty = newValue !== originalValue;
+                    setDirtyEditors((prev) => ({ ...prev, [key]: isDirty }));
+                };
+
                 return (
                     <div className="space-y-6">
                         {entries.map(([key, rawValue], index) => {
@@ -243,21 +379,49 @@ function ConfigMaps() {
                             );
                             const dynamicHeight = `${lineCount * lineHeight}px`;
 
+                            const displayValue = editorValues[key] ?? finalContent.toString();
+
                             return (
                                 <div key={index}>
-                                    <h2 className="text-sm font-semibold text-gray-300 mb-2">
-                                        {key}
-                                    </h2>
+                                    <div className="flex justify-between">
+                                        <h2 className="text-sm font-semibold text-gray-300 mb-2">{key}</h2>
+                                        <div className="flex space-x-2">
+                                            {dirtyEditors[key] && (
+                                                <button
+                                                    onClick={() => {
+                                                        handleSave(key, displayValue);
+                                                        setDirtyEditors((prev) => ({ ...prev, [key]: false }));
+                                                    }}
+                                                    className="hover:text-green-600 hover:bg-white rounded"
+                                                >
+                                                    <EditOutlinedIcon fontSize="small" />
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={() => {
+                                                    handleDelete(key);
+                                                }}
+                                                className="hover:text-red-600 hover:bg-white rounded"
+                                            >
+                                                <DeleteOutlineIcon fontSize="small" />
+                                            </button>
+                                        </div>
+                                    </div>
+
                                     <AceEditor
                                         mode="yaml"
                                         theme="tomorrow"
-                                        value={finalContent.toString()}
+                                        name={`editor-${key}`}
+                                        value={displayValue}
                                         showPrintMargin={false}
                                         setOptions={{
                                             useWorker: false,
                                             wrap: true,
                                             tabSize: 2,
                                         }}
+                                        onChange={(newValue) =>
+                                            handleChange(key, newValue, finalContent.toString())
+                                        }
                                         onLoad={(editor) => {
                                             editor.renderer.setPadding(10);
                                             editor.renderer.setScrollMargin(10);

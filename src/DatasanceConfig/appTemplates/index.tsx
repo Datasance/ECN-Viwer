@@ -280,9 +280,7 @@ function AppTemplates() {
                 }),
                 env: (ms.env || []).map((env: any) => {
                   const { id, ...rest } = env;
-                  // Remove null values from valueFromSecret and valueFromConfigMap
                   const cleanedEnv: any = { ...rest };
-                  // Only remove the property if it's explicitly null or undefined
                   if (cleanedEnv.valueFromSecret === null || cleanedEnv.valueFromSecret === undefined) {
                     delete cleanedEnv.valueFromSecret;
                   }
@@ -358,42 +356,42 @@ function AppTemplates() {
             header: 'Description',
             render: (row: any) => <span>{row.description || '-'}</span>,
         },
-        {
-            key: 'actions',
-            header: 'Action',
-            type: 'action',
-            render: (row: any) => (
-                <ul className="text-sm text-black bg-gray-200 rounded">
-                    <li
-                        className="px-4 py-2 hover:bg-gray-700 cursor-pointer hover:text-white"
-                        onClick={() => {
-                            setselectedItem(row);
-                            setShowDeployModal(true)
-                        }}
-                    >
-                        Deploy
-                    </li>
-                    <li
-                        className="px-4 py-2 hover:bg-gray-700 cursor-pointer hover:text-white"
-                        onClick={() => {
-                            setselectedItem(row);
-                            setShowDetailModal(true)
-                        }}
-                    >
-                        Details
-                    </li>
-                    <li
-                        className="px-4 py-2 hover:bg-red-600 hover:text-white cursor-pointer"
-                        onClick={() => {
-                            setselectedItem(row);
-                            setShowDeleteConfirmModal(true)
-                        }}
-                    >
-                        Remove
-                    </li>
-                </ul>
-            ),
-        }
+        // {
+        //     key: 'actions',
+        //     header: 'Action',
+        //     type: 'action',
+        //     render: (row: any) => (
+        //         <ul className="text-sm text-black bg-gray-200 rounded">
+        //             <li
+        //                 className="px-4 py-2 hover:bg-gray-700 cursor-pointer hover:text-white"
+        //                 onClick={() => {
+        //                     setselectedItem(row);
+        //                     setShowDeployModal(true)
+        //                 }}
+        //             >
+        //                 Deploy
+        //             </li>
+        //             <li
+        //                 className="px-4 py-2 hover:bg-gray-700 cursor-pointer hover:text-white"
+        //                 onClick={() => {
+        //                     setselectedItem(row);
+        //                     setShowDetailModal(true)
+        //                 }}
+        //             >
+        //                 Details
+        //             </li>
+        //             <li
+        //                 className="px-4 py-2 hover:bg-red-600 hover:text-white cursor-pointer"
+        //                 onClick={() => {
+        //                     setselectedItem(row);
+        //                     setShowDeleteConfirmModal(true)
+        //                 }}
+        //             >
+        //                 Remove
+        //             </li>
+        //         </ul>
+        //     ),
+        // }
     ];
 
     const slideOverFields = [

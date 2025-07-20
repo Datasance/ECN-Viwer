@@ -27,7 +27,6 @@ type OptionType = {
     value: string;
 };
 
-// Format duration in human-readable format of duration in milliseconds
 const formatDuration = (milliseconds: number): string => {
     if (!milliseconds || milliseconds <= 0) return 'N/A';
 
@@ -61,6 +60,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
     const { request } = useController();
     const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
     const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+    const [showCleanConfirmModal, setShowCleanConfirmModal] = useState(false);
     const [isBottomDrawerOpen, setIsBottomDrawerOpen] = useState(false);
     const [editorIsChanged, setEditorIsChanged] = React.useState(false);
     const [editorDataChanged, setEditorDataChanged] = React.useState<any>()
@@ -116,16 +116,15 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
 
     const renderTags = (tags: any) => {
         if (!tags) return 'N/A';
-        
-        // Handle both string and array cases
+
         const tagArray = Array.isArray(tags) ? tags : [tags];
-        
+
         if (tagArray.length === 0) return 'N/A';
-        
+
         return (
             <div className="flex flex-wrap gap-1">
                 {tagArray.map((tag: string, index: number) => (
-                    <span 
+                    <span
                         key={index}
                         className="inline-block bg-blue-600 text-white text-xs px-2 py-1 rounded"
                     >
@@ -172,6 +171,26 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
             }
         } catch (e: any) {
             pushFeedback({ message: e.message || e.status, type: "error" });
+        }
+    };
+
+    const handleClean = async () => {
+        try {
+            const res = await request(`/api/v3/iofog/${selectedNode.uuid}/prune`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+            });
+
+            if (!res.ok) {
+                pushFeedback({ message: res.statusText, type: "error" });
+                return;
+            }
+            else {
+                pushFeedback({ message: "Agent Pruned", type: "success" });
+                setShowResetConfirmModal(false);
+            }
+        } catch (e: any) {
+            pushFeedback({ message: e.message, type: "error", uuid: "error" });
         }
     };
 
@@ -239,19 +258,11 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
             const parsed = yaml.load(editorDataChanged) as any;
             const spec = parsed?.spec ?? {};
             const metadata = parsed?.metadata ?? {};
-
-            // Create patch body with all spec properties
             const patchBody = { ...spec };
-
-            // Add tags from metadata
             patchBody.tags = metadata.tags;
-
-            // Flatten routerConfig if it exists
             if (spec.routerConfig) {
                 patchBody.routerMode = spec.routerConfig.routerMode;
                 patchBody.messagingPort = spec.routerConfig.messagingPort;
-
-                // Include router properties if they exist in the YAML
                 if (spec.routerConfig.edgeRouterPort !== undefined) {
                     patchBody.edgeRouterPort = spec.routerConfig.edgeRouterPort;
                 }
@@ -261,8 +272,6 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
 
                 delete patchBody.routerConfig;
             }
-
-            // Add required fields that might be missing
             const fogType = spec?.fogType === "Auto" ? 0 : spec?.fogType === "x86" ? 1 : 2;
             patchBody.fogType = fogType;
 
@@ -547,10 +556,6 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
             label: 'Is Ready To Upgrade',
             render: (row: any) => <span>{row.isReadyToUpgrade.toString()}</span>,
         },
-        // {
-        //     label: 'Last Command Time',
-        //     render: (row: any) => row.lastCommandTime || 'N/A',
-        // },
         {
             label: 'Last Status Time',
             render: (row: any) => <span>{new Date(row.lastStatusTime).toLocaleString()}</span>,
@@ -632,11 +637,12 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
             label: '',
             isFullSection: true,
             render: (node: any) => {
-                const agentApplications = data?.applications?.find(
+                const AgentApplications = data?.applications?.filter(
                     (app: any) =>
                         app.microservices?.some((msvc: any) => msvc.iofogUuid === node.uuid)
                 );
-                const microservices = agentApplications?.microservices || [];
+                const microservices =
+                    AgentApplications?.flatMap((app: any) => app.microservices) || [];
 
                 if (!Array.isArray(microservices) || microservices.length === 0) {
                     return <div className="text-sm text-gray-400">No microservices available.</div>;
@@ -789,11 +795,13 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
             label: '',
             isFullSection: true,
             render: (node: any) => {
-                const systemAgentApplications = data?.systemApplications?.find(
+                const systemAgentApplications = data?.systemApplications?.filter(
                     (app: any) =>
                         app.microservices?.some((msvc: any) => msvc.iofogUuid === node.uuid)
                 );
-                const microservices = systemAgentApplications?.microservices || [];
+
+                const microservices =
+                    systemAgentApplications?.flatMap((app: any) => app.microservices || []) || [];
 
                 if (!Array.isArray(microservices) || microservices.length === 0) {
                     return <div className="text-sm text-gray-400">No microservices available.</div>;
@@ -905,6 +913,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
                 fields={slideOverFields}
                 onRestart={() => setShowResetConfirmModal(true)}
                 onDelete={() => setShowDeleteConfirmModal(true)}
+                onClean={() => setShowCleanConfirmModal(true)}
                 onEditYaml={handleEditYaml}
             />
             <ResizableBottomDrawer
@@ -960,6 +969,15 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
                 message={"This is not reversible."}
                 cancelLabel={"Cancel"}
                 confirmLabel={"Delete"}
+            />
+            <UnsavedChangesModal
+                open={showCleanConfirmModal}
+                onCancel={() => setShowCleanConfirmModal(false)}
+                onConfirm={handleClean}
+                title={`Prune ${selectedNode?.name}`}
+                message={"This action will remove all unused container images from the selected agent.Images not associated with a running microservice will be permanently deleted.Make sure all necessary images are in use before proceeding.\n \nThis is not revetsable"}
+                cancelLabel={"Cancel"}
+                confirmLabel={"Prune"}
             />
         </div>
     )

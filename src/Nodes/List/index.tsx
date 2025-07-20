@@ -50,6 +50,7 @@ function NodesList() {
     const [isOpen, setIsOpen] = useState(false);
     const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
     const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+    const [showCleanConfirmModal, setShowCleanConfirmModal] = useState(false);
     const [isBottomDrawerOpen, setIsBottomDrawerOpen] = useState(false);
     const [editorIsChanged, setEditorIsChanged] = React.useState(false);
     const [editorDataChanged, setEditorDataChanged] = React.useState<any>()
@@ -57,19 +58,17 @@ function NodesList() {
     const location = useLocation();
     const params = new URLSearchParams(location.search);
     const agentId = params.get('agentId');
-
     const renderTags = (tags: any) => {
         if (!tags) return 'N/A';
-        
-        // Handle both string and array cases
+
         const tagArray = Array.isArray(tags) ? tags : [tags];
-        
+
         if (tagArray.length === 0) return 'N/A';
-        
+
         return (
             <div className="flex flex-wrap gap-1">
                 {tagArray.map((tag: string, index: number) => (
-                    <span 
+                    <span
                         key={index}
                         className="inline-block bg-blue-600 text-white text-xs px-2 py-1 rounded"
                     >
@@ -117,20 +116,41 @@ function NodesList() {
 
     const handleDelete = async () => {
         try {
-            const res = await request(`/api/v3/iofog/${selectedNode.uuid}`, {
-                method: "DELETE",
+            const res = await request(`/api/v3/iofog/${selectedNode.uuid}/reboot`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
             });
 
             if (!res.ok) {
-                pushFeedback({ message: res.statusText || res.status, type: "error" });
+                pushFeedback({ message: res.statusText, type: "error" });
                 return;
             }
             else {
-                pushFeedback({ message: "Agent deleted!", type: "success" });
-                setShowDeleteConfirmModal(false);
+                pushFeedback({ message: "Agent Rebooted", type: "success" });
+                setShowResetConfirmModal(false);
             }
         } catch (e: any) {
-            pushFeedback({ message: e.message || e.status, type: "error" });
+            pushFeedback({ message: e.message, type: "error", uuid: "error" });
+        }
+    };
+
+    const handleClean = async () => {
+        try {
+            const res = await request(`/api/v3/iofog/${selectedNode.uuid}/prune`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+            });
+
+            if (!res.ok) {
+                pushFeedback({ message: res.statusText, type: "error" });
+                return;
+            }
+            else {
+                pushFeedback({ message: "Agent Pruned", type: "success" });
+                setShowResetConfirmModal(false);
+            }
+        } catch (e: any) {
+            pushFeedback({ message: e.message, type: "error", uuid: "error" });
         }
     };
 
@@ -567,10 +587,6 @@ function NodesList() {
             label: 'Is Ready To Upgrade',
             render: (row: any) => <span>{row.isReadyToUpgrade.toString()}</span>,
         },
-        // {
-        //     label: 'Last Command Time',
-        //     render: (row: any) => row.lastCommandTime || 'N/A',
-        // },
         {
             label: 'Last Status Time',
             render: (row: any) => <span>{new Date(row.lastStatusTime).toLocaleString()}</span>,
@@ -652,11 +668,12 @@ function NodesList() {
             label: '',
             isFullSection: true,
             render: (node: any) => {
-                const agentApplications = data?.applications?.find(
+                const AgentApplications = data?.applications?.filter(
                     (app: any) =>
                         app.microservices?.some((msvc: any) => msvc.iofogUuid === node.uuid)
                 );
-                const microservices = agentApplications?.microservices || [];
+                const microservices =
+                    AgentApplications?.flatMap((app: any) => app.microservices) || [];
 
                 if (!Array.isArray(microservices) || microservices.length === 0) {
                     return <div className="text-sm text-gray-400">No microservices available.</div>;
@@ -809,11 +826,13 @@ function NodesList() {
             label: '',
             isFullSection: true,
             render: (node: any) => {
-                const systemAgentApplications = data?.systemApplications?.find(
+                const systemAgentApplications = data?.systemApplications?.filter(
                     (app: any) =>
                         app.microservices?.some((msvc: any) => msvc.iofogUuid === node.uuid)
                 );
-                const microservices = systemAgentApplications?.microservices || [];
+
+                const microservices =
+                    systemAgentApplications?.flatMap((app: any) => app.microservices || []) || [];
 
                 if (!Array.isArray(microservices) || microservices.length === 0) {
                     return <div className="text-sm text-gray-400">No microservices available.</div>;
@@ -907,6 +926,7 @@ function NodesList() {
                 fields={slideOverFields}
                 onRestart={() => setShowResetConfirmModal(true)}
                 onDelete={() => setShowDeleteConfirmModal(true)}
+                onClean={() => setShowCleanConfirmModal(true)}
                 onEditYaml={handleEditYaml}
                 customWidth={700}
             />
@@ -922,10 +942,9 @@ function NodesList() {
                 unsavedModalMessage='Are you sure you want to exit? All unsaved changes will be lost.'
                 unsavedModalCancelLabel='Stay'
                 unsavedModalConfirmLabel='Exit Anyway'
-
             >
                 <AceEditor
-                    setOptions={{ useWorker: false, tabSize: 2  }}
+                    setOptions={{ useWorker: false, tabSize: 2 }}
                     mode="yaml"
                     theme="tomorrow"
                     defaultValue={yamlDump}
@@ -964,7 +983,15 @@ function NodesList() {
                 cancelLabel={"Cancel"}
                 confirmLabel={"Delete"}
             />
-
+            <UnsavedChangesModal
+                open={showCleanConfirmModal}
+                onCancel={() => setShowCleanConfirmModal(false)}
+                onConfirm={handleClean}
+                title={`Prune ${selectedNode?.name}`}
+                message={"This action will remove all unused container images from the selected agent.Images not associated with a running microservice will be permanently deleted.Make sure all necessary images are in use before proceeding.\n \nThis is not revetsable"}
+                cancelLabel={"Cancel"}
+                confirmLabel={"Prune"}
+            />
         </div>
     );
 }
