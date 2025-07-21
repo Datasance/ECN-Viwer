@@ -19,7 +19,7 @@ const CryptoTextBox: React.FC<Props> = ({ data, mode }) => {
   const encoded = useMemo(() => {
     try {
       return mode === 'plain'
-        ? btoa(unescape(encodeURIComponent(data)))
+        ? btoa(decodeURIComponent(encodeURIComponent(data)))
         : data;
     } catch {
       return 'Invalid base64';
@@ -30,7 +30,7 @@ const CryptoTextBox: React.FC<Props> = ({ data, mode }) => {
     try {
       return mode === 'plain'
         ? data
-        : decodeURIComponent(escape(atob(data)));
+        : decodeURIComponent(encodeURIComponent(atob(data)));
     } catch {
       return 'Invalid base64';
     }

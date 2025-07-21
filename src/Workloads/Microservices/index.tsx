@@ -160,6 +160,28 @@ function MicroservicesList() {
     }
   };
 
+  const renderExecSessionIds = (execSessionIds: any) => {
+    if (!execSessionIds) return 'N/A';
+    
+    // Handle both string and array cases
+    const execSessionIdArray = Array.isArray(execSessionIds) ? execSessionIds : [execSessionIds];
+    
+    if (execSessionIdArray.length === 0) return 'N/A';
+    
+    return (
+        <div className="flex flex-wrap gap-1">
+            {execSessionIdArray.map((execSessionId: string, index: number) => (
+                <span 
+                    key={index}
+                    className="inline-block bg-blue-600 text-white text-xs px-2 py-1 rounded"
+                >
+                    {execSessionId}
+                </span>
+            ))}
+        </div>
+    );
+  };
+
   const parseMicroserviceFile = async (doc: any) => {
     if (API_VERSIONS.indexOf(doc.apiVersion) === -1) {
       return [{}, `Invalid API Version ${doc.apiVersion}, current version is ${API_VERSIONS.slice(-1)[0]}`]
@@ -465,9 +487,7 @@ function MicroservicesList() {
     },
     {
       label: 'Exec Session Ids',
-      render: (row: any) => {
-        return row.status.execSessionIds?.length ? <span className="text-white whitespace-pre-wrap break-words">{row.status.execSessionIds}</span> : 'N/A'
-      }
+      render: (row: any) => renderExecSessionIds(row.status.execSessionIds)
     },
     {
       label: 'Container Id',

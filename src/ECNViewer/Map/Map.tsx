@@ -975,7 +975,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
                 onCancel={() => setShowCleanConfirmModal(false)}
                 onConfirm={handleClean}
                 title={`Prune ${selectedNode?.name}`}
-                message={"This action will remove all unused container images from the selected agent.Images not associated with a running microservice will be permanently deleted.Make sure all necessary images are in use before proceeding.\n \nThis is not revetsable"}
+                message={"This action will remove all unused container images from the selected agent. Images not associated with a running microservice will be permanently deleted. Make sure all necessary images are in use before proceeding.\n \nThis is not reversible!"}
                 cancelLabel={"Cancel"}
                 confirmLabel={"Prune"}
             />

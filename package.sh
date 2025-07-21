@@ -7,7 +7,7 @@
 # Import our helper functions
 . scripts/utils.sh
 
-VERSION="v1.0.0-beta10"
+VERSION="v1.0.0"
 
 prettyTitle "Datasance ioFog ECN Viewer Packaging"
 echoInfo "Beginning packaging process"
