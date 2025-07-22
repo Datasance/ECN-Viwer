@@ -75,8 +75,8 @@ export default function CustomDataTable<T>({
 
       </div>
 
-      <div className="overflow-x-auto h-full overflow-auto">
-        <table className="min-w-full text-sm text-gray-300">
+      <div className="overflow-x-auto h-full overflow-auto min-w-0">
+        <table className="w-full min-w-max text-sm text-gray-300 table-auto">
           <thead className="bg-gray-700 text-xs uppercase">
             <tr>
               {columns.map(col => (
@@ -118,7 +118,7 @@ export default function CustomDataTable<T>({
                         }
 
                         return (
-                          <td key={col.key} className={`px-4 py-2 text-start ${col.className || ''}`}>
+                          <td key={col.key} className={`px-4 py-2 text-start ${col.className || ''} max-w-[200px] whitespace-nowrap overflow-hidden text-ellipsis`}>
                             {col.render ? col.render(row) : (row as any)[col.key]}
                           </td>
                         );

@@ -928,7 +928,7 @@ function NodesList() {
                 onDelete={() => setShowDeleteConfirmModal(true)}
                 onClean={() => setShowCleanConfirmModal(true)}
                 onEditYaml={handleEditYaml}
-                customWidth={700}
+                customWidth={750}
             />
 
             <ResizableBottomDrawer

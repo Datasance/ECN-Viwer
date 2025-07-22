@@ -776,7 +776,7 @@ function SystemMicroserviceList() {
         onRestart={() => setShowResetConfirmModal(true)}
         onDelete={() => setShowDeleteConfirmModal(true)}
         onEditYaml={handleEditYaml}
-        customWidth={600}
+        customWidth={750}
       />
       <ResizableBottomDrawer
         open={isBottomDrawerOpen}

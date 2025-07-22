@@ -899,7 +899,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
                     onChange={handleSelectChange}
                     isClearable
                     placeholder="Select an agent..."
-                    className="!absolute top-3 left-16 w-[250px] z-[1000] bg-white rounded shadow"
+                    className="!absolute top-3 left-16 w-[250px] z-[50] bg-white rounded shadow"
                 />
 
             </div>

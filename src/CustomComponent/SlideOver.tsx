@@ -105,12 +105,12 @@ const SlideOver = <T,>({
                 leaveTo="translate-x-full"
               >
                 <Dialog.Panel
-                  className="pointer-events-auto h-full bg-gray-800 text-white shadow-xl overflow-auto relative"
+                  className="pointer-events-auto h-full max-h-screen bg-gray-800 text-white shadow-xl overflow-y-auto relative flex flex-col w-full sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl"
                   style={{ width }}
                 >
                   <div
                     onMouseDown={startResizing}
-                    className="absolute left-0 top-0 bottom-0 w-2 cursor-col-resize z-50 bg-gray-700 hover:bg-gray-600 h-[200%]"
+                    className="absolute left-0 top-0 bottom-0 w-2 cursor-col-resize z-50 bg-gray-700 hover:bg-gray-600 hidden sm:block"
                   />
 
                   <div className="flex items-start justify-between p-4 border-b border-gray-700">
@@ -164,7 +164,7 @@ const SlideOver = <T,>({
                     </div>
                   </div>
 
-                  <div className="p-4 space-y-4">
+                  <div className="p-4 space-y-4 overflow-y-auto max-h-[calc(100vh-4rem)]">
                     {data ? (
                       <dl className="divide-y divide-gray-700">
                         {fields.map((field, idx) =>

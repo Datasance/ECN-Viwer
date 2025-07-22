@@ -1,4 +1,3 @@
-
 import { MiBFactor, prettyBytes } from '../ECNViewer/utils';
 
 const CustomProgressBar = ({
@@ -20,18 +19,17 @@ const CustomProgressBar = ({
   if (unit === 'agent') {
     displayValue = `${prettyBytes(Number((value * MiBFactor)?.toFixed(2)))} / ${prettyBytes(max)}`;
   } else if (unit === '%') {
-    displayValue = `${(value?.toFixed(2))} % / ${(max)} %`;
-  } else if (unit === 'microservice')
-  {
-    displayValue = `${prettyBytes((value || 0 * MiBFactor ))} / ${prettyBytes(max)}`;
+    displayValue = `${value?.toFixed(2)} % / ${max} %`;
+  } else if (unit === 'microservice') {
+    displayValue = `${prettyBytes((value || 0) * MiBFactor)} / ${prettyBytes(max)}`;
   }
 
   return (
-    <div className="flex items-center space-x-2 w-full overflow-hidden">
-      <div className="truncate text-xs text-gray-300 whitespace-nowrap">
+    <div className="flex items-center w-full space-x-2 overflow-hidden min-w-0">
+      <div className="text-xs text-gray-300 truncate min-w-[100px] max-w-[50%]">
         {displayValue}
       </div>
-      <div className="flex-1 h-1.5 bg-gray-700 rounded overflow-hidden">
+      <div className="flex-1 h-1.5 bg-gray-700 rounded overflow-hidden min-w-0">
         <div
           className={`${color} h-1.5 transition-all duration-300`}
           style={{ width: `${percent}%` }}

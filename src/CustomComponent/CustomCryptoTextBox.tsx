@@ -70,19 +70,19 @@ const CryptoTextBox: React.FC<Props> = ({ data, mode }) => {
   }, [trimmedDisplayValue, visible]);
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full max-w-full sm:max-w-md md:max-w-lg lg:max-w-2xl">
       <textarea
         ref={textareaRef}
         readOnly
         value={trimmedDisplayValue}
         rows={rows}
-        className="w-full resize-none px-4 py-2 pr-20 border border-gray-300 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:outline-none break-words whitespace-pre-wrap"
+        className="w-full resize-none px-4 py-2 pr-20 border border-gray-300 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:outline-none break-words whitespace-pre-wrap text-sm"
         style={{ wordBreak: 'break-word', height: 'auto', overflow: 'hidden' }}
       />
 
       <button
         onClick={() => setVisible(!visible)}
-        className="absolute top-1/2 right-12 -translate-y-1/2 text-gray-300 hover:text-white bg-gray-800"
+        className="absolute top-2 right-12 sm:top-1/2 sm:-translate-y-1/2 text-gray-300 hover:text-white bg-gray-800"
         title="Toggle visibility"
       >
         {visible ? <VisibilityOffIcon /> : <VisibilityIcon />}
@@ -90,7 +90,7 @@ const CryptoTextBox: React.FC<Props> = ({ data, mode }) => {
 
       <button
         onClick={handleCopy}
-        className="absolute top-1/2 right-2 -translate-y-1/2 text-gray-300 hover:text-white bg-gray-800"
+        className="absolute top-2 right-2 sm:top-1/2 sm:-translate-y-1/2 text-gray-300 hover:text-white bg-gray-800"
         title={copied ? 'Copied!' : 'Copy to clipboard'}
       >
         {copied ? <CheckIcon /> : <FileCopyIcon />}

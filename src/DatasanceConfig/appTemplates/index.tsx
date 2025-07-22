@@ -554,7 +554,7 @@ function AppTemplates() {
                 title={selectedApplicationTemplate?.name || 'Application Templates Details'}
                 data={selectedApplicationTemplate}
                 fields={slideOverFields}
-                customWidth={600}
+                customWidth={900}
             />
             <ResizableBottomDrawer
                 open={isBottomDrawerOpen}

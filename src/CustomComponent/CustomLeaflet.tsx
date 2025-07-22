@@ -71,7 +71,8 @@ const CustomLeaflet: React.FC<CustomLeafletProps> = ({
         setSelectedMarker(foundMarker);
       }
     }
-  }, [selectedMarkerId, markers]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMarkerId]);
 
   function groupMarkersByPosition(markers: any[]): any[] {
     const grouped: Record<string, any[]> = {};
