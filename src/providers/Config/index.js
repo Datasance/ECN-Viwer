@@ -25,17 +25,17 @@ export const ConfigProvider = ({
   const { request, location } = useController()
   const [config, setConfig] = React.useState({ ..._initConfig, controllerLocation: location })
 
-  const _fetchConfig = async () => {
-    try {
-      const res = await request(`/api/v3/config/${ecnViewerConfigKey}`)
-      if (res.ok) {
-        const { value: stringifiedConfig } = await res.json()
-        setConfig(JSON.parse(stringifiedConfig))
-      }
-    } catch (e) {
+  // const _fetchConfig = async () => {
+  //   try {
+  //     const res = await request(`/api/v3/config/${ecnViewerConfigKey}`)
+  //     if (res.ok) {
+  //       const { value: stringifiedConfig } = await res.json()
+  //       setConfig(JSON.parse(stringifiedConfig))
+  //     }
+  //   } catch (e) {
 
-    }
-  }
+  //   }
+  // }
 
   const saveConfig = async (newConfig) => {
     const res = await request('/api/v3/config', {

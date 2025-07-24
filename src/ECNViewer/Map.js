@@ -1,12 +1,9 @@
-import React, { useEffect, useState } from 'react'
+/* eslint-disable no-unused-vars */
+import React, { useState } from 'react'
 
-import GoogleMapReact from 'google-map-react'
-import { Avatar } from '@material-ui/core'
-import CtrlIcon from '@material-ui/icons/DeveloperBoard'
-import Icon from '@material-ui/core/Icon'
 import { makeStyles, useTheme } from '@material-ui/styles'
 import L from 'leaflet'
-import { statusColor, tagColor } from './utils'
+import { tagColor } from './utils'
 import { useMap } from '../providers/Map'
 import { MapContainer } from './myleaflet'
 L.Icon.Default.imagePath = "/";
@@ -40,7 +37,7 @@ const useStyles = makeStyles(theme => ({
   },
   mapWrapper: {
     width: '172%',
-    height: '100%',
+    height: '96%',
     position: 'fixed',
     top: 0,
     '@media (min-width: 1200px)': {
@@ -102,14 +99,14 @@ export default function Map (props) {
 
   function ViewerMarker(props) {
     //componentDidmount is not over so this component return null
-    if (mcstate == false) {
+    if (mcstate === false) {
       return null
     } else {
       return (
         // componentDidmount is over Mymarker function can be mark on the map
         <Consumer>
           {(mymapobj) => {
-            const Mymarker = L.marker(props.position).addTo(mymapobj);
+            // const Mymarker = L.marker(props.position).addTo(mymapobj);
             // var allcity = L.layerGroup(...Mymarker).addTo(mymapobj);
           }
           }
@@ -118,7 +115,7 @@ export default function Map (props) {
     }
   }
   function SetViewOnClick({ coords }) {
-    if (mcstate == false) {
+    if (mcstate === false) {
       return null
     } else {
       return (

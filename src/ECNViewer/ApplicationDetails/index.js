@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable default-case */
 import React from "react";
 
 import ReactJson from "../../Utils/ReactJson";
@@ -30,7 +32,7 @@ import MicroservicesTable from "../MicroservicesTable";
 import yaml from "js-yaml";
 
 import AceEditor from "react-ace";
-import "ace-builds/src-noconflict/theme-monokai";
+import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/mode-yaml";
 
 import { useFeedback } from "../../Utils/FeedbackContext";
@@ -77,7 +79,8 @@ export default function ApplicationDetails({
   const [openChangeYamlApplicationDialog, setOpenChangeYamlApplicationDialog] =
     React.useState(false);
   const [fileParsing, setFileParsing] = React.useState(false)
-
+  const [openRebootAgentDialog, setOpenRebootAgentDialog] =
+      React.useState(false);
   const { applications, reducedAgents } = data;
   const application =
     (applications || []).find((a) => selectedApplication.name === a.name) ||
@@ -96,16 +99,20 @@ export default function ApplicationDetails({
           type: "success",
           message: `Application ${app.isActivated ? "Started" : "Stopped"}!`,
         });
+        setOpenRebootAgentDialog(false);
       } else {
         pushFeedback({ type: "error", message: response.status });
+        setOpenRebootAgentDialog(false);
       }
     } catch (e) {
       pushFeedback({ type: "error", message: e.message || e.status });
+      setOpenRebootAgentDialog(false);
     }
   };
 
   const restartApplication = async (app) => {
     await toggleApplication(app);
+    await new Promise(resolve => setTimeout(resolve, 8000));
     await toggleApplication(app);
   };
 
@@ -156,11 +163,14 @@ export default function ApplicationDetails({
             }
           ),
           container: {
+            annotations: JSON.parse(m.annotations),
             rootHostAccess: m.rootHostAccess,
             runAsUser: m?.runAsUser,
             platform: m?.platform,
             runtime: m?.runtime,
             cdiDevices: m?.cdiDevices !== undefined ? m?.cdiDevices : [],
+            capAdd: m?.capAdd !== undefined ? m?.capAdd : [],
+            capDrop: m?.capDrop !== undefined ? m?.capDrop : [],
             ports: m.ports.map((p) => {
               if (p.host) {
                 p.host = (
@@ -222,7 +232,7 @@ export default function ApplicationDetails({
       {application.isActivated ? (
         <icons.RestartIcon
           className={classes.action}
-          onClick={() => restartApplication(application)}
+          onClick={() => setOpenRebootAgentDialog(true)}
           title="Restart application"
         />
       ) : (
@@ -623,9 +633,9 @@ export default function ApplicationDetails({
             </div>
           </div>
           <AceEditor
-            setOptions={{ useWorker: false }}
+            setOptions={{ useWorker: false, tabSize: 2 }}
             mode="yaml"
-            theme="monokai"
+            theme="tomorrow"
             defaultValue={yamlDump}
             onLoad={function (editor) {
               editor.renderer.setPadding(10);
@@ -742,6 +752,27 @@ export default function ApplicationDetails({
 
         </DialogActions>
       </Dialog>
+      <Dialog
+              open={openRebootAgentDialog}
+              onClose={() => {
+                setOpenRebootAgentDialog(false);
+              }}
+            >
+              <DialogTitle id="alert-dialog-title">Restart {application.name}?</DialogTitle>
+              <DialogContent>
+                <DialogContentText id="alert-dialog-description">
+                  <span>Do you want to restart your application</span>
+                </DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setOpenRebootAgentDialog(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => restartApplication(application)} color="primary" autoFocus>
+                  Reboot
+                </Button>
+              </DialogActions>
+            </Dialog>
     </>
   );
 }

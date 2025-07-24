@@ -42,10 +42,32 @@ export const parseMicroservice = async (microservice) => {
     agentName: lget(microservice, 'agent.name'),
     registryId,
     ...microservice.container,
+    annotations: microservice.container.annotations ? JSON.stringify(microservice.container.annotations) : undefined,
     ports: lget(microservice, 'container.ports', []).map(p => ({ ...p, publicPort: p.public })),
     volumeMappings: lget(microservice, 'container.volumes', []),
     cmd: lget(microservice, 'container.commands', []),
-    env: lget(microservice, 'container.env', []).map(e => ({ key: e.key.toString(), value: e.value.toString() })),
+    env: lget(microservice, 'container.env', []).map(e => {
+      const envVar = { key: e.key.toString() }
+
+      // Handle different types of environment variables
+      // Check if valueFromSecret or valueFromConfigMap exists first
+      const hasValueFromSecret = Object.prototype.hasOwnProperty.call(e, 'valueFromSecret') && e.valueFromSecret !== null
+      const hasValueFromConfigMap = Object.prototype.hasOwnProperty.call(e, 'valueFromConfigMap') && e.valueFromConfigMap !== null
+
+      // Only parse value if neither valueFromSecret nor valueFromConfigMap is present
+      if (!hasValueFromSecret && !hasValueFromConfigMap && Object.prototype.hasOwnProperty.call(e, 'value') && e.value !== null) {
+        envVar.value = e.value.toString()
+      }
+
+      if (hasValueFromSecret) {
+        envVar.valueFromSecret = e.valueFromSecret
+      }
+      if (hasValueFromConfigMap) {
+        envVar.valueFromConfigMap = e.valueFromConfigMap
+      }
+
+      return envVar
+    }),
     images,
     extraHosts: lget(microservice, 'container.extraHosts', []),
     rebuild: microservice.rebuild,
@@ -53,6 +75,8 @@ export const parseMicroservice = async (microservice) => {
     platform: microservice.platform !== null || microservice?.container?.platform !== null ? microservice.platform !== undefined ? microservice.platform : microservice?.container?.platform : "",
     runtime: microservice.runtime !== null || microservice?.container?.runtime !== null ? microservice.runtime !== undefined ? microservice.runtime : microservice?.container?.runtime : "",
     cdiDevices: microservice.cdiDevices !== null || microservice?.container?.cdiDevices !== null ? microservice.cdiDevices !== undefined ? microservice.cdiDevices : microservice?.container?.cdiDevices : "",
+    capAdd: microservice.capAdd !== null || microservice?.container?.capAdd !== null ? microservice.capAdd !== undefined ? microservice.capAdd : microservice?.container?.capAdd : "",
+    capDrop: microservice.capDrop !== null || microservice?.container?.capDrop !== null ? microservice.capDrop !== undefined ? microservice.capDrop : microservice?.container?.capDrop : "",
     ...microservice.msroutes,
     pubTags: microservice.pubTags !== null || microservice?.msRoutes?.pubTags !== null ? microservice.pubTags !== undefined ? microservice.pubTags : microservice?.msRoutes?.pubTags : "",
     subTags: microservice.subTags !== null || microservice?.msRoutes?.subTags !== null ? microservice.subTags !== undefined ? microservice.subTags : microservice?.msRoutes?.subTags : "",

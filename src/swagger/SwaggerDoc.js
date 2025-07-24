@@ -14,7 +14,7 @@ const SwaggerDoc = () => {
                 if (!document.components) document.components = {};
                 if (!document.components.securitySchemes)
                     document.components.securitySchemes = {};
-                document.components.securitySchemes.userToken = {
+                document.components.securitySchemes.authToken = {
                     type: "http",
                     scheme: "bearer",
                     bearerFormat: "JWT",
@@ -23,34 +23,34 @@ const SwaggerDoc = () => {
                 const hashIndex = href.indexOf("#");
                 const queryString = hashIndex !== -1 ? href.substring(hashIndex + 2) : "";
                 const queryParams = new URLSearchParams(queryString.split("?")[1]);
-                const userToken = queryParams.get("userToken") || "";
+                const authToken = queryParams.get("authToken") || "";
                 const baseUrl = queryParams.get("baseUrl") || "http://localhost:51121/api/v3";
                 document.servers = [
                     {
                         url: baseUrl,
                     },
                 ];
-                document.security = userToken
+                document.security = authToken
                     ? [
                           {
-                              userToken: [],
+                              authToken: [],
                           },
                       ]
                     : [];
 
                 setSwaggerDocument(document);
 
-                if (userToken) {
+                if (authToken) {
                     window.ui?.authActions?.authorize({
-                        userToken: {
-                            name: "userToken",
+                        authToken: {
+                            name: "authToken",
                             schema: {
                                 type: "http",
                                 in: "header",
                                 name: "Authorization",
                                 description: "Bearer Token",
                             },
-                            value: `Bearer ${userToken}`,
+                            value: `Bearer ${authToken}`,
                         },
                     });
                 }
@@ -67,7 +67,8 @@ const SwaggerDoc = () => {
     }
 
     return (
-        <div id="swagger-container">
+        <div className="max-h-[82vh] min-h-[82vh]">
+        <div id="swagger-container" className="bg-white">
             <SwaggerUI
                 spec={swaggerDocument}
                 persistAuthorization={true}
@@ -76,9 +77,9 @@ const SwaggerDoc = () => {
                     const hashIndex = href.indexOf("#");
                     const queryString = hashIndex !== -1 ? href.substring(hashIndex + 1) : "";
                     const queryParams = new URLSearchParams(queryString.split("?")[1]);
-                    const userToken = queryParams.get("userToken") || "";
-                    if (userToken) {
-                        request.headers["Authorization"] = `Bearer ${userToken}`;
+                    const authToken = queryParams.get("authToken") || "";
+                    if (authToken) {
+                        request.headers["Authorization"] = `Bearer ${authToken}`;
                     }
                     return request;
                 }}
@@ -87,23 +88,24 @@ const SwaggerDoc = () => {
                     const hashIndex = href.indexOf("#");
                     const queryString = hashIndex !== -1 ? href.substring(hashIndex + 1) : "";
                     const queryParams = new URLSearchParams(queryString.split("?")[1]);
-                    const userToken = queryParams.get("userToken") || "";
-                    if (userToken) {
+                    const authToken = queryParams.get("authToken") || "";
+                    if (authToken) {
                         system.authActions.authorize({
-                            userToken: {
-                                name: "userToken",
+                            authToken: {
+                                name: "authToken",
                                 schema: {
                                     type: "http",
                                     in: "header",
                                     name: "Authorization",
                                     description: "Bearer Token",
                                 },
-                                value: `Bearer ${userToken}`,
+                                value: `Bearer ${authToken}`,
                             },
                         });
                     }
                 }}
             />
+        </div>
         </div>
     );
 };

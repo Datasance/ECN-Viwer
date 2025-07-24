@@ -5,7 +5,7 @@ import './myleaflet.css'
 import "leaflet/dist/leaflet.css";
 L.Icon.Default.imagePath = "/";
 const mymapcss = {
-  height: "100vh"
+  height: "97.4%"
 }
 export function MapContainer(props) {
   // const [posation,setPosation] = useState([]);
@@ -52,7 +52,7 @@ export function MapContainer(props) {
     //var newcontrol= L.control.layers(baseMaps, overlayMaps).setPosition('bottomleft').addTo(map);
     // console.log(newcontrol.getContainer())
     const navEl = document.querySelector('.latnav')
-    const lControlArray = navEl.querySelectorAll('.leaflet-control')
+    const lControlArray = navEl?.querySelectorAll('.leaflet-control')
     // console.log('find lControl', lControlArray)
     if (lControlArray){
       lControlArray.forEach((el)=>{

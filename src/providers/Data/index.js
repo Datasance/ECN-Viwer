@@ -2,10 +2,10 @@ import React from 'react'
 import { useController } from '../../ControllerProvider'
 import { find, groupBy, get } from 'lodash'
 import useRecursiveTimeout from '../../hooks/useInterval'
+import { useAuth } from '../../auth'
 
 import AgentManager from './agent-manager'
 import ApplicationManager from './application-manager'
-import { useKeycloak } from '@react-keycloak/web'
 
 export const DataContext = React.createContext()
 export const useData = () => React.useContext(DataContext)
@@ -119,59 +119,57 @@ export const DataProvider = ({
   const [loading, setLoading] = React.useState(true)
   const timeout = +refresh || 3000
   const [error, setError] = React.useState(false)
-  const { initialized, keycloak } = useKeycloak()
+  const { keycloak, initialized } = useAuth()
 
   const update = async () => {
-    if(initialized)
-    {
+    // Only update if we're initialized or not using auth
+    if (!keycloak || initialized) {
       // List fogs
-    let agents = []
-    try {
-      agents = await AgentManager.listAgents(request)()
-    } catch (e) {
-      setError(e)
-      return
-    }
-
-    // List applications
-    let applications = []
-    try {
-      applications = await ApplicationManager.listApplications(request)()
-    } catch (e) {
-      setError(e)
-      return
-    }
-
-    let systemApplications = []
-    try {
-      systemApplications = await ApplicationManager.listSystemApplications(request)()
-    } catch (e) {
-      setError(e)
-      return
-    }
-
-    let microservices = []
-    for (const application of applications) {
-      // We need this to get microservice details like Status
-      const microservicesResponse = await request(`/api/v3/microservices?application=${application.name}`)
-      if (!microservicesResponse.ok) {
-        setError({ message: microservicesResponse.statusText })
+      let agents = []
+      try {
+        agents = await AgentManager.listAgents(request)()
+      } catch (e) {
+        setError(e)
         return
       }
-      const newMicroservices = (await microservicesResponse.json()).microservices
-      microservices = microservices.concat(newMicroservices)
-      application.microservices = newMicroservices
-      // microservices = microservices.concat(application.microservices)
+
+      // List applications
+      let applications = []
+      try {
+        applications = await ApplicationManager.listApplications(request)()
+      } catch (e) {
+        setError(e)
+        return
+      }
+
+      let systemApplications = []
+      try {
+        systemApplications = await ApplicationManager.listSystemApplications(request)()
+      } catch (e) {
+        setError(e)
+        return
+      }
+
+      let microservices = []
+      for (const application of applications) {
+        // We need this to get microservice details like Status
+        const microservicesResponse = await request(`/api/v3/microservices?application=${application.name}`)
+        if (!microservicesResponse?.ok) {
+          setError({ message: microservicesResponse?.statusText || "" })
+          return
+        }
+        const newMicroservices = (await microservicesResponse.json()).microservices
+        microservices = microservices.concat(newMicroservices)
+        application.microservices = newMicroservices
+      }
+      if (error) {
+        setError(false)
+      }
+      dispatch({ type: actions.UPDATE, data: { agents, applications, microservices, systemApplications } })
+      if (loading) {
+        setLoading(false)
+      }
     }
-    if (error) {
-      setError(false)
-    }
-    dispatch({ type: actions.UPDATE, data: { agents, applications, microservices, systemApplications } })
-    if (loading) {
-      setLoading(false)
-    }
-    }
-    
   }
 
   useRecursiveTimeout(update, timeout)

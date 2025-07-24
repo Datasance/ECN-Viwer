@@ -1,3 +1,4 @@
+/* eslint-disable import/no-anonymous-default-export */
 const deleteAgent = (request) => async (agent) => {
   return request('/api/v3/iofog/' + agent.uuid, { method: 'DELETE' })
 }

@@ -174,7 +174,6 @@ export default function Default ({ selectAgent, selectController, selectApplicat
               case 0:
                 return(
                 <SearchBar onSearch={setFilter} style={{ marginRight: '5px', position: 'sticky', right: '15px', maxWidth: isMediumScreen ? 'inherit' : '100px' }} />)
-                break;
                 case 1:
                   return(
                     <>
@@ -208,11 +207,9 @@ export default function Default ({ selectAgent, selectController, selectApplicat
                 </div>
                 </>
                   )
-                  break;
                   case 2:
                     return(
                       <SearchBar onSearch={setFilter} style={{ marginRight: '5px', position: 'sticky', right: '15px', maxWidth: isMediumScreen ? 'inherit' : '100px' }} />)
-                break;
               default:
                 break;
             }

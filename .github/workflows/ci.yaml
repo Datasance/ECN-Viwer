@@ -21,7 +21,7 @@ env:
 
 
 jobs:
-  Build-Publish:
+  Build-Publish-Github:
     runs-on: ubuntu-22.04
     permissions:
       actions: write
@@ -48,3 +48,29 @@ jobs:
     - run: sh ${GITHUB_WORKSPACE}/package.sh
       env: 
         PAT: ${{ secrets.PAT }}
+  Build-Publish-NPM:
+    runs-on: ubuntu-22.04
+    permissions:
+      actions: write
+      checks: write
+      contents: write
+      deployments: write
+      id-token: write
+      issues: write
+      discussions: write
+      packages: write
+      pages: write
+      pull-requests: write
+      repository-projects: write
+      security-events: write
+      statuses: write 
+    name: Publish ECN-Viewer to NPM
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        registry-url: 'https://registry.npmjs.org'
+    - run: sh ${GITHUB_WORKSPACE}/package_npmjs.sh
+      env: 
+        NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}

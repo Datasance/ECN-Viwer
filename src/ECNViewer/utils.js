@@ -43,3 +43,14 @@ export const prettyBytes = (number) => {
   if (typeof number !== typeof 42) { return _prettyBytes(0) }
   return _prettyBytes(number)
 }
+
+export function getTextColor(bgColor) {
+  const whiteTextColors = [
+    '#16A34A',
+    '#EF4444',
+    '#DC2626',
+    '#3B82F6',
+    '#7A3BFF'
+  ];
+  return whiteTextColors.includes(bgColor) ? 'white' : 'black';
+}

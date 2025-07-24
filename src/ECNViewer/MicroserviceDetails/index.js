@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable default-case */
 import React from "react";
 
 import ReactJson from "../../Utils/ReactJson";
@@ -33,6 +35,8 @@ import Modal from "../../Utils/Modal";
 import { useController } from "../../ControllerProvider";
 import { useFeedback } from "../../Utils/FeedbackContext";
 import AceEditor from "react-ace";
+import "ace-builds/src-noconflict/theme-tomorrow";
+import "ace-builds/src-noconflict/mode-yaml";
 import yaml from "js-yaml";
 import { API_VERSIONS } from "../../Utils/constants";
 import { parseMicroservice } from '../../Utils/ApplicationParser'
@@ -54,7 +58,12 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     justifyContent: "end",
   },
+  rebootAndDeleteArea: {
+    display: "flex",
+    justifyContent: "end",
+  },
 }));
+
 export default function MicroserviceDetails({
   microservice: selectedMicroservice,
   selectApplication,
@@ -70,7 +79,8 @@ export default function MicroserviceDetails({
   const [volumeFilter, setVolumeFilter] = React.useState("");
   const [hostFilter, sethostFilter] = React.useState("");
   const isMediumScreen = useMediaQuery("(min-width: 768px)");
-
+  const [openRebootAgentDialog, setOpenRebootAgentDialog] =
+    React.useState(false);
   const { microservices, reducedAgents, reducedApplications, systemApplications } = data;
   const microservice =
     (microservices || []).find((a) => selectedMicroservice.uuid === a.uuid) ||
@@ -370,11 +380,14 @@ export default function MicroserviceDetails({
           }
         ),
         container: {
+          annotations: JSON.parse(app?.annotations),
           rootHostAccess: app.rootHostAccess,
           runAsUser: app?.runAsUser,
           platform: app?.platform,
           runtime: app?.runtime,
           cdiDevices: app?.cdiDevices !== undefined ? app?.cdiDevices : [],
+          capAdd: app?.capAdd !== undefined ? app?.capAdd : [],
+          capDrop: app?.capDrop !== undefined ? app?.capDrop : [],
           volumes: app.volumeMappings.map((vm) => {
             delete vm.id;
             return vm;
@@ -488,6 +501,42 @@ export default function MicroserviceDetails({
       pushFeedback({ message: e.message, type: 'error' })
     }
   }
+  
+
+  const rebootActions = (
+    <div className={classes.actions} style={{ minWidth: "unset", marginRight: "0.3rem" }}>
+      <icons.ReplayIcon
+        onClick={() => setOpenRebootAgentDialog(true)}
+        className={classes.action}
+        title="Reboot Agent"
+      />
+    </div>
+  );
+
+  async function rebootAgent() {
+    try {
+      let isSystem = systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application)
+      const res = await request(
+        `/api/v3/microservices/${isSystem ? `system/`:""}${selectedMicroservice.uuid}/rebuild`,
+        {
+          method: "PATCH",
+          headers: {
+            "content-type": "application/json",
+          },
+        }
+      );
+      if (!res.ok) {
+        pushFeedback({ message: res.statusText, type: "error" });
+        setOpenRebootAgentDialog(false);
+      } else {
+        pushFeedback({ message: "Microservice Rebuilt", type: "success" });
+        setOpenRebootAgentDialog(false);
+      }
+    } catch (e) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+      setOpenRebootAgentDialog(false);
+    }
+  }
 
 
 
@@ -533,7 +582,10 @@ export default function MicroserviceDetails({
         >
           <Typography variant="subtitle2" className={classes.title}>
             <span>Description</span>
-            {isMediumScreen && mainActions}
+            <div className={classes.rebootAndDeleteArea}>
+              {isMediumScreen && rebootActions}
+              {isMediumScreen && mainActions}
+            </div>
           </Typography>
           <span className={classes.text}>{microservice.description}</span>
         </div>
@@ -999,9 +1051,9 @@ export default function MicroserviceDetails({
             </div>
           </div>
           <AceEditor
-            setOptions={{ useWorker: false }}
+            setOptions={{ useWorker: false, tabSize: 2 }}
             mode="yaml"
-            theme="monokai"
+            theme="tomorrow"
             defaultValue={yamlDump}
             onLoad={function (editor) {
               editor.renderer.setPadding(10);
@@ -1241,6 +1293,27 @@ export default function MicroserviceDetails({
             }
           </>
 
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={openRebootAgentDialog}
+        onClose={() => {
+          setOpenRebootAgentDialog(false);
+        }}
+      >
+        <DialogTitle id="alert-dialog-title">Rebuild {selectedMicroservice.name}?</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            <span>Do you want to rebuild your microservice</span>
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenRebootAgentDialog(false)}>
+            Cancel
+          </Button>
+          <Button onClick={() => rebootAgent()} color="primary" autoFocus>
+            Reboot
+          </Button>
         </DialogActions>
       </Dialog>
     </>
