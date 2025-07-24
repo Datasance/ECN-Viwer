@@ -1,6 +1,6 @@
 import React from 'react';
 import ApexCharts from 'react-apexcharts';
-import { StatusColor } from '../../Utils/Enums/StatusColor';
+import { StatusColor, StatusType } from '../../Utils/Enums/StatusColor';
 import { MiBFactor, prettyBytes } from '../../ECNViewer/utils';
 
 interface MicroservicesDashboardProps {
@@ -15,25 +15,24 @@ const MicroservicesDashboard: React.FC<MicroservicesDashboardProps> = ({ applica
     const totalMicroservices = allMicroservices.length;
 
     const runningCount = allMicroservices.filter(
-        msvc => msvc.status?.status?.toUpperCase() === 'RUNNING'
+        msvc => msvc.status?.status?.toUpperCase() === StatusType.RUNNING
     ).length;
     const notRunningCount = totalMicroservices - runningCount;
 
+    const donutLabels = [StatusType.RUNNING, StatusType.STOPPED];
+    const donutColors = [StatusColor[StatusType.RUNNING], StatusColor[StatusType.STOPPED]];
+
     const donutChartOptions = {
         chart: { type: 'donut' as const, background: '#333' },
-        labels: ['RUNNING', 'NOT RUNNING'],
-        colors: [StatusColor.RUNNING, StatusColor.STOPPED],
+        labels: donutLabels,
+        colors: donutColors,
         dataLabels: { enabled: true },
         tooltip: {
             y: {
                 formatter: function (_val: number, opts: any) {
-                    const isRunning = opts.seriesIndex === 0;
+                    const status = donutLabels[opts.seriesIndex];
                     const names = allMicroservices
-                        .filter(msvc =>
-                            isRunning
-                                ? msvc.status?.status?.toUpperCase() === 'RUNNING'
-                                : msvc.status?.status?.toUpperCase() !== 'RUNNING'
-                        )
+                        .filter(msvc => (msvc.status?.status?.toUpperCase() || '') === status)
                         .map(msvc => `- ${msvc.name}`)
                         .join('<br />');
                     return names || 'No microservices';
@@ -49,15 +48,22 @@ const MicroservicesDashboard: React.FC<MicroservicesDashboardProps> = ({ applica
     const donutChartSeries = [runningCount, notRunningCount];
 
     const uniqueStatuses = Array.from(
-        new Set(allMicroservices.map(msvc => msvc.status?.status?.toUpperCase() || 'UNKNOWN'))
+        new Set(allMicroservices.map(msvc => {
+            const s = (msvc.status?.status?.toUpperCase() || 'UNKNOWN');
+            return Object.values(StatusType).includes(s as StatusType) ? s : 'UNKNOWN';
+        }))
     );
-    
+
     const bubbleSeries = uniqueStatuses.map(status => ({
         name: status,
+        color: StatusColor[status as keyof typeof StatusColor] || StatusColor.UNKNOWN,
         data: allMicroservices
-            .filter(msvc => (msvc.status?.status?.toUpperCase() || 'UNKNOWN') === status)
+            .filter(msvc => {
+                const s = (msvc.status?.status?.toUpperCase() || 'UNKNOWN');
+                return s === status;
+            })
             .map(msvc => ({
-                x: (msvc.status?.cpuUsage || 0 * 1) || 0,
+                x: msvc.status?.cpuUsage || 0,
                 y: msvc.status?.memoryUsage ? msvc.status.memoryUsage / (1024 * 1024) : 0,
                 z: 10,
                 name: msvc.name,
@@ -65,15 +71,15 @@ const MicroservicesDashboard: React.FC<MicroservicesDashboardProps> = ({ applica
     }));
 
     const memoryValues = allMicroservices.map(msvc =>
-        msvc.status?.memoryUsage ? (msvc.status.memoryUsage) / (1024 * 1024) : 0
+        msvc.status?.memoryUsage ? msvc.status.memoryUsage / (1024 * 1024) : 0
     );
-    const maxMemory = Math.max(...memoryValues);
+    const maxMemory = Math.max(...memoryValues, 100);
     const dynamicYMax = maxMemory > 0 ? Math.ceil(maxMemory * 1.2) : 100;
 
     const cpuValues = allMicroservices.map(msvc =>
         msvc.status?.cpuUsage ? Number(msvc.status.cpuUsage) : 0
     );
-    const maxCpu = Math.max(...cpuValues);
+    const maxCpu = Math.max(...cpuValues, 20);
     const dynamicXMax = maxCpu > 0 ? Math.ceil(maxCpu * 1.2) : 100;
 
     const bubbleChartOptions = {
@@ -92,12 +98,14 @@ const MicroservicesDashboard: React.FC<MicroservicesDashboardProps> = ({ applica
         tooltip: {
             custom: function ({ seriesIndex, dataPointIndex }: { seriesIndex: number; dataPointIndex: number }) {
                 const point = bubbleSeries[seriesIndex].data[dataPointIndex];
+                if (!point) return '<div style="padding:8px; color:#fff;">No data available</div>';
+                const memoryPretty = prettyBytes(point.y * MiBFactor);
                 return `
           <div style="padding:8px; color:#fff;">
             <strong>${point.name}</strong><br/>
             Status: ${uniqueStatuses[seriesIndex]}<br/>
-            CPU: ${point.x}%<br/>
-            Memory: ${point.y}<br/>
+            CPU: ${point.x.toFixed(2)}%<br/>
+            Memory: ${memoryPretty}<br/>
           </div>
         `;
             },
@@ -116,7 +124,7 @@ const MicroservicesDashboard: React.FC<MicroservicesDashboardProps> = ({ applica
             title: { text: 'Memory Usage (MB)', style: { color: '#fff' } },
             labels: {
                 style: { colors: '#fff' },
-                formatter: (val: number) => val?.toFixed(0),
+                formatter: (val: number) => val.toFixed(0),
             },
         },
         legend: {

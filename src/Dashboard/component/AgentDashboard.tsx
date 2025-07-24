@@ -1,6 +1,6 @@
 import React from 'react';
 import ApexCharts from 'react-apexcharts';
-import { StatusColor } from '../../Utils/Enums/StatusColor';
+import { StatusColor, StatusType } from '../../Utils/Enums/StatusColor';
 import { MiBFactor, prettyBytes } from '../../ECNViewer/utils';
 
 interface AgentData {
@@ -21,20 +21,25 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({ agentData }) => {
 
   const agentArray = Object.values(agentData);
 
-  const runningCount = agentArray.filter(agent => agent.daemonStatus === 'RUNNING').length;
-  const notRunningCount = agentArray.length - runningCount;
+  const runningCount = agentArray.filter(agent => agent.daemonStatus === StatusType.RUNNING).length;
+  const notRunningCount = agentArray.filter(agent => agent.daemonStatus !== StatusType.RUNNING).length;
+
+  const daemonStatusChartSeries = [runningCount, notRunningCount];
+
+  const daemonStatusLabels = [StatusType.RUNNING, StatusType.STOPPED];
+  const daemonStatusColors = [StatusColor[StatusType.RUNNING], StatusColor[StatusType.STOPPED]];
 
   const daemonStatusChartOptions = {
     chart: { type: 'donut' as const, background: '#333' },
-    labels: ['RUNNING', 'NOT RUNNING'],
-    colors: [StatusColor.RUNNING, StatusColor.STOPPED],
+    labels: daemonStatusLabels,
+    colors: daemonStatusColors,
     dataLabels: { enabled: true },
     tooltip: {
       y: {
         formatter: function (_val: number, opts: any) {
           const isRunning = opts.seriesIndex === 0;
           const agentNames = agentArray
-            .filter(agent => (isRunning ? agent.daemonStatus === 'RUNNING' : agent.daemonStatus !== 'RUNNING'))
+            .filter(agent => (isRunning ? agent.daemonStatus === StatusType.RUNNING : agent.daemonStatus !== StatusType.RUNNING))
             .map(agent => `- ${agent.name}`)
             .join('<br />');
           return agentNames || 'No agents';
@@ -49,8 +54,6 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({ agentData }) => {
     theme: { mode: 'dark' as const },
   };
 
-  const daemonStatusChartSeries = [runningCount, notRunningCount];
-
   const statusGroups: Record<string, typeof agentArray> = {};
   agentArray.forEach(agent => {
     if (!statusGroups[agent.daemonStatus]) {
@@ -61,6 +64,7 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({ agentData }) => {
 
   const bubbleSeries = Object.keys(statusGroups).map(status => ({
     name: status,
+    color: StatusColor[status as keyof typeof StatusColor] || '#FFFFFF',
     data: statusGroups[status].map(agent => ({
       x: agent.cpuUsage || 0,
       y: agent.memoryUsage ? (agent.memoryUsage * MiBFactor) / (1024 * 1024) : 0,
@@ -88,12 +92,9 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({ agentData }) => {
       background: '#333',
       toolbar: { show: false },
     },
-    legend: {
-      show: true,
-    },
+    legend: { show: true },
     dataLabels: { enabled: false },
     fill: { opacity: 0.8 },
-    colors: agentArray.map(agent => StatusColor[agent.daemonStatus as keyof typeof StatusColor] || '#FFFFFF'),
     plotOptions: {
       bubble: {
         minBubbleRadius: 4,
