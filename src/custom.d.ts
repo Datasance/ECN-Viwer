@@ -24,6 +24,7 @@ declare module "*.svg" {
   interface ControllerConfig {
     keycloakURL?: string
     keycloakRealm?: string
+    keycloakClientid?: string
     port?: number
     dev?: boolean
     url?: string

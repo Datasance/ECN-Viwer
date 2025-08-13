@@ -22,7 +22,7 @@ import { getTextColor, MiBFactor, prettyBytes } from '../../ECNViewer/utils';
 import { StatusColor, StatusType } from '../../Utils/Enums/StatusColor';
 import { useLocation } from 'react-router-dom';
 import { NavLink } from 'react-router-dom';
-
+import EditOutlinedIcon from '@material-ui/icons/EditOutlined';
 
 function MicroservicesList() {
   const { data } = useData();
@@ -52,6 +52,9 @@ function MicroservicesList() {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const microserviceId = params.get('microserviceId');
+  const [dirtyEditors, setDirtyEditors] = React.useState(false);
+  const [editorValues, setEditorValues] = React.useState<any>({});
+  const [configData, setConfigData] = useState<any>()
 
   useEffect(() => {
     if (microserviceId && flattenedMicroservices) {
@@ -64,6 +67,7 @@ function MicroservicesList() {
   }, [microserviceId]);
 
   const handleRowClick = (row: any) => {
+    getConfig();
     setSelectedMs(row);
     setIsOpen(true);
   };
@@ -160,25 +164,88 @@ function MicroservicesList() {
     }
   };
 
+  const handleConfigPatch = async () => {
+    try {
+      const res = await request(
+        `api/v3/microservices/${selectedMs.uuid}/config`,
+        {
+          method: "PATCH",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify(editorValues),
+        }
+      );
+      if (!res.ok) {
+        pushFeedback({ message: res.statusText, type: "error" });
+      } else {
+        pushFeedback({ message: "Microservice Config Updated. ", type: "success" });
+        setIsOpen(false)
+        setShowDeleteConfirmModal(false)
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  };
+
+  const getConfig = async () => {
+    try {
+      const configResponse = await request(`api/v3/microservices/${selectedMs.uuid}/config`);
+      if (configResponse) {
+        setConfigData(configResponse);
+      }
+      else {
+        setConfigData('{}');
+      }
+
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  };
+
+  const handleConfigDelete = async () => {
+    try {
+      const res = await request(
+        `api/v3/microservices/${selectedMs.uuid}/config`,
+        {
+          method: "DELETE",
+          headers: {
+            "content-type": "application/json",
+          },
+        }
+      );
+      if (!res.ok) {
+        pushFeedback({ message: res.statusText, type: "error" });
+      } else {
+        pushFeedback({ message: "Microservice Config Deleted. ", type: "success" });
+        setIsOpen(false)
+        setShowDeleteConfirmModal(false)
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  };
+
+
   const renderExecSessionIds = (execSessionIds: any) => {
     if (!execSessionIds) return 'N/A';
-    
+
     // Handle both string and array cases
     const execSessionIdArray = Array.isArray(execSessionIds) ? execSessionIds : [execSessionIds];
-    
+
     if (execSessionIdArray.length === 0) return 'N/A';
-    
+
     return (
-        <div className="flex flex-wrap gap-1">
-            {execSessionIdArray.map((execSessionId: string, index: number) => (
-                <span 
-                    key={index}
-                    className="inline-block bg-blue-600 text-white text-xs px-2 py-1 rounded"
-                >
-                    {execSessionId}
-                </span>
-            ))}
-        </div>
+      <div className="flex flex-wrap gap-1">
+        {execSessionIdArray.map((execSessionId: string, index: number) => (
+          <span
+            key={index}
+            className="inline-block bg-blue-600 text-white text-xs px-2 py-1 rounded"
+          >
+            {execSessionId}
+          </span>
+        ))}
+      </div>
     );
   };
 
@@ -765,6 +832,75 @@ function MicroservicesList() {
           />
         );
       },
+    },
+    {
+      label: 'Config',
+      render: () => '',
+      isSectionHeader: true,
+    },
+    {
+      label: '',
+      isFullSection: true,
+      render: (node: any) => {
+
+        const lineHeight = 18;
+        const minLines = 10;
+        const maxLines = 30;
+        const lineCount = Math.max(minLines, Math.min(configData.length, maxLines));
+        const dynamicHeight = `${lineCount * lineHeight}px`;
+
+        return (
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <h2 className="text-sm font-semibold text-gray-300">{node?.id}</h2>
+              <div className="flex space-x-2">
+                {dirtyEditors && (
+                  <button
+                    onClick={handleConfigPatch}
+                    className="hover:text-green-600 hover:bg-white rounded"
+                  >
+                    <EditOutlinedIcon fontSize="small" />
+                  </button>
+                )}
+                <button
+                  onClick={handleConfigDelete}
+                  className="hover:text-green-600 hover:bg-white rounded"
+                >
+                  <DeleteOutlineIcon fontSize="small" />
+                </button>
+              </div>
+            </div>
+
+            <AceEditor
+              mode="yaml"
+              theme="tomorrow"
+              name={`editor-service`}
+              value={yaml.dump(configData)}
+              onChange={function editorChanged(editor: any) {
+                setDirtyEditors(true)
+                setEditorValues(editor)
+              }}
+              showPrintMargin={false}
+              setOptions={{
+                useWorker: false,
+                wrap: true,
+                tabSize: 2,
+              }}
+              onLoad={(editor) => {
+                editor.renderer.setPadding(10);
+                editor.renderer.setScrollMargin(10);
+                editor.getSession().setUseWrapMode(true);
+                setTimeout(() => editor.resize(), 300);
+              }}
+              style={{
+                width: '100%',
+                height: dynamicHeight,
+                borderRadius: '4px',
+              }}
+            />
+          </div>
+        );
+      },
     }
   ];
 
@@ -802,11 +938,11 @@ function MicroservicesList() {
 
       >
         <AceEditor
-          setOptions={{ useWorker: false, tabSize: 2  }}
+          setOptions={{ useWorker: false, tabSize: 2 }}
           mode="yaml"
           theme="tomorrow"
           defaultValue={yamlDump}
-          showPrintMargin={false} 
+          showPrintMargin={false}
           onLoad={function (editor) {
             editor.renderer.setPadding(10);
             editor.renderer.setScrollMargin(10);
