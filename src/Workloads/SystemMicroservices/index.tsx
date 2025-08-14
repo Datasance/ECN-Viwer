@@ -41,7 +41,7 @@ function SystemMicroserviceList() {
   const [isOpen, setIsOpen] = useState(false);
   const [isBottomDrawerOpen, setIsBottomDrawerOpen] = useState(false);
   const [editorIsChanged, setEditorIsChanged] = React.useState(false);
-  const [editorDataChanged, setEditorDataChanged] = React.useState<any>()
+  const [editorDataChanged, setEditorDataChanged] = React.useState<any>();
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [showPortDeleteConfirmModal, setShowPortDeleteConfirmModal] = useState(false);
@@ -52,8 +52,9 @@ function SystemMicroserviceList() {
   const params = new URLSearchParams(location.search);
   const microserviceId = params.get('microserviceId');
   const [dirtyEditors, setDirtyEditors] = React.useState(false);
-  const [editorValues, setEditorValues] = React.useState<any>({});
-  const [configData, setConfigData] = useState<any>()
+  const [editorValues, setEditorValues] = React.useState<string>('');
+  const [configData, setConfigData] = useState<any>();
+  const [editorContent, setEditorContent] = useState<string>('');
 
   useEffect(() => {
     if (microserviceId && flattenedMicroservices) {
@@ -66,7 +67,6 @@ function SystemMicroserviceList() {
   }, [microserviceId]);
 
   const handleRowClick = (row: any) => {
-    getConfig();
     setSelectedMs(row);
     setIsOpen(true);
   };
@@ -164,22 +164,25 @@ function SystemMicroserviceList() {
 
   const handleConfigPatch = async () => {
     try {
+      // Parse the YAML string back to JSON
+      const parsedConfig = yaml.load(editorValues);
       const res = await request(
-        `api/v3/microservices/${selectedMs.uuid}/config`,
+        `/api/v3/microservices/system/${selectedMs.uuid}/config`,
         {
           method: "PATCH",
           headers: {
             "content-type": "application/json",
           },
-          body: JSON.stringify(editorValues),
+          body: JSON.stringify(parsedConfig),
         }
       );
       if (!res.ok) {
         pushFeedback({ message: res.statusText, type: "error" });
       } else {
         pushFeedback({ message: "Microservice Config Updated. ", type: "success" });
-        setIsOpen(false)
-        setShowDeleteConfirmModal(false)
+        setDirtyEditors(false);
+        // Update the editor content with the saved data
+        setEditorContent(editorValues);
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -189,7 +192,7 @@ function SystemMicroserviceList() {
   const handleConfigDelete = async () => {
     try {
       const res = await request(
-        `api/v3/microservices/${selectedMs.uuid}/config`,
+        `/api/v3/microservices/system/${selectedMs.uuid}/config`,
         {
           method: "DELETE",
           headers: {
@@ -211,18 +214,33 @@ function SystemMicroserviceList() {
 
   const getConfig = async () => {
     try {
-      const configResponse = await request(`api/v3/microservices/system/${selectedMs.uuid}/config`);
-      if(configResponse){
-        setConfigData(configResponse);
+      const configResponse = await request(`/api/v3/microservices/system/${selectedMs.uuid}/config`);
+      if(configResponse && configResponse.ok){
+        const configData = await configResponse.json();
+        if(configData && configData.config){
+          setConfigData(configData.config);
+          setEditorContent(yaml.dump(configData.config));
+        }
+        else{
+          setConfigData({});
+          setEditorContent('');
+        }
       }
       else{
-        setConfigData('{}');
+        setConfigData({});
+        setEditorContent('');
       }
       
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
     }
   };
+
+  useEffect(() => {
+    if (selectedMs && isOpen) {
+      getConfig();
+    }
+  }, [selectedMs, isOpen]);
 
   const renderExecSessionIds = (execSessionIds: any) => {
     if (!execSessionIds) return 'N/A';
@@ -867,10 +885,11 @@ function SystemMicroserviceList() {
               mode="yaml"
               theme="tomorrow"
               name={`editor-service`}
-              value={yaml.dump(configData)} 
-              onChange={function editorChanged(editor: any) {
+              value={editorContent} 
+              onChange={function editorChanged(value: string) {
                 setDirtyEditors(true)
-                setEditorValues(editor)
+                setEditorValues(value)
+                setEditorContent(value)
               }}
               showPrintMargin={false}
               setOptions={{
