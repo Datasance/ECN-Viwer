@@ -13,7 +13,7 @@ import LayersRounded from '@material-ui/icons/LayersRounded'
 import { MapProvider } from '../providers/Map'
 import { useData } from '../providers/Data'
 import { useController } from '../ControllerProvider'
-import { useKeycloak } from '@react-keycloak/web'
+import { useAuth } from 'react-oidc-context'
 
 import ECNViewer from '../ECNViewer'
 import Catalog from '../Catalog'
@@ -55,7 +55,7 @@ function RouteWatcher() {
 }
 
 export default function Layout() {
-  const { keycloak, initialized } = useKeycloak()
+  const auth = useAuth()
   const returnHomeCbRef = React.useRef<(() => void) | null>(null);
   const { status, updateController } = useController()
   const [collapsed, setCollapsed] = React.useState(true);
@@ -68,8 +68,8 @@ export default function Layout() {
 
   const handleLogout = async () => {
     try {
-      if (keycloak) {
-        await keycloak.logout()
+      if (auth?.signoutRedirect) {
+        await auth.signoutRedirect()
       } else {
         updateController({ user: null })
         window.location.href = '/dashboard'
@@ -79,7 +79,7 @@ export default function Layout() {
     }
   }
 
-  if (!initialized && keycloak) {
+  if (auth.isLoading) {
     return null
   }
 
@@ -239,7 +239,7 @@ export default function Layout() {
                     </SubMenu>
 
 
-                    {keycloak && (
+                    {auth && (
                       <MenuItem
                         icon={<AccountBoxIcon />}
                         onClick={() =>
@@ -286,7 +286,7 @@ export default function Layout() {
                           </a>
                           <a
                             className="font-bold underline underline-offset-2"
-                            href={`/#/api?authToken=${keycloak?.token}&baseUrl=${window.controllerConfig?.url === undefined
+                            href={`/#/api?authToken=${auth?.user?.access_token}&baseUrl=${window.controllerConfig?.url === undefined
                               ? `${window.location.protocol}//${window.location.hostname}:${window?.controllerConfig?.port}/api/v3`
                               : `${window.location.origin}/api/v3`
                               }`}

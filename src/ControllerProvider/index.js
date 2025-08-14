@@ -1,19 +1,20 @@
 import React from 'react'
 import { useAuth } from '../auth'
-import { useKeycloak } from '@react-keycloak/web'
 
 const controllerJson = window.controllerConfig
 const IPLookUp = 'http://ip-api.com/json/'
 
-// If dev mode, use proxy
-// Otherwise assume you are running on the Controller
-const getBaseUrl = () => controllerJson.url || `${window.location.protocol}//${[window.location.hostname, controllerJson.port].join(':')}`
-const getUrl = (path) => controllerJson.dev ? `/api/controllerApi${path}` : `${getBaseUrl()}${path}`
+const getBaseUrl = () =>
+  controllerJson.url || `${window.location.protocol}//${[window.location.hostname, controllerJson.port].join(':')}`
+
+const getUrl = (path) =>
+  controllerJson.dev ? `/api/controllerApi${path}` : `${getBaseUrl()}${path}`
+
 const getHeaders = (headers) => {
   if (controllerJson.dev) {
     return {
       ...headers,
-      'ECN-Api-Destination': controllerJson.dev ? `http://${controllerJson.ip}:${controllerJson.port}/` : ''
+      'ECN-Api-Destination': `http://${controllerJson.ip}:${controllerJson.port}/`,
     }
   }
   return headers
@@ -25,7 +26,8 @@ export const useController = () => React.useContext(ControllerContext)
 const initState = {
   user: null,
   status: null,
-  refresh: null
+  refresh: null,
+  location: null,
 }
 
 const reducer = (state, action) => {
@@ -38,33 +40,30 @@ const reducer = (state, action) => {
 }
 
 const lookUpControllerInfo = async (ip) => {
-  if (!ip) {
-    ip = window.location.host.split(':')[0] // Get only ip, not port
-  }
+  if (!ip) ip = window.location.host.split(':')[0]
+
   const localhost = /(0\.0\.0\.0|localhost|127\.0\.0\.1|192\.168\.)/
-  const lookupIP = localhost.test(ip) ? '8.8.8.8' : ip.slice(-1) === '/' ? ip.substring(0, ip.length - 1) : ip
-  const response = await window.fetch(IPLookUp + lookupIP.replace('http://', '').replace('https://', ''))
+  const lookupIP = localhost.test(ip) ? '8.8.8.8' : ip
+
+  const response = await fetch(IPLookUp + lookupIP.replace('http://', '').replace('https://', ''))
   if (response.ok) {
     return response.json()
-  } else {
-    throw new Error(response.statusText)
   }
+  throw new Error(response.statusText)
 }
 
-const getControllerStatus = async (api) => {
-  const response = await window.fetch(getUrl('/api/v3/status'), {
+const getControllerStatus = async () => {
+  const response = await fetch(getUrl('/api/v3/status'), {
     headers: getHeaders({})
   })
-  if (response.ok) {
-    return response.json()
-  } else {
-    console.log('Controller status unreachable', { status: response.statusText })
-  }
+  if (response.ok) return response.json()
+  console.log('Controller status unreachable', { status: response.statusText })
+  return null
 }
 
 export const ControllerProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initState)
-  const { keycloak } = useKeycloak()
+  const auth = useAuth()
 
   const updateController = (data) => {
     dispatch({ type: 'UPDATE', data })
@@ -73,66 +72,69 @@ export const ControllerProvider = ({ children }) => {
   const request = async (path, options = {}) => {
     const headers = {
       ...options.headers
-    };
-  
-    const currentToken = keycloak?.token;
-  
-    if (currentToken) {
-      headers.Authorization = `Bearer ${currentToken}`;
     }
-  
+    const token = auth?.token
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    }
+
     try {
       const response = await fetch(getUrl(path), {
         ...options,
-        headers
-      });
-  
+        headers,
+      })
+
       if (!response.ok) {
-        console.error(`HTTP error! status: ${response.status}`);
-        return null;
+        console.error(`HTTP error! status: ${response.status}`)
+        return null
       }
-  
-      return response;
+
+      return response
     } catch (error) {
-      console.error('Request failed:', error);
-      return null;
+      console.error('Request failed:', error)
+      return null
     }
-  };
-  
+  }
 
   React.useEffect(() => {
-    // Grab controller location informations
     const effect = async () => {
-      let ipInfo = {}
       try {
-        ipInfo = await lookUpControllerInfo(controllerJson.ip)
+        const ipInfo = await lookUpControllerInfo(controllerJson.ip)
+        dispatch({ type: 'UPDATE', data: { location: ipInfo } })
       } catch (e) {
-        ipInfo = {
-          lat: '40.935',
-          lon: '28.97',
-          query: controllerJson.ip
-        }
+        dispatch({
+          type: 'UPDATE',
+          data: {
+            location: {
+              lat: '40.935',
+              lon: '28.97',
+              query: controllerJson.ip,
+            },
+          },
+        })
       }
-      dispatch({ type: 'UPDATE', data: { location: ipInfo } })
     }
     effect()
   }, [])
 
   React.useEffect(() => {
     const effect = async () => {
-      // Everytime user is updated, try to grab status
       const status = await getControllerStatus()
       dispatch({ type: 'UPDATE', data: { status } })
     }
-    effect()
-  }, [state.user])
+
+    if (auth.isAuthenticated) {
+      dispatch({ type: 'UPDATE', data: { user: auth.user } })
+      effect()
+    }
+  }, [auth.user, auth.isAuthenticated])
 
   return (
     <ControllerContext.Provider
       value={{
         ...state,
         updateController,
-        request
+        request,
       }}
     >
       {children}
