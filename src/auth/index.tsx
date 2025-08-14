@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode, FC, useEffect } from 'react';
+import React, { createContext, useContext, ReactNode, FC, useEffect, useState } from 'react';
 import { AuthProvider as OidcProvider, useAuth } from 'react-oidc-context';
 
 const controllerConfig = window.controllerConfig || {};
@@ -27,18 +27,35 @@ const KeycloakAuthContext = createContext<KeycloakAuthContextType | null>(null);
 
 const KeycloakProviderContent: FC<{ children: ReactNode }> = ({ children }) => {
   const auth = useAuth();
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    if (!auth.isLoading && !auth.isAuthenticated) {
-      auth.signinRedirect();
+    if (!auth.isLoading) {
+      setInitialized(true);
+      if (!auth.isAuthenticated) {
+        auth.signinRedirect();
+      }
     }
-  }, [auth.isLoading, auth.isAuthenticated]);
+  }, [auth.isLoading, auth.isAuthenticated, auth]);
+
+  useEffect(() => {
+
+    const handleTokenExpired = () => {
+      auth.signoutRedirect();
+    };
+
+    auth.events.addAccessTokenExpired(handleTokenExpired);
+
+    return () => {
+      auth.events.removeAccessTokenExpired(handleTokenExpired);
+    };
+  }, [auth]);
 
   const profile = auth?.user?.profile as { realm_access?: { roles?: string[] } } | undefined;
 
   const authValue: KeycloakAuthContextType = {
     keycloak: auth,
-    initialized: !auth.isLoading,
+    initialized,
     token: auth.user?.access_token,
     isAuthenticated: auth.isAuthenticated,
     logout: () => auth.signoutRedirect(),
@@ -47,8 +64,6 @@ const KeycloakProviderContent: FC<{ children: ReactNode }> = ({ children }) => {
         ? profile.realm_access.roles.includes(role)
         : false,
   };
-
-  // Element eklemiyoruz, loading ya da login yönlendirme olayı direk yönetiliyor
 
   return (
     <KeycloakAuthContext.Provider value={authValue}>
