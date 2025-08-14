@@ -52,12 +52,17 @@ const SlideOver = <T,>({
   const [width, setWidth] = useState(customWidth ? customWidth : 480);
   const isResizing = useRef(false);
 
-  const startResizing = () => {
+  const startResizing = (e: React.MouseEvent) => {
+    e.preventDefault();
     isResizing.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
   };
 
   const stopResizing = () => {
     isResizing.current = false;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
   };
 
   const resize = (e: MouseEvent) => {
@@ -74,6 +79,9 @@ const SlideOver = <T,>({
     return () => {
       window.removeEventListener('mousemove', resize);
       window.removeEventListener('mouseup', stopResizing);
+      // Clean up body styles when component unmounts
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
     };
   }, []);
 
@@ -94,7 +102,7 @@ const SlideOver = <T,>({
 
         <div className="fixed inset-0 overflow-hidden">
           <div className="absolute inset-0 overflow-hidden">
-            <div className="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
+            <div className="pointer-events-none fixed inset-y-0 right-0 flex pl-10">
               <Transition.Child
                 as={Fragment}
                 enter="transform transition ease-in-out duration-500"
@@ -105,12 +113,13 @@ const SlideOver = <T,>({
                 leaveTo="translate-x-full"
               >
                 <Dialog.Panel
-                  className="pointer-events-auto h-full max-h-screen bg-gray-800 text-white shadow-xl overflow-y-auto relative flex flex-col w-full sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl"
-                  style={{ width }}
+                  className="pointer-events-auto h-full max-h-screen bg-gray-800 text-white shadow-xl overflow-y-auto relative flex flex-col"
+                  style={{ width: `${width}px` }}
                 >
                   <div
                     onMouseDown={startResizing}
-                    className="absolute left-0 top-0 bottom-0 w-2 cursor-col-resize z-50 bg-gray-700 hover:bg-gray-600 hidden sm:block"
+                    className="absolute left-0 top-0 bottom-0 w-2 cursor-col-resize z-50 bg-gray-700 hover:bg-gray-600 transition-colors"
+                    style={{ cursor: 'col-resize' }}
                   />
 
                   <div className="flex items-start justify-between p-4 border-b border-gray-700">

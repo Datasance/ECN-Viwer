@@ -861,9 +861,9 @@ function MicroservicesList() {
       isFullSection: true,
       render: (node: any) => {
 
-        const lineHeight = 18;
+        const lineHeight = 50;
         const minLines = 10;
-        const maxLines = 30;
+        const maxLines = 50;
         const lineCount = Math.max(minLines, Math.min(configData.length, maxLines));
         const dynamicHeight = `${lineCount * lineHeight}px`;
 
