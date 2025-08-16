@@ -864,7 +864,7 @@ function MicroservicesList() {
         const lineHeight = 50;
         const minLines = 10;
         const maxLines = 50;
-        const lineCount = Math.max(minLines, Math.min(configData.length, maxLines));
+        const lineCount = Math.max(minLines, Math.min(configData?.length || 0, maxLines));
         const dynamicHeight = `${lineCount * lineHeight}px`;
 
         return (
