@@ -3,6 +3,7 @@ import CustomDataTable from '../../CustomComponent/CustomDataTable'
 import { ControllerContext } from '../../ControllerProvider'
 import { FeedbackContext } from '../../Utils/FeedbackContext'
 import SlideOver from '../../CustomComponent/SlideOver'
+import CustomLoadingModal from '../../CustomComponent/CustomLoadingModal'
 
 function CatalogMicroservices() {
     const [fetching, setFetching] = React.useState(true)
@@ -35,7 +36,7 @@ function CatalogMicroservices() {
             setFetching(false)
         }
     }
-    
+
     async function fetchCatalogItem(catalogId: string) {
         try {
             setFetching(true)
@@ -202,27 +203,40 @@ function CatalogMicroservices() {
 
     return (
         <>
-            <div className="bg-gray-900 text-white overflow-auto p-4">
-                <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">
-                    Catalog Microservices
-                </h1>
+            {fetching ?
+                <>
+                    <CustomLoadingModal
+                        open={true}
+                        message="Fetching Catalog Microservices"
+                        spinnerSize="lg"
+                        spinnerColor="text-green-500"
+                        overlayOpacity={60}
+                    />
+                </>
+                :
+                <>
+                    <div className="bg-gray-900 text-white overflow-auto p-4">
+                        <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">
+                            Catalog Microservices
+                        </h1>
 
-                <CustomDataTable
-                    columns={columns}
-                    data={catalog}
-                    getRowKey={(row: any) => row.id}
-                />
-                <SlideOver
-                    open={isOpen}
-                    onClose={() => setIsOpen(false)}
-                    title={selectedCatalogMicroservice?.name || 'Catalog Microservice Details'}
-                    data={selectedCatalogMicroservice}
-                    fields={slideOverFields}
-                    customWidth={600}
-                />
-            </div>
+                        <CustomDataTable
+                            columns={columns}
+                            data={catalog}
+                            getRowKey={(row: any) => row.id}
+                        />
+                        <SlideOver
+                            open={isOpen}
+                            onClose={() => setIsOpen(false)}
+                            title={selectedCatalogMicroservice?.name || 'Catalog Microservice Details'}
+                            data={selectedCatalogMicroservice}
+                            fields={slideOverFields}
+                            customWidth={600}
+                        />
+                    </div>
+                </>
+            }
         </>
-
     )
 }
 

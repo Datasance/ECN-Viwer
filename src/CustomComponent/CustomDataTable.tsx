@@ -79,8 +79,8 @@ export default function CustomDataTable<T>({
         <table className="w-full min-w-max text-sm text-gray-300 table-auto">
           <thead className="bg-gray-700 text-xs uppercase">
             <tr>
-              {columns.map(col => (
-                <th key={col.key} className={`px-4 py-2 text-start ${col.className || ''} ${col.width || ''}`}>
+              {columns.map((col, index) => (
+                <th key={col.key + index} className={`px-4 py-2 text-start ${col.className || ''} ${col.width || ''}`}>
                   {col.header}
                 </th>
               ))}
@@ -89,7 +89,7 @@ export default function CustomDataTable<T>({
           </thead>
           <tbody>
             {filteredData && filteredData.length > 0 ? (
-              filteredData.map(row => {
+              filteredData.map((row, index) => {
                 const rowKey = getRowKey(row);
                 const isExpanded = expandedRows.has(rowKey);
                 const isMenuOpen = openMenuRowKey === rowKey;
@@ -97,14 +97,14 @@ export default function CustomDataTable<T>({
                 return (
                   <React.Fragment key={String(rowKey)}>
                     <tr className="border-b border-gray-700 hover:bg-gray-700/50 relative">
-                      {columns.map(col => {
+                      {columns.map((col, index) => {
                         if (col.type === 'action') {
                           return (
-                            <td key={col.key} className="px-4 py-2 text-start relative">
+                            <td key={col.key + index} className="px-4 py-2 text-start relative">
                               <div className="flex items-center space-x-2">
                                 <div className="relative">
                                   <span className="cursor-pointer text-gray-300" onClick={() => toggleMenu(rowKey)}>
-                                    <MoreVertIcon fontSize="default" />
+                                    <MoreVertIcon fontSize="medium" />
                                   </span>
                                   {isMenuOpen && col.render && (
                                     <div className="absolute right-0 z-50 mt-2 w-40 bg-gray-800 border border-gray-700 rounded shadow-lg">
@@ -118,7 +118,7 @@ export default function CustomDataTable<T>({
                         }
 
                         return (
-                          <td key={col.key} className={`px-4 py-2 text-start ${col.className || ''} max-w-[200px] whitespace-nowrap overflow-hidden text-ellipsis`}>
+                          <td key={col.key + index} className={`px-4 py-2 text-start ${col.className || ''} max-w-[200px] whitespace-nowrap overflow-hidden text-ellipsis`}>
                             {col.render ? col.render(row) : (row as any)[col.key]}
                           </td>
                         );
@@ -128,11 +128,11 @@ export default function CustomDataTable<T>({
                         <td className="px-4 py-2 text-start cursor-pointer" onClick={() => toggleRow(rowKey)}>
                           {isExpanded ? (
                             <span className="text-gray-300">
-                              <KeyboardArrowUpOutlined fontSize="default" />
+                              <KeyboardArrowUpOutlined fontSize="medium" />
                             </span>
                           ) : (
                             <span className="text-gray-300">
-                              <KeyboardArrowDown fontSize="default" />
+                              <KeyboardArrowDown fontSize="medium" />
                             </span>
                           )}
                         </td>

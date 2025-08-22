@@ -1,7 +1,6 @@
 import React from 'react';
 import ApexCharts from 'react-apexcharts';
 import { StatusColor } from '../../Utils/Enums/StatusColor';
-import { MiBFactor, prettyBytes } from '../../ECNViewer/utils';
 
 interface SystemMicroservicesDashboardProps {
   systemApplications: any[];

@@ -45,7 +45,7 @@ function SystemApplicationList() {
         setIsOpen(true);
       }
     }
-  }, [applicationId]);
+  }, [applicationId, data.systemApplications]);
 
   const handleRowClick = (row: any) => {
     setSelectedApplication(row);
@@ -491,7 +491,7 @@ function SystemApplicationList() {
         open={isBottomDrawerOpen}
         isEdit={editorIsChanged}
         onClose={() => { setIsBottomDrawerOpen(false); setEditorIsChanged(false); setEditorDataChanged(null) }}
-        onSave={() => {}}
+        onSave={() => handleYamlUpdate()}
         title={`${selectedApplication?.name} YAML`}
         showUnsavedChangesModal
         unsavedModalTitle='Changes Not Saved'

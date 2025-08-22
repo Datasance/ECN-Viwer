@@ -13,6 +13,7 @@ import { useLocation } from 'react-router-dom';
 import lget from 'lodash/get'
 import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
 import EditOutlinedIcon from '@material-ui/icons/EditOutlined';
+import CustomLoadingModal from '../../CustomComponent/CustomLoadingModal'
 
 function ConfigMaps() {
     const [fetching, setFetching] = React.useState(true)
@@ -45,6 +46,7 @@ function ConfigMaps() {
                 setIsOpen(true);
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [configMapName, configMaps]);
 
     async function fetchConfigMaps() {
@@ -238,24 +240,24 @@ function ConfigMaps() {
     const handleDelete = async (key: string) => {
         try {
             const { name, immutable, data = {} } = selectedConfigMap || {};
-    
+
             const yamlObj = {
                 apiVersion: 'datasance.com/v3',
                 kind: 'ConfigMap',
                 metadata: { name },
                 spec: { immutable },
             };
-    
+
             const yamlHeader = yaml.dump(yamlObj, {
                 noRefs: true,
                 indent: 2,
                 lineWidth: -1,
             }).trimEnd();
-    
+
             let dataSection = 'data:\n';
             for (const [dataKey, value] of Object.entries(data)) {
                 if (dataKey === key) continue;
-    
+
                 if (typeof value === 'string' && value.includes('\n')) {
                     dataSection += `  ${dataKey}: |\n`;
                     for (const line of value.split('\n')) {
@@ -265,15 +267,15 @@ function ConfigMaps() {
                     dataSection += `  ${dataKey}: ${value}\n`;
                 }
             }
-    
+
             const yamlString = `${yamlHeader}\n${dataSection}`;
             const parsedObj = yaml.load(yamlString) as any;
-    
+
             const [configMap, err] = await parseConfigMap(parsedObj);
             if (err) {
                 return pushFeedback({ message: err, type: 'error' });
             }
-    
+
             const res = await request(`/api/v3/configmaps/${selectedConfigMap?.name}`, {
                 method: "PATCH",
                 headers: {
@@ -281,7 +283,7 @@ function ConfigMaps() {
                 },
                 body: JSON.stringify(configMap),
             });
-    
+
             if (!res.ok) {
                 pushFeedback({ message: res.statusText, type: "error" });
             } else {
@@ -295,7 +297,7 @@ function ConfigMaps() {
             pushFeedback({ message: e.message, type: "error", uuid: "error" });
         }
     };
-    
+
 
 
     const columns = [
@@ -445,66 +447,80 @@ function ConfigMaps() {
 
     return (
         <>
-            <div className="bg-gray-900 text-white overflow-auto p-4">
-                <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">
-                    Config Maps List
-                </h1>
-
-                <CustomDataTable
-                    columns={columns}
-                    data={configMaps}
-                    getRowKey={(row: any) => row.id}
-                />
-                <SlideOver
-                    open={isOpen}
-                    onClose={() => setIsOpen(false)}
-                    onEditYaml={handleEditYaml}
-                    title={selectedConfigMap?.name || 'Config Map Details'}
-                    data={selectedConfigMap}
-                    fields={slideOverFields}
-                    customWidth={600}
-                />
-                <ResizableBottomDrawer
-                    open={isBottomDrawerOpen}
-                    isEdit={editorIsChanged}
-                    onClose={() => { setIsBottomDrawerOpen(false); setEditorIsChanged(false); setEditorDataChanged(null) }}
-                    onSave={() => handleYamlUpdate()}
-                    title={`${selectedConfigMap?.name} Config Map`}
-                    showUnsavedChangesModal
-                    unsavedModalTitle='Changes Not Saved'
-                    unsavedModalMessage='Are you sure you want to exit? All unsaved changes will be lost.'
-                    unsavedModalCancelLabel='Stay'
-                    unsavedModalConfirmLabel='Exit Anyway'
-
-                >
-                    <AceEditor
-                        setOptions={{
-                            useWorker: false,
-                            wrap: true,
-                            tabSize: 2,
-                        }}
-                        mode="yaml"
-                        theme="tomorrow"
-                        defaultValue={yamlDump}
-                        showPrintMargin={false}
-                        onLoad={function (editor) {
-                            editor.renderer.setPadding(10);
-                            editor.renderer.setScrollMargin(10);
-                        }}
-                        style={{
-                            width: "100%",
-                            height: "100%",
-                            borderRadius: "4px",
-                        }}
-                        onChange={function editorChanged(editor: any) {
-                            setEditorIsChanged(true)
-                            setEditorDataChanged(editor)
-                        }}
+            {fetching ?
+                <>
+                    <CustomLoadingModal
+                        open={true}
+                        message="Fetching Service Details"
+                        spinnerSize="lg"
+                        spinnerColor="text-green-500"
+                        overlayOpacity={60}
                     />
-                </ResizableBottomDrawer>
-            </div>
-        </>
+                </>
+                :
+                <>
+                    <div className="bg-gray-900 text-white overflow-auto p-4">
+                        <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">
+                            Config Maps List
+                        </h1>
 
+                        <CustomDataTable
+                            columns={columns}
+                            data={configMaps}
+                            getRowKey={(row: any) => row.id}
+                        />
+                        <SlideOver
+                            open={isOpen}
+                            onClose={() => setIsOpen(false)}
+                            onEditYaml={handleEditYaml}
+                            title={selectedConfigMap?.name || 'Config Map Details'}
+                            data={selectedConfigMap}
+                            fields={slideOverFields}
+                            customWidth={600}
+                        />
+                        <ResizableBottomDrawer
+                            open={isBottomDrawerOpen}
+                            isEdit={editorIsChanged}
+                            onClose={() => { setIsBottomDrawerOpen(false); setEditorIsChanged(false); setEditorDataChanged(null) }}
+                            onSave={() => handleYamlUpdate()}
+                            title={`${selectedConfigMap?.name} Config Map`}
+                            showUnsavedChangesModal
+                            unsavedModalTitle='Changes Not Saved'
+                            unsavedModalMessage='Are you sure you want to exit? All unsaved changes will be lost.'
+                            unsavedModalCancelLabel='Stay'
+                            unsavedModalConfirmLabel='Exit Anyway'
+
+                        >
+                            <AceEditor
+                                setOptions={{
+                                    useWorker: false,
+                                    wrap: true,
+                                    tabSize: 2,
+                                }}
+                                mode="yaml"
+                                theme="tomorrow"
+                                defaultValue={yamlDump}
+                                showPrintMargin={false}
+                                onLoad={function (editor) {
+                                    editor.renderer.setPadding(10);
+                                    editor.renderer.setScrollMargin(10);
+                                }}
+                                style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    borderRadius: "4px",
+                                }}
+                                onChange={function editorChanged(editor: any) {
+                                    setEditorIsChanged(true)
+                                    setEditorDataChanged(editor)
+                                }}
+                            />
+                        </ResizableBottomDrawer>
+                    </div>
+                </>
+            }
+
+        </>
     )
 }
 

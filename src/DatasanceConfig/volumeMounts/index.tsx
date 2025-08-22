@@ -7,6 +7,7 @@ import { NavLink } from 'react-router-dom'
 import { useLocation } from 'react-router-dom';
 import { useData } from '../../providers/Data';
 import { StatusColor, StatusType } from '../../Utils/Enums/StatusColor';
+import CustomLoadingModal from '../../CustomComponent/CustomLoadingModal'
 
 function VolumeMounts() {
     const { data } = useData();
@@ -36,6 +37,7 @@ function VolumeMounts() {
                 setIsOpen(true);
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [volumeMountName, volumeMounts]);
 
     async function fetchVolumeMounts() {
@@ -213,7 +215,7 @@ function VolumeMounts() {
                                     const agent = data.reducedAgents.byUUID[fogUuid];
                                     const statusKey = agent?.daemonStatus;
                                     const bgColor = StatusColor[statusKey as StatusType] ?? '#9CA3AF';
-                                    
+
                                     return (
                                         <div key={fogUuid} className="p-3 hover:bg-gray-750/50 transition-all duration-200 group">
                                             <NavLink
@@ -255,26 +257,40 @@ function VolumeMounts() {
 
     return (
         <>
-            <div className="bg-gray-900 text-white overflow-auto p-4">
-                <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">
-                    Volume Mount List
-                </h1>
+            {fetching ?
+                <>
+                    <CustomLoadingModal
+                        open={true}
+                        message="Fetching Volume Mount List"
+                        spinnerSize="lg"
+                        spinnerColor="text-green-500"
+                        overlayOpacity={60}
+                    />
+                </>
+                :
+                <>
+                    <div className="bg-gray-900 text-white overflow-auto p-4">
+                        <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">
+                            Volume Mount List
+                        </h1>
 
-                <CustomDataTable
-                    columns={columns}
-                    data={volumeMounts || []}
-                    getRowKey={(row: any) => row.uuid || row.id || Math.random()}
-                />
+                        <CustomDataTable
+                            columns={columns}
+                            data={volumeMounts || []}
+                            getRowKey={(row: any) => row.uuid || row.id || Math.random()}
+                        />
 
-                <SlideOver
-                    open={isOpen}
-                    onClose={() => setIsOpen(false)}
-                    title={selectedVolume?.name || 'Secret Details'}
-                    data={selectedVolume}
-                    fields={slideOverFields}
-                    customWidth={600}
-                />
-            </div>
+                        <SlideOver
+                            open={isOpen}
+                            onClose={() => setIsOpen(false)}
+                            title={selectedVolume?.name || 'Secret Details'}
+                            data={selectedVolume}
+                            fields={slideOverFields}
+                            customWidth={600}
+                        />
+                    </div>
+                </>
+            }
         </>
 
     )

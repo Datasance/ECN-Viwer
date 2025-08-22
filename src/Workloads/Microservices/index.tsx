@@ -65,7 +65,7 @@ function MicroservicesList() {
         setIsOpen(true);
       }
     }
-  }, [microserviceId]);
+  }, [flattenedMicroservices, microserviceId]);
 
   const handleRowClick = (row: any) => {
     setSelectedMs(row);
@@ -219,6 +219,7 @@ function MicroservicesList() {
     if (selectedMs && isOpen) {
       getConfig();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMs, isOpen]);
 
   const handleConfigDelete = async () => {

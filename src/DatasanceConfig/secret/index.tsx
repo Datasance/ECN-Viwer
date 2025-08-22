@@ -4,13 +4,14 @@ import { ControllerContext } from '../../ControllerProvider'
 import { FeedbackContext } from '../../Utils/FeedbackContext'
 import SlideOver from '../../CustomComponent/SlideOver'
 import CryptoTextBox from '../../CustomComponent/CustomCryptoTextBox'
-import { data, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/mode-yaml";
 import yaml from 'js-yaml';
 import ResizableBottomDrawer from '../../CustomComponent/ResizableBottomDrawer'
 import lget from 'lodash/get'
+import CustomLoadingModal from '../../CustomComponent/CustomLoadingModal'
 
 function Secrets() {
     const [fetching, setFetching] = React.useState(true)
@@ -41,6 +42,7 @@ function Secrets() {
                 setIsOpen(true);
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [secretName, secrets]);
 
 
@@ -87,22 +89,16 @@ function Secrets() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    class LiteralString {
-        constructor(public value: string) {}
-        toString() {
-          return this.value;
-        }
-    }
     const handleEditYaml = () => {
         if (!selectedSecret) return;
         const yamlObj = {
             apiVersion: 'datasance.com/v3',
             kind: 'Secret',
             metadata: {
-            name: selectedSecret?.name,
+                name: selectedSecret?.name,
             },
             spec: {
-            type: selectedSecret?.type,
+                type: selectedSecret?.type,
             },
             data: selectedSecret?.data,
         };
@@ -110,7 +106,7 @@ function Secrets() {
         setyamlDump(yamlString);
         setIsBottomDrawerOpen(true);
     };
-    
+
     const parseSecret = async (doc: any) => {
         if (doc.apiVersion !== 'datasance.com/v3') {
             return [{}, `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v3`]
@@ -237,64 +233,79 @@ function Secrets() {
 
     return (
         <>
-            <div className="bg-gray-900 text-white overflow-auto p-4">
-                <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">
-                    Secrets
-                </h1>
-
-                <CustomDataTable
-                    columns={columns}
-                    data={secrets}
-                    getRowKey={(row: any) => row.name}
-                />
-                <SlideOver
-                    open={isOpen}
-                    onClose={() => setIsOpen(false)}
-                    onEditYaml={handleEditYaml}
-                    title={selectedSecret?.name || 'Secret Details'}
-                    data={selectedSecret}
-                    fields={slideOverFields}
-                    customWidth={600}
-                />
-            </div>
-                <ResizableBottomDrawer
-                    open={isBottomDrawerOpen}
-                    isEdit={editorIsChanged}
-                    onClose={() => { setIsBottomDrawerOpen(false); setEditorIsChanged(false); setEditorDataChanged(null) }}
-                    onSave={() => handleYamlUpdate()}
-                    title={`${selectedSecret?.name} Secret`}
-                    showUnsavedChangesModal
-                    unsavedModalTitle='Changes Not Saved'
-                    unsavedModalMessage='Are you sure you want to exit? All unsaved changes will be lost.'
-                    unsavedModalCancelLabel='Stay'
-                    unsavedModalConfirmLabel='Exit Anyway'
-
-                >
-                    <AceEditor
-                        setOptions={{
-                            useWorker: false,
-                            wrap: true,
-                            tabSize: 2,
-                        }}
-                        mode="yaml"
-                        theme="tomorrow"
-                        defaultValue={yamlDump}
-                        showPrintMargin={false}
-                        onLoad={function (editor) {
-                            editor.renderer.setPadding(10);
-                            editor.renderer.setScrollMargin(10);
-                        }}
-                        style={{
-                            width: "100%",
-                            height: "100%",
-                            borderRadius: "4px",
-                        }}
-                        onChange={function editorChanged(editor: any) {
-                            setEditorIsChanged(true)
-                            setEditorDataChanged(editor)
-                        }}
+            {fetching ?
+                <>
+                    <CustomLoadingModal
+                        open={true}
+                        message="Fetching Secret Details"
+                        spinnerSize="lg"
+                        spinnerColor="text-green-500"
+                        overlayOpacity={60}
                     />
-                </ResizableBottomDrawer>
+                </>
+                :
+                <>
+                    <div className="bg-gray-900 text-white overflow-auto p-4">
+                        <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">
+                            Secrets
+                        </h1>
+
+                        <CustomDataTable
+                            columns={columns}
+                            data={secrets}
+                            getRowKey={(row: any) => row.name}
+                        />
+                        <SlideOver
+                            open={isOpen}
+                            onClose={() => setIsOpen(false)}
+                            onEditYaml={handleEditYaml}
+                            title={selectedSecret?.name || 'Secret Details'}
+                            data={selectedSecret}
+                            fields={slideOverFields}
+                            customWidth={600}
+                        />
+                    </div>
+                    <ResizableBottomDrawer
+                        open={isBottomDrawerOpen}
+                        isEdit={editorIsChanged}
+                        onClose={() => { setIsBottomDrawerOpen(false); setEditorIsChanged(false); setEditorDataChanged(null) }}
+                        onSave={() => handleYamlUpdate()}
+                        title={`${selectedSecret?.name} Secret`}
+                        showUnsavedChangesModal
+                        unsavedModalTitle='Changes Not Saved'
+                        unsavedModalMessage='Are you sure you want to exit? All unsaved changes will be lost.'
+                        unsavedModalCancelLabel='Stay'
+                        unsavedModalConfirmLabel='Exit Anyway'
+
+                    >
+                        <AceEditor
+                            setOptions={{
+                                useWorker: false,
+                                wrap: true,
+                                tabSize: 2,
+                            }}
+                            mode="yaml"
+                            theme="tomorrow"
+                            defaultValue={yamlDump}
+                            showPrintMargin={false}
+                            onLoad={function (editor) {
+                                editor.renderer.setPadding(10);
+                                editor.renderer.setScrollMargin(10);
+                            }}
+                            style={{
+                                width: "100%",
+                                height: "100%",
+                                borderRadius: "4px",
+                            }}
+                            onChange={function editorChanged(editor: any) {
+                                setEditorIsChanged(true)
+                                setEditorDataChanged(editor)
+                            }}
+                        />
+                    </ResizableBottomDrawer>
+                </>
+            }
+
         </>
 
     )

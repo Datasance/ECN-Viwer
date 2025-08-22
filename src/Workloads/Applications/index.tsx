@@ -45,7 +45,7 @@ function ApplicationList() {
         setIsOpen(true);
       }
     }
-  }, [applicationId]);
+  }, [applicationId, data.applications]);
 
 
   const handleRowClick = (row: any) => {

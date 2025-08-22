@@ -10,13 +10,10 @@ import Hub from '@material-ui/icons/DeviceHubRounded'
 import StorageRounded from '@material-ui/icons/StorageRounded'
 import LayersRounded from '@material-ui/icons/LayersRounded'
 
-import { MapProvider } from '../providers/Map'
 import { useData } from '../providers/Data'
 import { useController } from '../ControllerProvider'
 import { useAuth } from 'react-oidc-context'
 
-import ECNViewer from '../ECNViewer'
-import Catalog from '../Catalog'
 import Dashboard from '../Dashboard'
 import SwaggerDoc from '../swagger/SwaggerDoc'
 import logomark from '../assets/potLogoWithWhiteText.svg'
@@ -45,7 +42,6 @@ function RouteWatcher() {
 
   React.useEffect(() => {
     if (location.pathname === '/overview' || location.pathname === '/dashboard') {
-      console.log('Refreshing data')
       refreshData()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -259,7 +255,6 @@ export default function Layout() {
                   </Menu>
                 </div>
 
-                {/* ALT: Pin button + versiyon bilgisi + footer */}
                 <div className="flex flex-col gap-3 px-3 py-4 border-t border-gray-500">
                   <button
                     className="w-full text-xs bg-gray-700 text-white py-2 rounded hover:bg-gray-600 transition flex items-center justify-center"
@@ -278,14 +273,14 @@ export default function Layout() {
                     !collapsed ?
                       <>
                         <div className="flex justify-center items-center text-white text-xs space-x-8">
-                          <a className="font-bold underline underline-offset-2" href="https://docs.datasance.com" target="_blank" rel="noreferrer">
+                          <span className="cursor-pointer underline" onClick={() => window.open('https://docs.datasance.com', '_blank')}>
                             DOCS
-                          </a>
-                          <a className="font-bold underline underline-offset-2" href="https://github.com/Datasance" target="_blank" rel="noreferrer">
+                          </span>
+                          <span className="cursor-pointer underline" onClick={() => window.open('https://github.com/Datasance', '_blank')}>
                             GitHub
-                          </a>
+                          </span>
                           <a
-                            className="font-bold underline underline-offset-2"
+                            className="underline underline-offset-2"
                             href={`/#/api?authToken=${auth?.user?.access_token}&baseUrl=${window.controllerConfig?.url === undefined
                               ? `${window.location.protocol}//${window.location.hostname}:${window?.controllerConfig?.port}/api/v3`
                               : `${window.location.origin}/api/v3`
@@ -294,20 +289,20 @@ export default function Layout() {
                           >
                             API
                           </a>
-                          <a className="font-bold underline underline-offset-2" href="https://datasance.com/EULA.pdf" target="_blank" rel="noreferrer">
+                          <span className="cursor-pointer underline" onClick={() => window.open('https://datasance.com/EULA.pdf', '_blank')}>
                             EULA
-                          </a>
+                          </span>
                         </div>
+
                         <div className="text-white text-xs text-center">
                           <p>Controller v{status?.versions.controller}</p>
                           <p>ECN Viewer v{status?.versions.ecnViewer}</p>
                         </div>
                       </> : null
                   }
-                  <a href="https://datasance.com/" className="text-white text-xs text-center">
+                  <span className="text-white text-xs text-center cursor-pointer" onClick={() => window.open('https://datasance.com/', '_blank')}>
                     © {new Date().getFullYear()} Datasance
-                  </a>
-
+                  </span>
                 </div>
               </Sidebar>
 
@@ -317,23 +312,10 @@ export default function Layout() {
             </div>
           </ProSidebarProvider>
 
-
-          {/* Content Area */}
           <div className="flex-1 px-5 pt-6 overflow-auto bg-gray-900 h-screen overflow-auto">
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" Component={Dashboard} />
-              <Route path="/catalog" Component={Catalog} />
-              <Route
-                path="/overview"
-                element={
-                  <div className=' overflow-auto'>
-                    <MapProvider>
-                      <ECNViewer returnHomeCBRef={returnHomeCbRef} />
-                    </MapProvider>
-                  </div>
-                }
-              />
 
               <Route path="/api" Component={SwaggerDoc} />
               <Route path="/nodes/list" Component={NodesList} />
@@ -353,42 +335,6 @@ export default function Layout() {
             </Routes>
           </div>
         </div>
-
-        {/* Footer */}
-        {/* <footer className="text-xs text-center border-t border-gray-700 flex justify-between p-3 bg-gray-900">
-          <div className="text-white">
-            <p>
-              Controller v{status?.versions.controller}
-            </p>
-            <p>
-              ECN Viewer v{status?.versions.ecnViewer}
-            </p>
-          </div>
-          <div className="flex justify-center space-x-6">
-            <span className="text-white font-bold"></span>
-            <a
-              className="text-white font-black"
-              href="https://docs.datasance.com"
-              target="_blank"
-              rel="noreferrer"
-            >
-              DOCS
-            </a>
-            <a
-              className="text-white font-black"
-              href={`/#/api?authToken=${keycloak?.token}&baseUrl=${/^(http:\/\/|https:\/\/)?((\d{1,3}\.){3}\d{1,3}|localhost)(:\d+)?$/.test(window.location.origin)
-                ? `${window.location.origin.replace(/(:\d+)?$/, `:${window.controllerConfig?.port}`)}/api/v3`
-                : `${window.location.origin}/api/v3`
-                }`}
-              target="_parent"
-            >
-              API
-            </a>
-          </div>
-          <a href="https://datasance.com/" className="text-white">
-            © {new Date().getFullYear()} Datasance.
-          </a>
-        </footer> */}
       </div>
     </HashRouter>
   )

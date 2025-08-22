@@ -234,85 +234,85 @@ function AppTemplates() {
         const microservices = application.microservices?.map((ms: any) => {
             let parsedConfig: any = {};
             try {
-              parsedConfig =
-                typeof ms?.config === 'string' ? JSON.parse(ms.config) : ms.config || {};
+                parsedConfig =
+                    typeof ms?.config === 'string' ? JSON.parse(ms.config) : ms.config || {};
             } catch (e) {
-              console.warn(`Failed to parse config for ${ms.name}:`, e);
-              parsedConfig = ms.config;
+                console.warn(`Failed to parse config for ${ms.name}:`, e);
+                parsedConfig = ms.config;
             }
-        
+
             return {
-              name: ms.name,
-              agent: {
-                name: ms.agentName
-              },
-              images: (ms.images || []).reduce(
-                (acc: any, image: any) => {
-                  switch (image.fogTypeId) {
-                    case 1:
-                      acc.x86 = image.containerImage;
-                      break;
-                    case 2:
-                      acc.arm = image.containerImage;
-                      break;
-                  }
-                  return acc;
+                name: ms.name,
+                agent: {
+                    name: ms.agentName
                 },
-                {
-                  registry: ms.registryId ?? null,
-                  catalogItemId: ms.catalogItemId ?? null,
-                }
-              ),
-              container: {
-                annotations: JSON.parse(ms.annotations || '{}'),
-                rootHostAccess: ms.rootHostAccess ?? false,
-                runAsUser: ms.runAsUser ?? null,
-                ipcMode: ms?.ipcMode ?? '',
-                pidMode: ms?.pidMode ?? '',
-                platform: ms.platform ?? null,
-                runtime: ms.runtime ?? null,
-                cdiDevices: ms.cdiDevices ?? [],
-                capAdd: ms.capAdd ?? [],
-                capDrop: ms.capDrop ?? [],
-                volumes: (ms.volumeMappings || []).map((vm: any) => {
-                  const { id, ...rest } = vm;
-                  return rest;
-                }),
-                env: (ms.env || []).map((env: any) => {
-                  const { id, ...rest } = env;
-                  const cleanedEnv: any = { ...rest };
-                  if (cleanedEnv.valueFromSecret === null || cleanedEnv.valueFromSecret === undefined) {
-                    delete cleanedEnv.valueFromSecret;
-                  }
-                  if (cleanedEnv.valueFromConfigMap === null || cleanedEnv.valueFromConfigMap === undefined) {
-                    delete cleanedEnv.valueFromConfigMap;
-                  }
-                  return cleanedEnv;
-                }),
-                extraHosts: (ms.extraHosts || []).map((eH: any) => {
-                  const { id, ...rest } = eH;
-                  return rest;
-                }),
-                ports: ms.ports ?? [],
-                commands: Array.isArray(ms.cmd) ? [...ms.cmd] : [],
-                cpuSetCpus: ms?.cpuSetCpus ?? '',
-                ...(ms?.memoryLimit !== undefined && ms?.memoryLimit !== null && { memoryLimit: ms.memoryLimit }),
-                healthCheck: ms?.healthCheck ?? {},
-              },
-              schedule: ms?.schedule ?? 50,
-              msRoutes: {
-                pubTags: ms.pubTags ?? [],
-                subTags: ms.subTags ?? [],
-              },
-              config: parsedConfig,
+                images: (ms.images || []).reduce(
+                    (acc: any, image: any) => {
+                        switch (image.fogTypeId) {
+                            case 1:
+                                acc.x86 = image.containerImage;
+                                break;
+                            case 2:
+                                acc.arm = image.containerImage;
+                                break;
+                        }
+                        return acc;
+                    },
+                    {
+                        registry: ms.registryId ?? null,
+                        catalogItemId: ms.catalogItemId ?? null,
+                    }
+                ),
+                container: {
+                    annotations: JSON.parse(ms.annotations || '{}'),
+                    rootHostAccess: ms.rootHostAccess ?? false,
+                    runAsUser: ms.runAsUser ?? null,
+                    ipcMode: ms?.ipcMode ?? '',
+                    pidMode: ms?.pidMode ?? '',
+                    platform: ms.platform ?? null,
+                    runtime: ms.runtime ?? null,
+                    cdiDevices: ms.cdiDevices ?? [],
+                    capAdd: ms.capAdd ?? [],
+                    capDrop: ms.capDrop ?? [],
+                    volumes: (ms.volumeMappings || []).map((vm: any) => {
+                        const { id, ...rest } = vm;
+                        return rest;
+                    }),
+                    env: (ms.env || []).map((env: any) => {
+                        const { id, ...rest } = env;
+                        const cleanedEnv: any = { ...rest };
+                        if (cleanedEnv.valueFromSecret === null || cleanedEnv.valueFromSecret === undefined) {
+                            delete cleanedEnv.valueFromSecret;
+                        }
+                        if (cleanedEnv.valueFromConfigMap === null || cleanedEnv.valueFromConfigMap === undefined) {
+                            delete cleanedEnv.valueFromConfigMap;
+                        }
+                        return cleanedEnv;
+                    }),
+                    extraHosts: (ms.extraHosts || []).map((eH: any) => {
+                        const { id, ...rest } = eH;
+                        return rest;
+                    }),
+                    ports: ms.ports ?? [],
+                    commands: Array.isArray(ms.cmd) ? [...ms.cmd] : [],
+                    cpuSetCpus: ms?.cpuSetCpus ?? '',
+                    ...(ms?.memoryLimit !== undefined && ms?.memoryLimit !== null && { memoryLimit: ms.memoryLimit }),
+                    healthCheck: ms?.healthCheck ?? {},
+                },
+                schedule: ms?.schedule ?? 50,
+                msRoutes: {
+                    pubTags: ms.pubTags ?? [],
+                    subTags: ms.subTags ?? [],
+                },
+                config: parsedConfig,
             };
-          });
-        
-          const routes = application.routes?.map((r: any) => ({
+        });
+
+        const routes = application.routes?.map((r: any) => ({
             name: r.name,
             from: r.from,
             to: r.to,
-          }));
+        }));
 
         const yamlDump = {
             apiVersion: 'datasance.com/v3',
@@ -356,42 +356,6 @@ function AppTemplates() {
             header: 'Description',
             render: (row: any) => <span>{row.description || '-'}</span>,
         },
-        // {
-        //     key: 'actions',
-        //     header: 'Action',
-        //     type: 'action',
-        //     render: (row: any) => (
-        //         <ul className="text-sm text-black bg-gray-200 rounded">
-        //             <li
-        //                 className="px-4 py-2 hover:bg-gray-700 cursor-pointer hover:text-white"
-        //                 onClick={() => {
-        //                     setselectedItem(row);
-        //                     setShowDeployModal(true)
-        //                 }}
-        //             >
-        //                 Deploy
-        //             </li>
-        //             <li
-        //                 className="px-4 py-2 hover:bg-gray-700 cursor-pointer hover:text-white"
-        //                 onClick={() => {
-        //                     setselectedItem(row);
-        //                     setShowDetailModal(true)
-        //                 }}
-        //             >
-        //                 Details
-        //             </li>
-        //             <li
-        //                 className="px-4 py-2 hover:bg-red-600 hover:text-white cursor-pointer"
-        //                 onClick={() => {
-        //                     setselectedItem(row);
-        //                     setShowDeleteConfirmModal(true)
-        //                 }}
-        //             >
-        //                 Remove
-        //             </li>
-        //         </ul>
-        //     ),
-        // }
     ];
 
     const slideOverFields = [
@@ -531,118 +495,133 @@ function AppTemplates() {
 
     return (
         <>
-            <div className="bg-gray-900 text-white overflow-auto p-4">
-                <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">
-                    Application Templates
-                </h1>
+            {fetching ?
+                <>
+                    <CustomLoadingModal
+                        open={true}
+                        message="Fetching Certificates"
+                        spinnerSize="lg"
+                        spinnerColor="text-green-500"
+                        overlayOpacity={60}
+                    />
+                </>
+                :
+                <>
+                    <div className="bg-gray-900 text-white overflow-auto p-4">
+                        <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">
+                            Application Templates
+                        </h1>
 
-                <CustomDataTable
-                    columns={columns}
-                    data={catalog}
-                    getRowKey={(row: any) => row.id}
-                    uploadDropzone
-                    uploadFunction={handleYamlUpload}
-                    closeMenuRowKey={selectedItem}
-                />
-            </div>
-            <SlideOver
-                open={isOpen}
-                onClose={() => setIsOpen(false)}
-                onPublish={() => setShowDeployModal(true)}
-                onDelete={() => setShowDeleteConfirmModal(true)}
-                onEditYaml={handleEditYaml}
-                title={selectedApplicationTemplate?.name || 'Application Templates Details'}
-                data={selectedApplicationTemplate}
-                fields={slideOverFields}
-                customWidth={900}
-            />
-            <ResizableBottomDrawer
-                open={isBottomDrawerOpen}
-                isEdit={editorIsChanged}
-                onClose={() => { setIsBottomDrawerOpen(false); setEditorIsChanged(false); setEditorDataChanged(null) }}
-                onSave={() => handleYamlUpdate()}
-                title={`${selectedApplicationTemplate?.name} Template`}
-                showUnsavedChangesModal
-                unsavedModalTitle='Changes Not Saved'
-                unsavedModalMessage='Are you sure you want to exit? All unsaved changes will be lost.'
-                unsavedModalCancelLabel='Stay'
-                unsavedModalConfirmLabel='Exit Anyway'
-
-            >
-                <AceEditor
-                    setOptions={{ useWorker: false }}
-                    mode="yaml"
-                    theme="tomorrow"
-                    defaultValue={yamlDump}
-                    showPrintMargin={false}
-                    onLoad={function (editor) {
-                        editor.renderer.setPadding(10);
-                        editor.renderer.setScrollMargin(10);
-                    }}
-                    style={{
-                        width: "100%",
-                        height: "100%",
-                        borderRadius: "4px",
-                    }}
-                    onChange={function editorChanged(editor: any) {
-                        setEditorIsChanged(true)
-                        setEditorDataChanged(editor)
-                    }}
-                />
-            </ResizableBottomDrawer>
-            <UnsavedChangesModal
-                open={showDeleteConfirmModal}
-                onCancel={() => { setShowDeleteConfirmModal(false); }}
-                onConfirm={() => removeCatalogItem(selectedApplicationTemplate)}
-                title={`Delete ${selectedApplicationTemplate?.name}`}
-                message={"This is not reversible."}
-                cancelLabel={"Cancel"}
-                confirmLabel={"Delete"}
-            />
-            <CustomActionModal
-                open={showDeployModal}
-                child={<DeployApplicationTemplate template={selectedApplicationTemplate} close={() => setShowDeployModal(false)} />}
-                title={`Deploy ${selectedApplicationTemplate?.name}`}
-            />
-            <CustomActionModal
-                open={showDetailModal}
-                child={
-                    <div className="w-full h-[70vh] min-h-[400px]">
-                        <AceEditor
-                            mode="yaml"
-                            theme="tomorrow"
-                            value={
-                                selectedApplicationTemplate ? yaml.dump(selectedApplicationTemplate) : ''
-                            }
-                            setOptions={{
-                                useWorker: false,
-                                wrap: true,
-                                tabSize: 2,
-                            }}
-                            onLoad={(editor) => {
-                                editor.renderer.setPadding(10);
-                                editor.renderer.setScrollMargin(10);
-                                editor.getSession().setUseWrapMode(true);
-                            }}
-                            style={{
-                                width: '100%',
-                                height: '100%',
-                                borderRadius: '4px',
-                            }}
+                        <CustomDataTable
+                            columns={columns}
+                            data={catalog}
+                            getRowKey={(row: any) => row.id}
+                            uploadDropzone
+                            uploadFunction={handleYamlUpload}
+                            closeMenuRowKey={selectedItem}
                         />
                     </div>
-                }
-                title={`${selectedItem?.name} Details`}
-                onCancel={() => setShowDetailModal(false)}
-                cancelLabel="Cancel"
-            />
-            <CustomLoadingModal
-                open={loading}
-                message={loadingMessage}
-                spinnerSize="lg"
-                spinnerColor="text-green-500"
-                overlayOpacity={60}
-            />
+                    <SlideOver
+                        open={isOpen}
+                        onClose={() => setIsOpen(false)}
+                        onPublish={() => setShowDeployModal(true)}
+                        onDelete={() => setShowDeleteConfirmModal(true)}
+                        onEditYaml={handleEditYaml}
+                        title={selectedApplicationTemplate?.name || 'Application Templates Details'}
+                        data={selectedApplicationTemplate}
+                        fields={slideOverFields}
+                        customWidth={900}
+                    />
+                    <ResizableBottomDrawer
+                        open={isBottomDrawerOpen}
+                        isEdit={editorIsChanged}
+                        onClose={() => { setIsBottomDrawerOpen(false); setEditorIsChanged(false); setEditorDataChanged(null) }}
+                        onSave={() => handleYamlUpdate()}
+                        title={`${selectedApplicationTemplate?.name} Template`}
+                        showUnsavedChangesModal
+                        unsavedModalTitle='Changes Not Saved'
+                        unsavedModalMessage='Are you sure you want to exit? All unsaved changes will be lost.'
+                        unsavedModalCancelLabel='Stay'
+                        unsavedModalConfirmLabel='Exit Anyway'
+
+                    >
+                        <AceEditor
+                            setOptions={{ useWorker: false }}
+                            mode="yaml"
+                            theme="tomorrow"
+                            defaultValue={yamlDump}
+                            showPrintMargin={false}
+                            onLoad={function (editor) {
+                                editor.renderer.setPadding(10);
+                                editor.renderer.setScrollMargin(10);
+                            }}
+                            style={{
+                                width: "100%",
+                                height: "100%",
+                                borderRadius: "4px",
+                            }}
+                            onChange={function editorChanged(editor: any) {
+                                setEditorIsChanged(true)
+                                setEditorDataChanged(editor)
+                            }}
+                        />
+                    </ResizableBottomDrawer>
+                    <UnsavedChangesModal
+                        open={showDeleteConfirmModal}
+                        onCancel={() => { setShowDeleteConfirmModal(false); }}
+                        onConfirm={() => removeCatalogItem(selectedApplicationTemplate)}
+                        title={`Delete ${selectedApplicationTemplate?.name}`}
+                        message={"This is not reversible."}
+                        cancelLabel={"Cancel"}
+                        confirmLabel={"Delete"}
+                    />
+                    <CustomActionModal
+                        open={showDeployModal}
+                        child={<DeployApplicationTemplate template={selectedApplicationTemplate} close={() => setShowDeployModal(false)} />}
+                        title={`Deploy ${selectedApplicationTemplate?.name}`}
+                    />
+                    <CustomActionModal
+                        open={showDetailModal}
+                        child={
+                            <div className="w-full h-[70vh] min-h-[400px]">
+                                <AceEditor
+                                    mode="yaml"
+                                    theme="tomorrow"
+                                    value={
+                                        selectedApplicationTemplate ? yaml.dump(selectedApplicationTemplate) : ''
+                                    }
+                                    setOptions={{
+                                        useWorker: false,
+                                        wrap: true,
+                                        tabSize: 2,
+                                    }}
+                                    onLoad={(editor) => {
+                                        editor.renderer.setPadding(10);
+                                        editor.renderer.setScrollMargin(10);
+                                        editor.getSession().setUseWrapMode(true);
+                                    }}
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        borderRadius: '4px',
+                                    }}
+                                />
+                            </div>
+                        }
+                        title={`${selectedItem?.name} Details`}
+                        onCancel={() => setShowDetailModal(false)}
+                        cancelLabel="Cancel"
+                    />
+                    <CustomLoadingModal
+                        open={loading}
+                        message={loadingMessage}
+                        spinnerSize="lg"
+                        spinnerColor="text-green-500"
+                        overlayOpacity={60}
+                    />
+                </>
+            }
+
         </>
 
     )

@@ -12,6 +12,7 @@ import ThemeContext from "./Theme/ThemeProvider";
 import { ConfigProvider } from "./providers/Config";
 import './styles/tailwind.css';
 import { KeycloakAuthProvider } from './auth'
+import 'immutable';
 
 function App() {
 

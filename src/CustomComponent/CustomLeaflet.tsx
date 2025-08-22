@@ -163,7 +163,7 @@ const CustomLeaflet: React.FC<CustomLeafletProps> = ({
           className="bg-gray-800 text-white rounded-full shadow-md w-10 h-10 flex items-center justify-center hover:bg-gray-700 transition"
           title="Zoom Out"
         >
-          <ZoomOutMap fontSize="default" />
+          <ZoomOutMap fontSize="medium" />
         </button>
       </div>
     );

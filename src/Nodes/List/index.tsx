@@ -87,7 +87,7 @@ function NodesList() {
                 setIsOpen(true);
             }
         }
-    }, [agentId]);
+    }, [agentId, data?.reducedAgents]);
 
     const handleRowClick = (row: any) => {
         setSelectedNode(row);

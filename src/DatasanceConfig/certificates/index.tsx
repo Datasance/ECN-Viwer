@@ -6,6 +6,7 @@ import SlideOver from '../../CustomComponent/SlideOver'
 import { format, formatDistanceToNow } from 'date-fns';
 import CryptoTextBox from '../../CustomComponent/CustomCryptoTextBox'
 import { NavLink, useLocation } from 'react-router-dom'
+import CustomLoadingModal from '../../CustomComponent/CustomLoadingModal'
 
 function Certificates() {
     const [fetching, setFetching] = React.useState(true)
@@ -32,6 +33,7 @@ function Certificates() {
                 setIsOpen(true);
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [certificateName, certificates]);
 
     async function fetchCertificates() {
@@ -210,13 +212,13 @@ function Certificates() {
                             }
                             return (
                                 <div key={index} className="py-3 flex flex-col">
-                                <div className="text-sm font-medium text-gray-300 mb-1">
-                                    {key}:
+                                    <div className="text-sm font-medium text-gray-300 mb-1">
+                                        {key}:
+                                    </div>
+                                    <div className="text-sm text-white break-all bg-gray-800 rounded px-2 py-1">
+                                        <CryptoTextBox data={parsed} mode={'plain'} />
+                                    </div>
                                 </div>
-                                <div className="text-sm text-white break-all bg-gray-800 rounded px-2 py-1">
-                                    <CryptoTextBox data={parsed} mode={'plain'} />
-                                </div>
-                            </div>
                             );
                         })}
                     </div>
@@ -227,26 +229,40 @@ function Certificates() {
 
     return (
         <>
-            <div className="bg-gray-900 text-white overflow-auto p-4">
-                <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">
-                    Certificates
-                </h1>
+            {fetching ?
+                <>
+                    <CustomLoadingModal
+                        open={true}
+                        message="Fetching Certificates"
+                        spinnerSize="lg"
+                        spinnerColor="text-green-500"
+                        overlayOpacity={60}
+                    />
+                </>
+                :
+                <>
+                    <div className="bg-gray-900 text-white overflow-auto p-4">
+                        <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">
+                            Certificates
+                        </h1>
 
-                <CustomDataTable
-                    columns={columns}
-                    data={certificates}
-                    getRowKey={(row: any) => row.id}
-                />
+                        <CustomDataTable
+                            columns={columns}
+                            data={certificates}
+                            getRowKey={(row: any) => row.name}
+                        />
 
-                <SlideOver
-                    open={isOpen}
-                    onClose={() => setIsOpen(false)}
-                    title={selectedCertificate?.name || 'Certificate Details'}
-                    data={selectedCertificate}
-                    fields={slideOverFields}
-                    customWidth={600}
-                />
-            </div>
+                        <SlideOver
+                            open={isOpen}
+                            onClose={() => setIsOpen(false)}
+                            title={selectedCertificate?.name || 'Certificate Details'}
+                            data={selectedCertificate}
+                            fields={slideOverFields}
+                            customWidth={600}
+                        />
+                    </div>
+                </>
+            }
         </>
 
     )

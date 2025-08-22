@@ -6,6 +6,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import SlideOver from '../../CustomComponent/SlideOver'
 import FileCopyIcon from '@material-ui/icons/FileCopy'
 import CheckIcon from '@material-ui/icons/Check'
+import CustomLoadingModal from '../../CustomComponent/CustomLoadingModal'
 
 function Services() {
     const [fetching, setFetching] = React.useState(true)
@@ -37,7 +38,7 @@ function Services() {
 
     const renderServiceEndpoint = (endpoint: string) => {
         if (!endpoint || endpoint === '-') return <span>-</span>;
-        
+
         return (
             <div className="flex items-center space-x-2">
                 <span className="text-blue-400">{endpoint}</span>
@@ -59,11 +60,11 @@ function Services() {
         if (!tags) return 'N/A';
         const tagArray = Array.isArray(tags) ? tags : [tags];
         if (tagArray.length === 0) return 'N/A';
-        
+
         return (
             <div className="flex flex-wrap gap-1">
                 {tagArray.map((tag: string, index: number) => (
-                    <span 
+                    <span
                         key={index}
                         className="inline-block bg-blue-600 text-white text-xs px-2 py-1 rounded"
                     >
@@ -82,6 +83,7 @@ function Services() {
                 setIsOpen(true);
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [serviceName, services]);
 
     async function fetchServices() {
@@ -193,7 +195,7 @@ function Services() {
             label: 'Resource',
             render: (row: any) => {
                 if (!row.resource) return <span className="text-gray-400">N/A</span>;
-                
+
                 if (row.type === 'agent') {
                     return (
                         <NavLink
@@ -249,26 +251,41 @@ function Services() {
 
     return (
         <>
-            <div className="bg-gray-900 text-white overflow-auto p-4">
-                <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">
-                    Services
-                </h1>
+            {fetching ?
+                <>
+                    <CustomLoadingModal
+                        open={true}
+                        message="Fetching Service Details"
+                        spinnerSize="lg"
+                        spinnerColor="text-green-500"
+                        overlayOpacity={60}
+                    />
+                </>
+                :
+                <>
+                    <div className="bg-gray-900 text-white overflow-auto p-4">
+                        <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">
+                            Services
+                        </h1>
 
-                <CustomDataTable
-                    columns={columns}
-                    data={services}
-                    getRowKey={(row: any) => row.id}
-                />
+                        <CustomDataTable
+                            columns={columns}
+                            data={services}
+                            getRowKey={(row: any) => row.id}
+                        />
 
-                <SlideOver
-                    open={isOpen}
-                    onClose={() => setIsOpen(false)}
-                    title={selectedService?.name || 'Service Details'}
-                    data={selectedService}
-                    fields={slideOverFields}
-                    customWidth={600}
-                />
-            </div>
+                        <SlideOver
+                            open={isOpen}
+                            onClose={() => setIsOpen(false)}
+                            title={selectedService?.name || 'Service Details'}
+                            data={selectedService}
+                            fields={slideOverFields}
+                            customWidth={600}
+                        />
+                    </div>
+                </>
+            }
+
         </>
 
     )

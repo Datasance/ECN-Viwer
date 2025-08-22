@@ -1,6 +1,5 @@
-import React from 'react'
 import { ThemeProvider } from '@material-ui/styles'
-import { createMuiTheme } from '@material-ui/core/styles'
+import { createTheme } from '@material-ui/core/styles';
 
 import customTheme from './theme.json'
 
@@ -33,7 +32,7 @@ export const colors = {
   datasance_color_4:'#e76467ff',
 }
 
-export const theme = createMuiTheme({
+export const theme = createTheme({
   ...customTheme,
   colors: {
     ...colors,

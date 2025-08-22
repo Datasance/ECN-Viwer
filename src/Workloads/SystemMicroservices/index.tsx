@@ -64,7 +64,7 @@ function SystemMicroserviceList() {
         setIsOpen(true);
       }
     }
-  }, [microserviceId]);
+  }, [flattenedMicroservices, microserviceId]);
 
   const handleRowClick = (row: any) => {
     setSelectedMs(row);
@@ -240,6 +240,7 @@ function SystemMicroserviceList() {
     if (selectedMs && isOpen) {
       getConfig();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMs, isOpen]);
 
   const renderExecSessionIds = (execSessionIds: any) => {
