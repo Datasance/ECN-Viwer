@@ -1,28 +1,28 @@
-import React, { useEffect, useState } from 'react';
-import { useData } from '../../providers/Data';
-import CustomDataTable from '../../CustomComponent/CustomDataTable';
-import CustomProgressBar from '../../CustomComponent/CustomProgressBar';
-import SlideOver from '../../CustomComponent/SlideOver';
-import { formatDistanceToNow, format } from 'date-fns';
-import { useController } from '../../ControllerProvider';
-import { useFeedback } from '../../Utils/FeedbackContext';
-import ResizableBottomDrawer from '../../CustomComponent/ResizableBottomDrawer';
+import React, { useEffect, useState } from "react";
+import { useData } from "../../providers/Data";
+import CustomDataTable from "../../CustomComponent/CustomDataTable";
+import CustomProgressBar from "../../CustomComponent/CustomProgressBar";
+import SlideOver from "../../CustomComponent/SlideOver";
+import { formatDistanceToNow, format } from "date-fns";
+import { useController } from "../../ControllerProvider";
+import { useFeedback } from "../../Utils/FeedbackContext";
+import ResizableBottomDrawer from "../../CustomComponent/ResizableBottomDrawer";
 import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/mode-yaml";
-import { dumpMicroserviceYAML } from '../../Utils/microserviceYAML';
-import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
-import UnsavedChangesModal from '../../CustomComponent/UnsavedChangesModal';
+import { dumpMicroserviceYAML } from "../../Utils/microserviceYAML";
+import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
+import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import yaml from "js-yaml";
-import { API_VERSIONS } from '../../Utils/constants';
-import { parseMicroservice } from '../../Utils/ApplicationParser';
+import { API_VERSIONS } from "../../Utils/constants";
+import { parseMicroservice } from "../../Utils/ApplicationParser";
 import lget from "lodash/get";
-import CryptoTextBox from '../../CustomComponent/CustomCryptoTextBox';
-import { getTextColor, MiBFactor, prettyBytes } from '../../ECNViewer/utils';
-import { StatusColor, StatusType } from '../../Utils/Enums/StatusColor';
-import { useLocation } from 'react-router-dom';
-import { NavLink } from 'react-router-dom';
-import EditOutlinedIcon from '@material-ui/icons/EditOutlined';
+import CryptoTextBox from "../../CustomComponent/CustomCryptoTextBox";
+import { getTextColor, MiBFactor, prettyBytes } from "../../ECNViewer/utils";
+import { StatusColor, StatusType } from "../../Utils/Enums/StatusColor";
+import { useLocation } from "react-router-dom";
+import { NavLink } from "react-router-dom";
+import EditOutlinedIcon from "@material-ui/icons/EditOutlined";
 
 function MicroservicesList() {
   const { data } = useData();
@@ -35,8 +35,10 @@ function MicroservicesList() {
   const [editorDataChanged, setEditorDataChanged] = React.useState<any>();
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
-  const [showPortDeleteConfirmModal, setShowPortDeleteConfirmModal] = useState(false);
-  const [showVolumeDeleteConfirmModal, setShowVolumeDeleteConfirmModal] = useState(false);
+  const [showPortDeleteConfirmModal, setShowPortDeleteConfirmModal] =
+    useState(false);
+  const [showVolumeDeleteConfirmModal, setShowVolumeDeleteConfirmModal] =
+    useState(false);
   const [selectedPort, setSelectedPort] = useState<any>(null);
   const [selectedVolume, setSelectedVolume] = useState<any>(null);
   const flattenedMicroservices = data?.applications?.flatMap((app: any) =>
@@ -46,26 +48,29 @@ function MicroservicesList() {
       appName: app.name,
       appDescription: app.description,
       appCreatedAt: app.createdAt,
-    }))
+    })),
   );
 
   const location = useLocation();
   const params = new URLSearchParams(location.search);
-  const microserviceId = params.get('microserviceId');
+  const microserviceId = params.get("microserviceId");
   const [dirtyEditors, setDirtyEditors] = React.useState(false);
-  const [editorValues, setEditorValues] = React.useState<string>('');
+  const [editorValues, setEditorValues] = React.useState<string>("");
   const [configData, setConfigData] = useState<any>();
-  const [editorContent, setEditorContent] = useState<string>('');
+  const [editorContent, setEditorContent] = useState<string>("");
 
   useEffect(() => {
     if (microserviceId && flattenedMicroservices) {
-      const found = flattenedMicroservices.find((a: any) => a.uuid === microserviceId);
+      const found = flattenedMicroservices.find(
+        (a: any) => a.uuid === microserviceId,
+      );
       if (found) {
         setSelectedMs(found);
         setIsOpen(true);
       }
     }
-  }, [flattenedMicroservices, microserviceId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [microserviceId]);
 
   const handleRowClick = (row: any) => {
     setSelectedMs(row);
@@ -81,13 +86,13 @@ function MicroservicesList() {
           headers: {
             "content-type": "application/json",
           },
-        }
+        },
       );
       if (!res.ok) {
         pushFeedback({ message: res.statusText, type: "error" });
       } else {
         pushFeedback({ message: "Microservice Rebuilt", type: "success" });
-        setShowResetConfirmModal(false)
+        setShowResetConfirmModal(false);
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -96,21 +101,18 @@ function MicroservicesList() {
 
   const handleDelete = async () => {
     try {
-      const res = await request(
-        `/api/v3/microservices/${selectedMs.uuid}`,
-        {
-          method: "DELETE",
-          headers: {
-            "content-type": "application/json",
-          },
-        }
-      );
+      const res = await request(`/api/v3/microservices/${selectedMs.uuid}`, {
+        method: "DELETE",
+        headers: {
+          "content-type": "application/json",
+        },
+      });
       if (!res.ok) {
         pushFeedback({ message: res.statusText, type: "error" });
       } else {
         pushFeedback({ message: "Microservice Deleted", type: "success" });
-        setIsOpen(false)
-        setShowDeleteConfirmModal(false)
+        setIsOpen(false);
+        setShowDeleteConfirmModal(false);
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -119,22 +121,18 @@ function MicroservicesList() {
 
   const handlePortsDelete = async () => {
     try {
-      const res = await request(
-        `/api/v3/microservices/${selectedMs.uuid}`,
-        {
-          method: "DELETE",
-          headers: {
-            "content-type": "application/json",
-          },
-        }
-      );
+      const res = await request(`/api/v3/microservices/${selectedMs.uuid}`, {
+        method: "DELETE",
+        headers: {
+          "content-type": "application/json",
+        },
+      });
       if (!res.ok) {
         pushFeedback({ message: res.statusText, type: "error" });
       } else {
         pushFeedback({ message: "Port Deleted", type: "success" });
-        setIsOpen(false)
-        setShowPortDeleteConfirmModal(false)
-
+        setIsOpen(false);
+        setShowPortDeleteConfirmModal(false);
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -143,21 +141,18 @@ function MicroservicesList() {
 
   const handleVolumeDelete = async () => {
     try {
-      const res = await request(
-        `/api/v3/microservices/${selectedMs.uuid}`,
-        {
-          method: "DELETE",
-          headers: {
-            "content-type": "application/json",
-          },
-        }
-      );
+      const res = await request(`/api/v3/microservices/${selectedMs.uuid}`, {
+        method: "DELETE",
+        headers: {
+          "content-type": "application/json",
+        },
+      });
       if (!res.ok) {
         pushFeedback({ message: res.statusText, type: "error" });
       } else {
         pushFeedback({ message: "Volume Deleted", type: "success" });
-        setIsOpen(false)
-        setShowVolumeDeleteConfirmModal(false)
+        setIsOpen(false);
+        setShowVolumeDeleteConfirmModal(false);
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -176,12 +171,15 @@ function MicroservicesList() {
             "content-type": "application/json",
           },
           body: JSON.stringify(parsedConfig),
-        }
+        },
       );
       if (!res.ok) {
         pushFeedback({ message: res.statusText, type: "error" });
       } else {
-        pushFeedback({ message: "Microservice Config Updated. ", type: "success" });
+        pushFeedback({
+          message: "Microservice Config Updated. ",
+          type: "success",
+        });
         setDirtyEditors(false);
         // Update the editor content with the saved data
         setEditorContent(editorValues);
@@ -193,23 +191,22 @@ function MicroservicesList() {
 
   const getConfig = async () => {
     try {
-      const configResponse = await request(`/api/v3/microservices/${selectedMs.uuid}/config`);
+      const configResponse = await request(
+        `/api/v3/microservices/${selectedMs.uuid}/config`,
+      );
       if (configResponse && configResponse.ok) {
         const configData = await configResponse.json();
         if (configData && configData.config) {
           setConfigData(configData.config);
           setEditorContent(yaml.dump(configData.config));
-        }
-        else {
+        } else {
           setConfigData({});
-          setEditorContent('');
+          setEditorContent("");
         }
-      }
-      else {
+      } else {
         setConfigData({});
-        setEditorContent('');
+        setEditorContent("");
       }
-
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
     }
@@ -231,28 +228,32 @@ function MicroservicesList() {
           headers: {
             "content-type": "application/json",
           },
-        }
+        },
       );
       if (!res.ok) {
         pushFeedback({ message: res.statusText, type: "error" });
       } else {
-        pushFeedback({ message: "Microservice Config Deleted. ", type: "success" });
-        setIsOpen(false)
-        setShowDeleteConfirmModal(false)
+        pushFeedback({
+          message: "Microservice Config Deleted. ",
+          type: "success",
+        });
+        setIsOpen(false);
+        setShowDeleteConfirmModal(false);
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
     }
   };
 
-
   const renderExecSessionIds = (execSessionIds: any) => {
-    if (!execSessionIds) return 'N/A';
+    if (!execSessionIds) return "N/A";
 
     // Handle both string and array cases
-    const execSessionIdArray = Array.isArray(execSessionIds) ? execSessionIds : [execSessionIds];
+    const execSessionIdArray = Array.isArray(execSessionIds)
+      ? execSessionIds
+      : [execSessionIds];
 
-    if (execSessionIdArray.length === 0) return 'N/A';
+    if (execSessionIdArray.length === 0) return "N/A";
 
     return (
       <div className="flex flex-wrap gap-1">
@@ -270,64 +271,66 @@ function MicroservicesList() {
 
   const parseMicroserviceFile = async (doc: any) => {
     if (API_VERSIONS.indexOf(doc.apiVersion) === -1) {
-      return [{}, `Invalid API Version ${doc.apiVersion}, current version is ${API_VERSIONS.slice(-1)[0]}`]
+      return [
+        {},
+        `Invalid API Version ${doc.apiVersion}, current version is ${API_VERSIONS.slice(-1)[0]}`,
+      ];
     }
-    if (doc.kind !== 'Microservice') {
-      return [{}, `Invalid kind ${doc.kind}`]
+    if (doc.kind !== "Microservice") {
+      return [{}, `Invalid kind ${doc.kind}`];
     }
     if (!doc.metadata || !doc.spec) {
-      return [{}, 'Invalid YAML format']
+      return [{}, "Invalid YAML format"];
     }
-    let tempObject = await parseMicroservice(doc.spec)
+    let tempObject = await parseMicroservice(doc.spec);
     const microserviceData = {
-      name: lget(doc, 'metadata.name', undefined),
+      name: lget(doc, "metadata.name", undefined),
       ...tempObject,
-    }
-    return [microserviceData]
-  }
+    };
+    return [microserviceData];
+  };
 
   const deployMicroservice = async (microservice: any) => {
-
-    const url = `/api/v3/microservices/${`${selectedMs.uuid}`}`
+    const url = `/api/v3/microservices/${`${selectedMs.uuid}`}`;
     try {
       const res = await request(url, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: {
-          'content-type': 'application/json'
+          "content-type": "application/json",
         },
-        body: JSON.stringify(microservice)
-      })
-      return res
+        body: JSON.stringify(microservice),
+      });
+      return res;
     } catch (e: any) {
-      pushFeedback({ message: e.message, type: 'error' })
+      pushFeedback({ message: e.message, type: "error" });
     }
-  }
+  };
 
   const handleYamlUpdate = async () => {
     if (editorIsChanged) {
       try {
-        const doc = yaml.load(editorDataChanged)
-        const [microserviceData, err] = await parseMicroserviceFile(doc)
+        const doc = yaml.load(editorDataChanged);
+        const [microserviceData, err] = await parseMicroserviceFile(doc);
         if (err) {
-          return pushFeedback({ message: err, type: 'error' })
+          return pushFeedback({ message: err, type: "error" });
         }
-        const newMicroservice = microserviceData
-        const res = await deployMicroservice(newMicroservice)
+        const newMicroservice = microserviceData;
+        const res = await deployMicroservice(newMicroservice);
         if (!res.ok) {
           try {
-            const error = await res.json()
-            pushFeedback({ message: error.message, type: 'error' })
+            const error = await res.json();
+            pushFeedback({ message: error.message, type: "error" });
           } catch (e) {
-            pushFeedback({ message: res.statusText, type: 'error' })
+            pushFeedback({ message: res.statusText, type: "error" });
           }
         } else {
-          pushFeedback({ message: 'Microservice updated!', type: 'success' })
+          pushFeedback({ message: "Microservice updated!", type: "success" });
           setIsBottomDrawerOpen(false);
           setEditorIsChanged(false);
           setEditorDataChanged(null);
         }
       } catch (e: any) {
-        pushFeedback({ message: e.message, type: 'error' })
+        pushFeedback({ message: e.message, type: "error" });
       }
     }
   };
@@ -346,20 +349,20 @@ function MicroservicesList() {
 
   useEffect(() => {
     if (selectedPort) {
-      setShowPortDeleteConfirmModal(true)
+      setShowPortDeleteConfirmModal(true);
     }
-  }, [selectedPort])
+  }, [selectedPort]);
 
   useEffect(() => {
     if (selectedVolume) {
-      setShowVolumeDeleteConfirmModal(true)
+      setShowVolumeDeleteConfirmModal(true);
     }
-  }, [selectedVolume])
+  }, [selectedVolume]);
 
   const columns = [
     {
-      key: 'name',
-      header: 'Microservice Name',
+      key: "name",
+      header: "Microservice Name",
       render: (row: any) => (
         <div
           className="cursor-pointer text-blue-400 hover:underline"
@@ -370,82 +373,86 @@ function MicroservicesList() {
       ),
     },
     {
-      key: 'agentName',
-      header: 'Agent Name',
+      key: "agentName",
+      header: "Agent Name",
     },
     {
-      key: 'application',
-      header: 'Application',
+      key: "application",
+      header: "Application",
     },
     {
-      key: 'cpuUsage',
-      header: 'CPU Usage',
+      key: "cpuUsage",
+      header: "CPU Usage",
       render: (row: any) => {
         const usage = Number(row?.status?.cpuUsage || 0);
         return <CustomProgressBar value={usage} max={100} unit="%" />;
       },
     },
     {
-      key: 'memoryUsage',
-      header: 'Memory Usage',
+      key: "memoryUsage",
+      header: "Memory Usage",
       render: (row: any) => (
-        <CustomProgressBar value={(row?.status?.memoryUsage)} max={data.reducedAgents.byUUID[row?.iofogUuid]?.systemAvailableMemory} unit='microservice' />
+        <CustomProgressBar
+          value={row?.status?.memoryUsage}
+          max={data.reducedAgents.byUUID[row?.iofogUuid]?.systemAvailableMemory}
+          unit="microservice"
+        />
       ),
     },
     {
-      key: 'status',
-      header: 'Status',
+      key: "status",
+      header: "Status",
       render: (row: any) => {
-        const status = row.status?.status || 'UNKNOWN';
+        const status = row.status?.status || "UNKNOWN";
         const percentage = row.status?.percentage;
 
-        if (status === 'PULLING') {
+        if (status === "PULLING") {
           return (
             <span className="text-yellow-500 font-semibold">
-              {`${status}${typeof percentage === 'number' ? ` (${percentage?.toFixed(2)}%)` : ''}`}
+              {`${status}${typeof percentage === "number" ? ` (${percentage?.toFixed(2)}%)` : ""}`}
             </span>
           );
         }
 
-        const bgColor = StatusColor[status as StatusType] ?? '#9CA3AF'
+        const bgColor = StatusColor[status as StatusType] ?? "#9CA3AF";
         const textColor = getTextColor(bgColor);
         return (
           <span
             className="px-2 py-1 rounded-full text-xs font-semibold"
             style={{
               backgroundColor: bgColor,
-              color: textColor
+              color: textColor,
             }}
           >
             {status}
           </span>
         );
       },
-    }
-
+    },
   ];
 
   const slideOverFields = [
     {
-      label: 'Microservice Details',
-      render: () => '',
+      label: "Microservice Details",
+      render: () => "",
       isSectionHeader: true,
     },
     {
-      label: 'uuid',
-      render: (row: any) => row.uuid || 'N/A',
+      label: "uuid",
+      render: (row: any) => row.uuid || "N/A",
     },
     {
-      label: 'Status',
+      label: "Status",
       render: (row: any) => {
-        const bgColor = StatusColor[row.status?.status as StatusType] ?? '#9CA3AF'
+        const bgColor =
+          StatusColor[row.status?.status as StatusType] ?? "#9CA3AF";
         const textColor = getTextColor(bgColor);
         return (
           <span
             className="px-2 py-1 rounded-full text-xs font-semibold"
             style={{
               backgroundColor: bgColor,
-              color: textColor
+              color: textColor,
             }}
           >
             {row.status?.status}
@@ -454,15 +461,15 @@ function MicroservicesList() {
       },
     },
     {
-      label: 'Ip Address',
-      render: (row: any) => row.status.ipAddress || 'N/A',
+      label: "Ip Address",
+      render: (row: any) => row.status.ipAddress || "N/A",
     },
     {
-      label: 'Image',
-      render: (row: any) => row.images?.[0]?.containerImage || 'N/A',
+      label: "Image",
+      render: (row: any) => row.images?.[0]?.containerImage || "N/A",
     },
     {
-      label: 'Agent',
+      label: "Agent",
       render: (row: any) => {
         const agent = data.reducedAgents.byUUID[row.iofogUuid];
         if (!agent) return <span className="text-gray-400">N/A</span>;
@@ -477,7 +484,7 @@ function MicroservicesList() {
       },
     },
     {
-      label: 'Application',
+      label: "Application",
       render: (row: any) => {
         if (!row?.name) return <span className="text-gray-400">No name</span>;
         return (
@@ -491,41 +498,38 @@ function MicroservicesList() {
       },
     },
     {
-      label: 'Name',
-      render: (row: any) => row.name || 'N/A',
+      label: "Name",
+      render: (row: any) => row.name || "N/A",
     },
     {
-      label: 'Start Time',
+      label: "Start Time",
       render: (row: any) => {
         const startTime = row.status.startTime;
         const dateStr = startTime
           ? new Date(startTime).toLocaleString()
-          : 'N/A';
+          : "N/A";
         return (
-          <span
-            className="font-semibold truncate"
-            title={dateStr}
-          >
+          <span className="font-semibold truncate" title={dateStr}>
             {dateStr}
           </span>
         );
       },
     },
     {
-      label: 'Created at',
+      label: "Created at",
       render: (row: any) => {
         const created = row.createdAt || row.creationTimestamp;
-        if (!created) return 'N/A';
+        if (!created) return "N/A";
         const date = new Date(created);
-        const formattedDate = format(date, 'PPpp');
+        const formattedDate = format(date, "PPpp");
         return `${formatDistanceToNow(date, { addSuffix: true })} (${formattedDate})`;
       },
     },
     {
-      label: 'Operating Duration',
+      label: "Operating Duration",
       render: (row: any) => {
         const durationMs = row.status.operatingDuration;
-        if (!durationMs) return 'N/A';
+        if (!durationMs) return "N/A";
 
         const totalSeconds = Math.floor(durationMs / 1000);
         const days = Math.floor(totalSeconds / (24 * 3600));
@@ -537,21 +541,22 @@ function MicroservicesList() {
       },
     },
     {
-      label: 'Status',
-      render: () => '',
+      label: "Status",
+      render: () => "",
       isSectionHeader: true,
     },
     {
-      label: 'Status',
+      label: "Status",
       render: (row: any) => {
-        const bgColor = StatusColor[row.status?.status as StatusType] ?? '#9CA3AF'
+        const bgColor =
+          StatusColor[row.status?.status as StatusType] ?? "#9CA3AF";
         const textColor = getTextColor(bgColor);
         return (
           <span
             className="px-2 py-1 rounded-full text-xs font-semibold"
             style={{
               backgroundColor: bgColor,
-              color: textColor
+              color: textColor,
             }}
           >
             {row.status?.status}
@@ -560,43 +565,56 @@ function MicroservicesList() {
       },
     },
     {
-      label: 'Health Check Status',
+      label: "Health Check Status",
       render: (row: any) => {
-        return row.status?.healthStatus ? <span className="text-white whitespace-pre-wrap break-words">{row.status?.healthStatus}</span> : 'N/A'
+        return row.status?.healthStatus ? (
+          <span className="text-white whitespace-pre-wrap break-words">
+            {row.status?.healthStatus}
+          </span>
+        ) : (
+          "N/A"
+        );
       },
     },
     {
-      label: 'Error Messages',
+      label: "Error Messages",
       render: (node: any) => {
-        return node.status.errorMessage ? <span className="text-white whitespace-pre-wrap break-words">{node.status?.errorMessage}</span> : 'N/A'
+        return node.status.errorMessage ? (
+          <span className="text-white whitespace-pre-wrap break-words">
+            {node.status?.errorMessage}
+          </span>
+        ) : (
+          "N/A"
+        );
       },
     },
     {
-      label: 'Exec Session Ids',
-      render: (row: any) => renderExecSessionIds(row.status.execSessionIds)
+      label: "Exec Session Ids",
+      render: (row: any) => renderExecSessionIds(row.status.execSessionIds),
     },
     {
-      label: 'Container Id',
+      label: "Container Id",
       render: (row: any) => (
         <span
           className="font-semibold truncate"
-          title={row.status.containerId || 'N/A'}
+          title={row.status.containerId || "N/A"}
         >
-          {row.status.containerId || 'N/A'}
+          {row.status.containerId || "N/A"}
         </span>
       ),
     },
     {
-      label: 'Exec Status',
+      label: "Exec Status",
       render: (row: any) => {
-        const bgColor = StatusColor[row.execStatus?.status as StatusType] ?? '#9CA3AF'
+        const bgColor =
+          StatusColor[row.execStatus?.status as StatusType] ?? "#9CA3AF";
         const textColor = getTextColor(bgColor);
         return (
           <span
             className="px-2 py-1 rounded-full text-xs font-semibold"
             style={{
               backgroundColor: bgColor,
-              color: textColor
+              color: textColor,
             }}
           >
             {row.execStatus?.status ?? "UNKNOWN"}
@@ -605,67 +623,84 @@ function MicroservicesList() {
       },
     },
     {
-      label: 'Active Exec Session Id',
-      render: (row: any) => row.execStatus?.execSessionId || 'N/A',
+      label: "Active Exec Session Id",
+      render: (row: any) => row.execStatus?.execSessionId || "N/A",
     },
     {
-      label: 'Resource Utilization',
-      render: () => '',
+      label: "Resource Utilization",
+      render: () => "",
       isSectionHeader: true,
     },
     {
-      label: 'CPU Usage',
-      render: (row: any) => `${(Number(row?.status?.cpuUsage) || 0)?.toFixed(2)}%`,
+      label: "CPU Usage",
+      render: (row: any) =>
+        `${(Number(row?.status?.cpuUsage) || 0)?.toFixed(2)}%`,
     },
     {
-      label: 'Memory Usage',
-      render: (row: any) => `${prettyBytes((row.status?.memoryUsage || 0 * MiBFactor))}`,
+      label: "Memory Usage",
+      render: (row: any) =>
+        `${prettyBytes(row.status?.memoryUsage || 0 * MiBFactor)}`,
     },
     {
-      label: 'Ports',
-      render: () => '',
+      label: "Ports",
+      render: () => "",
       isSectionHeader: true,
     },
     {
-      label: '',
+      label: "",
       isFullSection: true,
       render: (node: any) => {
         const ports = node?.ports || [];
 
         if (!Array.isArray(ports) || ports.length === 0) {
-          return <div className="text-sm text-gray-400">No ports found for this microservice.</div>;
+          return (
+            <div className="text-sm text-gray-400">
+              No ports found for this microservice.
+            </div>
+          );
         }
 
         const portData = ports.map((port: any, index: number) => ({
           internal: port.internal,
           external: port.external,
           protocol: port.protocol,
-          publicLink: port.public?.links?.[0] || '-',
+          publicLink: port.public?.links?.[0] || "-",
           key: `${port.internal}-${port.external}-${index}`,
         }));
 
         const portColumns = [
           {
-            key: 'internal',
-            header: 'Internal',
-            formatter: ({ row }: any) => <span className="text-white">{row.internal}</span>,
+            key: "internal",
+            header: "Internal",
+            formatter: ({ row }: any) => (
+              <span className="text-white">{row.internal}</span>
+            ),
           },
           {
-            key: 'external',
-            header: 'External',
-            formatter: ({ row }: any) => <span className="text-white">{row.external}</span>,
+            key: "external",
+            header: "External",
+            formatter: ({ row }: any) => (
+              <span className="text-white">{row.external}</span>
+            ),
           },
           {
-            key: 'protocol',
-            header: 'Protocol',
-            formatter: ({ row }: any) => <span className="uppercase text-white">{row.protocol}</span>,
+            key: "protocol",
+            header: "Protocol",
+            formatter: ({ row }: any) => (
+              <span className="uppercase text-white">{row.protocol}</span>
+            ),
           },
           {
-            key: 'publicLink',
-            header: 'Public Link',
+            key: "publicLink",
+            header: "Public Link",
             formatter: ({ row }: any) =>
-              row.publicLink !== '-' ? (
-                <a href={row.publicLink} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">
+              row.publicLink !== "-" ? (
+                <a
+                  href={row.publicLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 underline"
+                >
                   {row.publicLink}
                 </a>
               ) : (
@@ -673,13 +708,17 @@ function MicroservicesList() {
               ),
           },
           {
-            key: 'action',
-            header: 'Action',
+            key: "action",
+            header: "Action",
             render: (row: any) => {
               return (
-                <button onClick={() => setSelectedPort(row)} className="hover:text-red-600 hover:bg-white rounded">
+                <button
+                  onClick={() => setSelectedPort(row)}
+                  className="hover:text-red-600 hover:bg-white rounded"
+                >
                   <DeleteOutlineIcon fontSize="small" />
-                </button>)
+                </button>
+              );
             },
           },
         ];
@@ -694,57 +733,70 @@ function MicroservicesList() {
       },
     },
     {
-      label: 'Volumes',
-      render: () => '',
+      label: "Volumes",
+      render: () => "",
       isSectionHeader: true,
     },
     {
-      label: '',
+      label: "",
       isFullSection: true,
       render: (node: any) => {
         const volumes = node?.volumeMappings || [];
 
         if (!Array.isArray(volumes) || volumes.length === 0) {
-          return <div className="text-sm text-gray-400">No Volumes found for this microservice.</div>;
+          return (
+            <div className="text-sm text-gray-400">
+              No Volumes found for this microservice.
+            </div>
+          );
         }
 
         const volumesData = volumes.map((volume: any, index: number) => ({
           host: volume.hostDestination,
           container: volume.containerDestination,
           accessMode: volume.accessMode,
-          type: volume.type || '-',
+          type: volume.type || "-",
           key: `${volume.hostDestination}-${volume.containerDestination}-${index}`,
         }));
 
         const volumeColumns = [
           {
-            key: 'host',
-            header: 'Host',
-            formatter: ({ row }: any) => <span className="text-white">{row.host}</span>,
+            key: "host",
+            header: "Host",
+            formatter: ({ row }: any) => (
+              <span className="text-white">{row.host}</span>
+            ),
           },
           {
-            key: 'container',
-            header: 'Container',
-            formatter: ({ row }: any) => <span className="text-white">{row.container}</span>,
+            key: "container",
+            header: "Container",
+            formatter: ({ row }: any) => (
+              <span className="text-white">{row.container}</span>
+            ),
           },
           {
-            key: 'accessMode',
-            header: 'Access Mode',
-            formatter: ({ row }: any) => <span className="uppercase text-white">{row.accessMode}</span>,
+            key: "accessMode",
+            header: "Access Mode",
+            formatter: ({ row }: any) => (
+              <span className="uppercase text-white">{row.accessMode}</span>
+            ),
           },
           {
-            key: 'type',
-            header: 'Type',
+            key: "type",
+            header: "Type",
             formatter: ({ row }: any) => (
               <span className="text-white">{row.type}</span>
             ),
           },
           {
-            key: 'action',
-            header: 'Action',
+            key: "action",
+            header: "Action",
             render: (row: any) => {
               return (
-                <button onClick={() => setSelectedVolume(row)} className="hover:text-red-600 hover:bg-white rounded">
+                <button
+                  onClick={() => setSelectedVolume(row)}
+                  className="hover:text-red-600 hover:bg-white rounded"
+                >
                   <DeleteOutlineIcon fontSize="small" />
                 </button>
               );
@@ -762,35 +814,41 @@ function MicroservicesList() {
       },
     },
     {
-      label: 'Environment Variables',
-      render: () => '',
+      label: "Environment Variables",
+      render: () => "",
       isSectionHeader: true,
     },
     {
-      label: '',
+      label: "",
       isFullSection: true,
       render: (node: any) => {
         const envVars = node?.env || [];
 
         if (!Array.isArray(envVars) || envVars.length === 0) {
-          return <div className="text-sm text-gray-400">No environment variables found for this microservice.</div>;
+          return (
+            <div className="text-sm text-gray-400">
+              No environment variables found for this microservice.
+            </div>
+          );
         }
 
         const envData = envVars.map((env: any, index: number) => ({
           keyName: env.key,
-          value: <CryptoTextBox data={env.value} mode='plain' />,
+          value: <CryptoTextBox data={env.value} mode="plain" />,
           key: `${env.key}-${index}`,
         }));
 
         const envColumns = [
           {
-            key: 'keyName',
-            header: 'Key',
-            formatter: ({ row }: any) => <span className="text-white">{row.keyName}</span>,
+            key: "keyName",
+            header: "Key",
+            formatter: ({ row }: any) => (
+              <span className="text-white">{row.keyName}</span>
+            ),
           },
           {
-            key: 'value',
-            header: 'Value',
+            key: "value",
+            header: "Value",
           },
         ];
 
@@ -804,42 +862,52 @@ function MicroservicesList() {
       },
     },
     {
-      label: 'Extra Hosts',
-      render: () => '',
+      label: "Extra Hosts",
+      render: () => "",
       isSectionHeader: true,
     },
     {
-      label: '',
+      label: "",
       isFullSection: true,
       render: (node: any) => {
         const extraHosts = node?.extraHosts || [];
 
         if (!Array.isArray(extraHosts) || extraHosts.length === 0) {
-          return <div className="text-sm text-gray-400">No extra hosts found for this microservice.</div>;
+          return (
+            <div className="text-sm text-gray-400">
+              No extra hosts found for this microservice.
+            </div>
+          );
         }
 
         const extraHostsData = extraHosts.map((host: any, index: number) => ({
-          name: host.name || '-',
-          address: host.address || '-',
-          value: host.value || '-',
+          name: host.name || "-",
+          address: host.address || "-",
+          value: host.value || "-",
           key: `${host.name}-${host.address}-${index}`,
         }));
 
         const extraHostColumns = [
           {
-            key: 'name',
-            header: 'Name',
-            formatter: ({ row }: any) => <span className="text-white">{row.name}</span>,
+            key: "name",
+            header: "Name",
+            formatter: ({ row }: any) => (
+              <span className="text-white">{row.name}</span>
+            ),
           },
           {
-            key: 'address',
-            header: 'Address',
-            formatter: ({ row }: any) => <span className="text-white">{row.address}</span>,
+            key: "address",
+            header: "Address",
+            formatter: ({ row }: any) => (
+              <span className="text-white">{row.address}</span>
+            ),
           },
           {
-            key: 'value',
-            header: 'Value',
-            formatter: ({ row }: any) => <span className="text-white">{row.value}</span>,
+            key: "value",
+            header: "Value",
+            formatter: ({ row }: any) => (
+              <span className="text-white">{row.value}</span>
+            ),
           },
         ];
 
@@ -853,36 +921,40 @@ function MicroservicesList() {
       },
     },
     {
-      label: 'Config',
-      render: () => '',
+      label: "Config",
+      render: () => "",
       isSectionHeader: true,
     },
     {
-      label: '',
+      label: "",
       isFullSection: true,
       render: (node: any) => {
-
         const lineHeight = 50;
         const minLines = 10;
         const maxLines = 50;
-        const lineCount = Math.max(minLines, Math.min(configData?.length || 0, maxLines));
+        const lineCount = Math.max(
+          minLines,
+          Math.min(configData?.length || 0, maxLines),
+        );
         const dynamicHeight = `${lineCount * lineHeight}px`;
 
         return (
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <h2 className="text-sm font-semibold text-gray-300">{node?.id}</h2>
+              <h2 className="text-sm font-semibold text-gray-300">
+                {node?.id}
+              </h2>
               <div className="flex space-x-2">
                 {dirtyEditors && (
                   <button
-                    onClick={handleConfigPatch}
+                    onClick={()=> handleConfigPatch}
                     className="hover:text-green-600 hover:bg-white rounded"
                   >
                     <EditOutlinedIcon fontSize="small" />
                   </button>
                 )}
                 <button
-                  onClick={handleConfigDelete}
+                  onClick={()=> handleConfigDelete}
                   className="hover:text-green-600 hover:bg-white rounded"
                 >
                   <DeleteOutlineIcon fontSize="small" />
@@ -896,9 +968,9 @@ function MicroservicesList() {
               name={`editor-service`}
               value={editorContent}
               onChange={function editorChanged(value: string) {
-                setDirtyEditors(true)
-                setEditorValues(value)
-                setEditorContent(value)
+                setDirtyEditors(true);
+                setEditorValues(value);
+                setEditorContent(value);
               }}
               showPrintMargin={false}
               setOptions={{
@@ -913,21 +985,22 @@ function MicroservicesList() {
                 setTimeout(() => editor.resize(), 300);
               }}
               style={{
-                width: '100%',
+                width: "100%",
                 height: dynamicHeight,
-                borderRadius: '4px',
+                borderRadius: "4px",
               }}
             />
           </div>
         );
       },
-    }
+    },
   ];
-
 
   return (
     <div className=" bg-gray-900 text-white overflow-auto p-4">
-      <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">Microservices List</h1>
+      <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">
+        Microservices List
+      </h1>
       <CustomDataTable
         columns={columns}
         data={flattenedMicroservices || []}
@@ -936,7 +1009,7 @@ function MicroservicesList() {
       <SlideOver
         open={isOpen}
         onClose={() => setIsOpen(false)}
-        title={selectedMs?.name || 'Microservice Details'}
+        title={selectedMs?.name || "Microservice Details"}
         data={selectedMs}
         fields={slideOverFields}
         onRestart={() => setShowResetConfirmModal(true)}
@@ -947,15 +1020,18 @@ function MicroservicesList() {
       <ResizableBottomDrawer
         open={isBottomDrawerOpen}
         isEdit={editorIsChanged}
-        onClose={() => { setIsBottomDrawerOpen(false); setEditorIsChanged(false); setEditorDataChanged(null) }}
+        onClose={() => {
+          setIsBottomDrawerOpen(false);
+          setEditorIsChanged(false);
+          setEditorDataChanged(null);
+        }}
         onSave={() => handleYamlUpdate()}
         title={`${selectedMs?.name} YAML`}
         showUnsavedChangesModal
-        unsavedModalTitle='Changes Not Saved'
-        unsavedModalMessage='Are you sure you want to exit? All unsaved changes will be lost.'
-        unsavedModalCancelLabel='Stay'
-        unsavedModalConfirmLabel='Exit Anyway'
-
+        unsavedModalTitle="Changes Not Saved"
+        unsavedModalMessage="Are you sure you want to exit? All unsaved changes will be lost."
+        unsavedModalCancelLabel="Stay"
+        unsavedModalConfirmLabel="Exit Anyway"
       >
         <AceEditor
           setOptions={{ useWorker: false, tabSize: 2 }}
@@ -973,8 +1049,8 @@ function MicroservicesList() {
             borderRadius: "4px",
           }}
           onChange={function editorChanged(editor: any) {
-            setEditorIsChanged(true)
-            setEditorDataChanged(editor)
+            setEditorIsChanged(true);
+            setEditorDataChanged(editor);
           }}
         />
       </ResizableBottomDrawer>
@@ -986,7 +1062,7 @@ function MicroservicesList() {
         message={"This is not reversible."}
         cancelLabel={"Cancel"}
         confirmLabel={"Rebuild"}
-        confirmColor='bg-blue'
+        confirmColor="bg-blue"
       />
       <UnsavedChangesModal
         open={showDeleteConfirmModal}

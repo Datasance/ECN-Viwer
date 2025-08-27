@@ -1,4 +1,4 @@
-import { MiBFactor, prettyBytes } from '../ECNViewer/utils';
+import { MiBFactor, prettyBytes } from "../ECNViewer/utils";
 
 const CustomProgressBar = ({
   value,
@@ -9,18 +9,18 @@ const CustomProgressBar = ({
   max?: number;
   unit?: string;
 }) => {
-  const percent = Math.min((value / (max / 100)), 100);
+  const percent = Math.min(value / (max / 100), 100);
 
-  let color = 'bg-green-500';
-  if (percent > 90) color = 'bg-red-500';
-  else if (percent > 70) color = 'bg-yellow-400';
+  let color = "bg-green-500";
+  if (percent > 90) color = "bg-red-500";
+  else if (percent > 70) color = "bg-yellow-400";
 
-  let displayValue = '';
-  if (unit === 'agent') {
+  let displayValue = "";
+  if (unit === "agent") {
     displayValue = `${prettyBytes(Number((value * MiBFactor)?.toFixed(2)))} / ${prettyBytes(max)}`;
-  } else if (unit === '%') {
+  } else if (unit === "%") {
     displayValue = `${value?.toFixed(2)} % / ${max} %`;
-  } else if (unit === 'microservice') {
+  } else if (unit === "microservice") {
     displayValue = `${prettyBytes((value || 0) * MiBFactor)} / ${prettyBytes(max)}`;
   }
 

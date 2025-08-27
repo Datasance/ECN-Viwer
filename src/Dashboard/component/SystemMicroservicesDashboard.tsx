@@ -1,29 +1,30 @@
-import React from 'react';
-import ApexCharts from 'react-apexcharts';
-import { StatusColor } from '../../Utils/Enums/StatusColor';
+import React from "react";
+import ApexCharts from "react-apexcharts";
+import { StatusColor } from "../../Utils/Enums/StatusColor";
 
 interface SystemMicroservicesDashboardProps {
   systemApplications: any[];
   title: string;
 }
 
-const SystemMicroservicesDashboard: React.FC<SystemMicroservicesDashboardProps> = ({
-  systemApplications,
-  title,
-}) => {
+const SystemMicroservicesDashboard: React.FC<
+  SystemMicroservicesDashboardProps
+> = ({ systemApplications, title }) => {
   if (!systemApplications) return <div>Loading...</div>;
 
-  const allMicroservices = systemApplications.flatMap(app => app.microservices || []);
+  const allMicroservices = systemApplications.flatMap(
+    (app) => app.microservices || [],
+  );
   const totalMicroservices = allMicroservices.length;
 
   const runningCount = allMicroservices.filter(
-    msvc => (msvc.status?.status?.toUpperCase() || '') === 'RUNNING'
+    (msvc) => (msvc.status?.status?.toUpperCase() || "") === "RUNNING",
   ).length;
   const notRunningCount = totalMicroservices - runningCount;
 
   const donutChartOptions = {
-    chart: { type: 'donut' as const, background: '#333' },
-    labels: ['RUNNING', 'NOT RUNNING'],
+    chart: { type: "donut" as const, background: "#333" },
+    labels: ["RUNNING", "NOT RUNNING"],
     colors: [StatusColor.RUNNING, StatusColor.STOPPED],
     dataLabels: { enabled: true },
     tooltip: {
@@ -31,61 +32,75 @@ const SystemMicroservicesDashboard: React.FC<SystemMicroservicesDashboardProps> 
         formatter: (_val: number, opts: any) => {
           const isRunning = opts.seriesIndex === 0;
           const names = allMicroservices
-            .filter(msvc =>
+            .filter((msvc) =>
               isRunning
-                ? (msvc.status?.status?.toUpperCase() || '') === 'RUNNING'
-                : (msvc.status?.status?.toUpperCase() || '') !== 'RUNNING'
+                ? (msvc.status?.status?.toUpperCase() || "") === "RUNNING"
+                : (msvc.status?.status?.toUpperCase() || "") !== "RUNNING",
             )
-            .map(msvc => `- ${msvc.name}`)
-            .join('<br />');
-          return names || 'No microservices';
+            .map((msvc) => `- ${msvc.name}`)
+            .join("<br />");
+          return names || "No microservices";
         },
       },
     },
     legend: {
-      labels: { colors: '#fff' },
-      position: 'bottom' as const,
+      labels: { colors: "#fff" },
+      position: "bottom" as const,
     },
-    theme: { mode: 'dark' as const },
+    theme: { mode: "dark" as const },
   };
 
   const donutChartSeries = [runningCount, notRunningCount];
 
   const uniqueStatuses = Array.from(
-    new Set(allMicroservices.map(msvc => (msvc.status?.status?.toUpperCase() || 'UNKNOWN')))
+    new Set(
+      allMicroservices.map(
+        (msvc) => msvc.status?.status?.toUpperCase() || "UNKNOWN",
+      ),
+    ),
   );
 
-  const bubbleSeries = uniqueStatuses.map(status => ({
+  const bubbleSeries = uniqueStatuses.map((status) => ({
     name: status,
-    color: StatusColor[status as keyof typeof StatusColor] || StatusColor.UNKNOWN,
+    color:
+      StatusColor[status as keyof typeof StatusColor] || StatusColor.UNKNOWN,
     data: allMicroservices
-      .filter(msvc => (msvc.status?.status?.toUpperCase() || 'UNKNOWN') === status)
-      .map(msvc => ({
+      .filter(
+        (msvc) => (msvc.status?.status?.toUpperCase() || "UNKNOWN") === status,
+      )
+      .map((msvc) => ({
         x: msvc.status?.cpuUsage || 0,
-        y: msvc.status?.memoryUsage ? msvc.status.memoryUsage / (1024 * 1024) : 0,
+        y: msvc.status?.memoryUsage
+          ? msvc.status.memoryUsage / (1024 * 1024)
+          : 0,
         z: 10,
         name: msvc.name,
       })),
   }));
 
-  const memoryValues = allMicroservices.map(msvc =>
-    msvc.status?.memoryUsage ? msvc.status.memoryUsage / (1024 * 1024) : 0
+  const memoryValues = allMicroservices.map((msvc) =>
+    msvc.status?.memoryUsage ? msvc.status.memoryUsage / (1024 * 1024) : 0,
   );
   const maxMemory = Math.max(...memoryValues, 100);
   const dynamicYMax = maxMemory > 0 ? Math.ceil(maxMemory * 1.2) : 100;
 
-  const cpuValues = allMicroservices.map(msvc =>
-    msvc.status?.cpuUsage ? Number(msvc.status.cpuUsage) : 0
+  const cpuValues = allMicroservices.map((msvc) =>
+    msvc.status?.cpuUsage ? Number(msvc.status.cpuUsage) : 0,
   );
   const maxCpu = Math.max(...cpuValues, 20);
   const dynamicXMax = maxCpu > 0 ? Math.ceil(maxCpu * 1.2) : 100;
 
   const bubbleChartOptions = {
-    chart: { type: 'bubble' as const, background: '#333', toolbar: { show: false } },
+    chart: {
+      type: "bubble" as const,
+      background: "#333",
+      toolbar: { show: false },
+    },
     dataLabels: { enabled: false },
     fill: { opacity: 0.8 },
     colors: uniqueStatuses.map(
-      status => StatusColor[status as keyof typeof StatusColor] || StatusColor.UNKNOWN
+      (status) =>
+        StatusColor[status as keyof typeof StatusColor] || StatusColor.UNKNOWN,
     ),
     plotOptions: {
       bubble: {
@@ -94,7 +109,13 @@ const SystemMicroservicesDashboard: React.FC<SystemMicroservicesDashboardProps> 
       },
     },
     tooltip: {
-      custom: ({ seriesIndex, dataPointIndex }: { seriesIndex: number; dataPointIndex: number }) => {
+      custom: ({
+        seriesIndex,
+        dataPointIndex,
+      }: {
+        seriesIndex: number;
+        dataPointIndex: number;
+      }) => {
         const point = bubbleSeries[seriesIndex].data[dataPointIndex];
         return `
           <div style="padding:8px; color:#fff;">
@@ -110,39 +131,53 @@ const SystemMicroservicesDashboard: React.FC<SystemMicroservicesDashboardProps> 
       min: -2,
       max: dynamicXMax,
       tickAmount: 5,
-      title: { text: 'CPU Usage (%)', style: { color: '#fff' }, offsetY: -10 },
-      labels: { style: { colors: '#fff' } },
+      title: { text: "CPU Usage (%)", style: { color: "#fff" }, offsetY: -10 },
+      labels: { style: { colors: "#fff" } },
     },
     yaxis: {
       min: 0,
       max: dynamicYMax,
       tickAmount: 5,
-      title: { text: 'Memory Usage (MB)', style: { color: '#fff' } },
+      title: { text: "Memory Usage (MB)", style: { color: "#fff" } },
       labels: {
-        style: { colors: '#fff' },
+        style: { colors: "#fff" },
         formatter: (val: number) => val.toFixed(0),
       },
     },
     legend: {
       show: true,
-      labels: { colors: '#fff' },
+      labels: { colors: "#fff" },
     },
-    theme: { mode: 'dark' as const },
+    theme: { mode: "dark" as const },
   };
 
   return (
     <div className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-2xl p-4 md:p-6 shadow-md w-full h-full flex flex-col">
       <h1 className="text-2xl md:text-3xl font-bold text-white mb-4 md:mb-6 text-start">
-        {` ${title}${totalMicroservices !== 1 ? 's' : ''} (${totalMicroservices})`}
+        {` ${title}${totalMicroservices !== 1 ? "s" : ""} (${totalMicroservices})`}
       </h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
         <div className="w-full">
-          <h2 className="text-white text-xl mb-4">System Microservices Status</h2>
-          <ApexCharts options={donutChartOptions} series={donutChartSeries} type="donut" height={332} />
+          <h2 className="text-white text-xl mb-4">
+            System Microservices Status
+          </h2>
+          <ApexCharts
+            options={donutChartOptions}
+            series={donutChartSeries}
+            type="donut"
+            height={332}
+          />
         </div>
         <div className="w-full">
-          <h2 className="text-white text-xl mb-4">System Microservices Resource Chart</h2>
-          <ApexCharts options={bubbleChartOptions} series={bubbleSeries} type="bubble" height={300} />
+          <h2 className="text-white text-xl mb-4">
+            System Microservices Resource Chart
+          </h2>
+          <ApexCharts
+            options={bubbleChartOptions}
+            series={bubbleSeries}
+            type="bubble"
+            height={300}
+          />
         </div>
       </div>
     </div>
