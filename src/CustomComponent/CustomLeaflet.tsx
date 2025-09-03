@@ -1,19 +1,19 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from "react";
 import {
   MapContainer,
   TileLayer,
   CircleMarker as LeafletCircleMarker,
   useMap,
-} from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-import ZoomOutMap from '@material-ui/icons/ZoomOutMap';
+} from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+import ZoomOutMap from "@material-ui/icons/ZoomOutMap";
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: '',
-  iconUrl: '',
-  shadowUrl: '',
+  iconRetinaUrl: "",
+  iconUrl: "",
+  shadowUrl: "",
 });
 
 interface MarkerData {
@@ -42,11 +42,11 @@ const CustomLeaflet: React.FC<CustomLeafletProps> = ({
   center,
   zoom = 13,
   markers,
-  className = '',
-  height = '100%',
-  width = '100%',
-  tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-  attribution = '&copy; OpenStreetMap contributors',
+  className = "",
+  height = "100%",
+  width = "100%",
+  tileUrl = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  attribution = "&copy; OpenStreetMap contributors",
   onMarkerAction,
   collapsed,
   selectedMarkerId,
@@ -64,21 +64,21 @@ const CustomLeaflet: React.FC<CustomLeafletProps> = ({
 
   useEffect(() => {
     if (selectedMarkerId && mapRef.current) {
-      const foundMarker = markers.find(m => m.id === selectedMarkerId);
+      const foundMarker = markers.find((m) => m.id === selectedMarkerId);
       if (foundMarker) {
         mapRef.current.setView(foundMarker.position, mapRef.current.getZoom());
         mapRef.current.flyTo(foundMarker.position, 16, { duration: 0.5 });
         setSelectedMarker(foundMarker);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMarkerId]);
 
   function groupMarkersByPosition(markers: any[]): any[] {
     const grouped: Record<string, any[]> = {};
 
     for (const marker of markers) {
-      const key = marker.position.join(',');
+      const key = marker.position.join(",");
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(marker);
     }
@@ -120,8 +120,8 @@ const CustomLeaflet: React.FC<CustomLeafletProps> = ({
       <LeafletCircleMarker
         center={marker.position}
         pathOptions={{
-          color: isSelected ? 'blue' : marker.color || 'gray',
-          fillColor: isSelected ? 'blue' : marker.color || 'gray',
+          color: isSelected ? "blue" : marker.color || "gray",
+          fillColor: isSelected ? "blue" : marker.color || "gray",
           fillOpacity: 0.8,
         }}
         radius={isSelected ? 12 : 10}
@@ -163,7 +163,7 @@ const CustomLeaflet: React.FC<CustomLeafletProps> = ({
           className="bg-gray-800 text-white rounded-full shadow-md w-10 h-10 flex items-center justify-center hover:bg-gray-700 transition"
           title="Zoom Out"
         >
-          <ZoomOutMap fontSize="default" />
+          <ZoomOutMap fontSize="medium" />
         </button>
       </div>
     );
@@ -190,9 +190,13 @@ const CustomLeaflet: React.FC<CustomLeafletProps> = ({
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-lg rounded-lg p-4 w-[90%] max-w-md z-50 transition-all">
           <div className="flex justify-between items-start">
             <div>
-              <h3 className="text-lg font-semibold mb-1">{selectedMarker.label || 'Selected Marker'}</h3>
+              <h3 className="text-lg font-semibold mb-1">
+                {selectedMarker.label || "Selected Marker"}
+              </h3>
               <p className="text-sm opacity-80 mb-2">ID: {selectedMarker.id}</p>
-              <p className="text-sm opacity-80">Location: {selectedMarker.position.join(', ')}</p>
+              <p className="text-sm opacity-80">
+                Location: {selectedMarker.position.join(", ")}
+              </p>
             </div>
             <button
               onClick={() => setSelectedMarker(null)}

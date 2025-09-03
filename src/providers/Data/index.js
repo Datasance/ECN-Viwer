@@ -1,41 +1,41 @@
-import React from 'react'
-import { useController } from '../../ControllerProvider'
-import { find, groupBy, get } from 'lodash'
-import useRecursiveTimeout from '../../hooks/useInterval'
-import { useAuth } from '../../auth'
+import React from "react";
+import { useController } from "../../ControllerProvider";
+import { find, groupBy, get } from "lodash";
+import useRecursiveTimeout from "../../hooks/useInterval";
+import { useAuth } from "../../auth";
 
-import AgentManager from './agent-manager'
-import ApplicationManager from './application-manager'
+import AgentManager from "./agent-manager";
+import ApplicationManager from "./application-manager";
 
-export const DataContext = React.createContext()
-export const useData = () => React.useContext(DataContext)
+export const DataContext = React.createContext();
+export const useData = () => React.useContext(DataContext);
 
 const initState = {
   controller: {
     info: {
       location: {},
-      user: {}
+      user: {},
     },
     agents: [],
     flows: [],
     microservices: [],
-    applications: []
+    applications: [],
   },
   activeAgents: [],
   activeMsvcs: [],
   msvcsPerAgent: [],
   applications: [],
-  systemApplications: []
-}
+  systemApplications: [],
+};
 
 export const actions = {
-  UPDATE: 'UPDATE',
-  SET_AGENT: 'SET_AGENT'
-}
+  UPDATE: "UPDATE",
+  SET_AGENT: "SET_AGENT",
+};
 
 const updateData = (state, newController) => {
   if (!newController) {
-    return state
+    return state;
   }
   // newController.agents = newController.agents.map(a => ({
   //   ...a,
@@ -44,49 +44,77 @@ const updateData = (state, newController) => {
   newController.agents.sort((a, b) => {
     const statusOrder = {
       RUNNING: 1,
-      UNKOWN: 2
-    }
+      UNKOWN: 2,
+    };
     if (a.daemonStatus === b.daemonStatus) {
-      return a.name.localeCompare(b.name)
+      return a.name.localeCompare(b.name);
     } else {
-      return (statusOrder[a.daemonStatus] || 3) - (statusOrder[b.daemonStatus] || 3)
+      return (
+        (statusOrder[a.daemonStatus] || 3) - (statusOrder[b.daemonStatus] || 3)
+      );
     }
-  })
+  });
   newController.applications.sort((a, b) => {
-    if (a.isActivated === b.isActivated) { return a.name.localeCompare(b.name) }
-    return (a.isActivated ? 1 : 2) - (b.isActivated ? 1 : 2)
-  })
-  const reducedAgents = newController.agents.reduce((acc, a) => {
-    acc.byUUID[a.uuid] = a
-    acc.byName[a.name] = a
-    return acc
-  }, {
-    byUUID: {},
-    byName: {}
-  })
+    if (a.isActivated === b.isActivated) {
+      return a.name.localeCompare(b.name);
+    }
+    return (a.isActivated ? 1 : 2) - (b.isActivated ? 1 : 2);
+  });
+  const reducedAgents = newController.agents.reduce(
+    (acc, a) => {
+      acc.byUUID[a.uuid] = a;
+      acc.byName[a.name] = a;
+      return acc;
+    },
+    {
+      byUUID: {},
+      byName: {},
+    },
+  );
 
-  let mergedApplications = [...newController.applications, ...newController?.systemApplications];
-  const reducedApplications = mergedApplications.reduce((acc, a) => {
-    acc.byId[a.id] = a
-    acc.byName[a.name] = a
-    return acc
-  }, {
-    byId: {},
-    byName: {}
-  })
-  const activeFlows = newController.applications.filter(f => f.isActivated === true)
-  const activeAgents = newController.agents.filter(a => a.daemonStatus === 'RUNNING')
-  const msvcsPerAgent = groupBy(newController.microservices.map(m => ({
-    ...m,
-    flowActive: !!find(activeFlows, f => m.flowId === f.id)
-  })), 'iofogUuid')
-  const activeMsvcs = activeAgents.reduce((res, a) => res.concat(get(msvcsPerAgent, a.uuid, []).filter(m => !!find(activeFlows, f => f.id === m.flowId)) || []), [])
+  let mergedApplications = [
+    ...newController.applications,
+    ...newController?.systemApplications,
+  ];
+  const reducedApplications = mergedApplications.reduce(
+    (acc, a) => {
+      acc.byId[a.id] = a;
+      acc.byName[a.name] = a;
+      return acc;
+    },
+    {
+      byId: {},
+      byName: {},
+    },
+  );
+  const activeFlows = newController.applications.filter(
+    (f) => f.isActivated === true,
+  );
+  const activeAgents = newController.agents.filter(
+    (a) => a.daemonStatus === "RUNNING",
+  );
+  const msvcsPerAgent = groupBy(
+    newController.microservices.map((m) => ({
+      ...m,
+      flowActive: !!find(activeFlows, (f) => m.flowId === f.id),
+    })),
+    "iofogUuid",
+  );
+  const activeMsvcs = activeAgents.reduce(
+    (res, a) =>
+      res.concat(
+        get(msvcsPerAgent, a.uuid, []).filter(
+          (m) => !!find(activeFlows, (f) => f.id === m.flowId),
+        ) || [],
+      ),
+    [],
+  );
 
   if (!state.agent || !state.agent.uuid) {
-    state.agent = newController.agents[0] || {}
+    state.agent = newController.agents[0] || {};
   }
-  
-  const systemApplications = newController?.systemApplications
+
+  const systemApplications = newController?.systemApplications;
 
   return {
     ...state,
@@ -98,81 +126,86 @@ const updateData = (state, newController) => {
     msvcsPerAgent,
     reducedAgents,
     reducedApplications,
-    systemApplications
-  }
-}
+    systemApplications,
+  };
+};
 
 const reducer = (state, action) => {
   switch (action.type) {
     case actions.UPDATE:
-      return updateData(state, action.data)
+      return updateData(state, action.data);
     default:
-      return state
+      return state;
   }
-}
+};
 
-export const DataProvider = ({
-  children
-}) => {
-  const { request, refresh } = useController()
-  const [state, dispatch] = React.useReducer(reducer, initState)
-  const [loading, setLoading] = React.useState(true)
-  const timeout = +refresh || 3000
-  const [error, setError] = React.useState(false)
-  const { keycloak, initialized } = useAuth()
+export const DataProvider = ({ children }) => {
+  const { request, refresh } = useController();
+  const [state, dispatch] = React.useReducer(reducer, initState);
+  const [loading, setLoading] = React.useState(true);
+  const timeout = +refresh || 3000;
+  const [error, setError] = React.useState(false);
+  const { keycloak, initialized } = useAuth();
 
   const update = async () => {
     // Only update if we're initialized or not using auth
     if (!keycloak || initialized) {
       // List fogs
-      let agents = []
+      let agents = [];
       try {
-        agents = await AgentManager.listAgents(request)()
+        agents = await AgentManager.listAgents(request)();
       } catch (e) {
-        setError(e)
-        return
+        setError(e);
+        return;
       }
 
       // List applications
-      let applications = []
+      let applications = [];
       try {
-        applications = await ApplicationManager.listApplications(request)()
+        applications = await ApplicationManager.listApplications(request)();
       } catch (e) {
-        setError(e)
-        return
+        setError(e);
+        return;
       }
 
-      let systemApplications = []
+      let systemApplications = [];
       try {
-        systemApplications = await ApplicationManager.listSystemApplications(request)()
+        systemApplications =
+          await ApplicationManager.listSystemApplications(request)();
       } catch (e) {
-        setError(e)
-        return
+        setError(e);
+        return;
       }
 
-      let microservices = []
+      let microservices = [];
       for (const application of applications) {
         // We need this to get microservice details like Status
-        const microservicesResponse = await request(`/api/v3/microservices?application=${application.name}`)
+        const microservicesResponse = await request(
+          `/api/v3/microservices?application=${application.name}`,
+        );
         if (!microservicesResponse?.ok) {
-          setError({ message: microservicesResponse?.statusText || "" })
-          return
+          setError({ message: microservicesResponse?.statusText || "" });
+          return;
         }
-        const newMicroservices = (await microservicesResponse.json()).microservices
-        microservices = microservices.concat(newMicroservices)
-        application.microservices = newMicroservices
+        const newMicroservices = (await microservicesResponse.json())
+          .microservices;
+        microservices = microservices.concat(newMicroservices);
+        application.microservices = newMicroservices;
       }
       if (error) {
-        setError(false)
+        setError(false);
       }
-      dispatch({ type: actions.UPDATE, data: { agents, applications, microservices, systemApplications } })
+      dispatch({
+        type: actions.UPDATE,
+        data: { agents, applications, microservices, systemApplications },
+      });
       if (loading) {
-        setLoading(false)
+        setLoading(false);
       }
     }
-  }
+  };
 
-  useRecursiveTimeout(update, timeout)
+  useRecursiveTimeout(update, timeout);
 
   return (
     <DataContext.Provider
@@ -183,10 +216,10 @@ export const DataProvider = ({
         refreshData: update,
         deleteAgent: AgentManager.deleteAgent(request),
         deleteApplication: ApplicationManager.deleteApplication(request),
-        toggleApplication: ApplicationManager.toggleApplication(request)
+        toggleApplication: ApplicationManager.toggleApplication(request),
       }}
     >
       {children}
     </DataContext.Provider>
-  )
-}
+  );
+};

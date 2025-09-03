@@ -1,23 +1,23 @@
 import CssBaseline from "@material-ui/core/CssBaseline";
-import { HTML5Backend } from 'react-dnd-html5-backend'
-import { DndProvider } from 'react-dnd'
-import React, { useEffect } from 'react'
-import { ControllerProvider } from './ControllerProvider'
-import { DataProvider } from './providers/Data'
-import Layout from './Layout'
-import './App.scss'
+import { HTML5Backend } from "react-dnd-html5-backend";
+import { DndProvider } from "react-dnd";
+import React, { useEffect } from "react";
+import { ControllerProvider } from "./ControllerProvider";
+import { DataProvider } from "./providers/Data";
+import Layout from "./Layout";
+import "./App.scss";
 
 import FeedbackContext from "./Utils/FeedbackContext";
 import ThemeContext from "./Theme/ThemeProvider";
 import { ConfigProvider } from "./providers/Config";
-import './styles/tailwind.css';
-import { KeycloakAuthProvider } from './auth'
+import "./styles/tailwind.css";
+import { KeycloakAuthProvider } from "./auth";
+import "immutable";
 
 function App() {
-
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('code') || urlParams.get('state')) {
+    if (urlParams.get("code") || urlParams.get("state")) {
       const cleanUrl = window.location.origin + window.location.hash;
       window.history.replaceState({}, document.title, cleanUrl);
     }
@@ -40,7 +40,7 @@ function App() {
         </DndProvider>
       </ThemeContext>
     </KeycloakAuthProvider>
-  )
+  );
 }
 
-export default App
+export default App;

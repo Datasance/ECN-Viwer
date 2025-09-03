@@ -1,6 +1,6 @@
-import { Dialog, Transition } from '@headlessui/react';
-import React, { Fragment } from 'react';
-import CloseOutlinedIcon from '@material-ui/icons/CloseOutlined';
+import { Dialog, Transition } from "@headlessui/react";
+import React, { Fragment } from "react";
+import CloseOutlinedIcon from "@material-ui/icons/CloseOutlined";
 
 type CustomActionModalProps = {
   open: boolean;
@@ -17,15 +17,19 @@ const CustomActionModal = ({
   open,
   onConfirm,
   onCancel,
-  cancelLabel = 'Cancel',
-  confirmLabel = 'Close Anyway',
+  cancelLabel = "Cancel",
+  confirmLabel = "Close Anyway",
   confirmColor,
   child,
-  title
+  title,
 }: CustomActionModalProps) => {
   return (
     <Transition show={open} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onCancel || (() => {})}>
+      <Dialog
+        as="div"
+        className="relative z-50"
+        onClose={onCancel || (() => {})}
+      >
         {/* Background */}
         <Transition.Child
           as={Fragment}
@@ -51,11 +55,14 @@ const CustomActionModal = ({
             leaveTo="scale-95 opacity-0"
           >
             <Dialog.Panel className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded bg-white text-black shadow-xl p-6 relative">
-              
               {/* Title & Close Icon */}
               {(title || onCancel) && (
                 <div className="flex justify-between items-start mb-4">
-                  {title && <Dialog.Title className="text-xl font-semibold">{title}</Dialog.Title>}
+                  {title && (
+                    <Dialog.Title className="text-xl font-semibold">
+                      {title}
+                    </Dialog.Title>
+                  )}
                   {onCancel && (
                     <button
                       onClick={onCancel}
@@ -68,9 +75,7 @@ const CustomActionModal = ({
               )}
 
               {/* Content */}
-              <div className="mb-6">
-                {child}
-              </div>
+              <div className="mb-6">{child}</div>
 
               {/* Footer Buttons */}
               {(onCancel || onConfirm) && (
@@ -86,9 +91,11 @@ const CustomActionModal = ({
                   {onConfirm && (
                     <button
                       onClick={onConfirm}
-                      className={`px-4 py-2 ${confirmColor
-                        ? `bg-${confirmColor}-600 hover:bg-${confirmColor}-700`
-                        : "bg-red-600 hover:bg-red-700"} text-white rounded`}
+                      className={`px-4 py-2 ${
+                        confirmColor
+                          ? `bg-${confirmColor}-600 hover:bg-${confirmColor}-700`
+                          : "bg-red-600 hover:bg-red-700"
+                      } text-white rounded`}
                     >
                       {confirmLabel}
                     </button>

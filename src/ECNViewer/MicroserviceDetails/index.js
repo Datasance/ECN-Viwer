@@ -39,7 +39,7 @@ import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/mode-yaml";
 import yaml from "js-yaml";
 import { API_VERSIONS } from "../../Utils/constants";
-import { parseMicroservice } from '../../Utils/ApplicationParser'
+import { parseMicroservice } from "../../Utils/ApplicationParser";
 
 const useStyles = makeStyles((theme) => ({
   ...getSharedStyle(theme),
@@ -68,7 +68,7 @@ export default function MicroserviceDetails({
   microservice: selectedMicroservice,
   selectApplication,
   selectAgent,
-  back
+  back,
 }) {
   const { data } = useData();
   const classes = useStyles();
@@ -81,18 +81,25 @@ export default function MicroserviceDetails({
   const isMediumScreen = useMediaQuery("(min-width: 768px)");
   const [openRebootAgentDialog, setOpenRebootAgentDialog] =
     React.useState(false);
-  const { microservices, reducedAgents, reducedApplications, systemApplications } = data;
+  const {
+    microservices,
+    reducedAgents,
+    reducedApplications,
+    systemApplications,
+  } = data;
   const microservice =
     (microservices || []).find((a) => selectedMicroservice.uuid === a.uuid) ||
     selectedMicroservice; // Get live updates from data
   const agent = reducedAgents.byUUID[microservice.iofogUuid];
 
-  const [editorIsChanged, setEditorIsChanged] = React.useState(false)
-  const [openChangeYamlMicroserviceDialog, setOpenChangeYamlMicroserviceDialog] =
-    React.useState(false);
-  const [copyText, setcopyText] = React.useState("Copy All")
-  const [editorDataChanged, setEditorDataChanged] = React.useState(false)
-  const [fileParsing, setFileParsing] = React.useState(false)
+  const [editorIsChanged, setEditorIsChanged] = React.useState(false);
+  const [
+    openChangeYamlMicroserviceDialog,
+    setOpenChangeYamlMicroserviceDialog,
+  ] = React.useState(false);
+  const [copyText, setcopyText] = React.useState("Copy All");
+  const [editorDataChanged, setEditorDataChanged] = React.useState(false);
+  const [fileParsing, setFileParsing] = React.useState(false);
 
   const _getMicroserviceImage = (m) => {
     if (!agent) {
@@ -108,27 +115,38 @@ export default function MicroserviceDetails({
   const env = microservice.env.filter(
     (e) =>
       lget(e, "key", "").toLowerCase().includes(envFilter) ||
-      lget(e, "value", "").toString().toLowerCase().includes(envFilter)
+      lget(e, "value", "").toString().toLowerCase().includes(envFilter),
   );
   if (!env.length > 0) {
     env.push({});
   }
-  const volumes = reducedApplications.byName[microservice.application].microservices.find((a) => selectedMicroservice.uuid === a.uuid).volumeMappings.filter(
-    (vm) =>
-      lget(vm, "hostDestination", "").toLowerCase().includes(volumeFilter) ||
-      lget(vm, "containerDestination", "")
-        .toLowerCase()
-        .includes(volumeFilter) ||
-      lget(vm, "accessMode", "").toLowerCase().includes(volumeFilter) ||
-      lget(vm, "type", "").toLowerCase().includes(volumeFilter)
-  );
+  const volumes = reducedApplications.byName[
+    microservice.application
+  ].microservices
+    .find((a) => selectedMicroservice.uuid === a.uuid)
+    .volumeMappings.filter(
+      (vm) =>
+        lget(vm, "hostDestination", "").toLowerCase().includes(volumeFilter) ||
+        lget(vm, "containerDestination", "")
+          .toLowerCase()
+          .includes(volumeFilter) ||
+        lget(vm, "accessMode", "").toLowerCase().includes(volumeFilter) ||
+        lget(vm, "type", "").toLowerCase().includes(volumeFilter),
+    );
 
-  const ports = reducedApplications.byName[microservice.application].microservices.find((a) => selectedMicroservice.uuid === a.uuid).ports.length > 0 ? reducedApplications.byName[microservice.application].microservices.find((a) => selectedMicroservice.uuid === a.uuid).ports : [];
+  const ports =
+    reducedApplications.byName[microservice.application].microservices.find(
+      (a) => selectedMicroservice.uuid === a.uuid,
+    ).ports.length > 0
+      ? reducedApplications.byName[microservice.application].microservices.find(
+          (a) => selectedMicroservice.uuid === a.uuid,
+        ).ports
+      : [];
   const extraHosts = microservice.extraHosts.filter(
     (e) =>
       lget(e, "name", "").toLowerCase().includes(hostFilter) ||
       lget(e, "value", "").toLowerCase().includes(hostFilter) ||
-      lget(e, "address", "").toLowerCase().includes(hostFilter)
+      lget(e, "address", "").toLowerCase().includes(hostFilter),
   );
   if (!extraHosts.length > 0) {
     extraHosts.push({});
@@ -202,13 +220,13 @@ export default function MicroserviceDetails({
     if (selectedPortObject !== undefined) {
       try {
         const res = await request(
-          `/api/v3/microservices/${systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application) ? `system/`:""}${selectedMicroservice.uuid}`,
+          `/api/v3/microservices/${systemApplications.length > 0 && systemApplications.some((x) => x.name === selectedMicroservice.application) ? `system/` : ""}${selectedMicroservice.uuid}`,
           {
             method: "DELETE",
             headers: {
               "content-type": "application/json",
             },
-          }
+          },
         );
         if (!res.ok) {
           pushFeedback({ message: res.statusText, type: "error" });
@@ -227,14 +245,14 @@ export default function MicroserviceDetails({
   async function addPortFunction() {
     try {
       const res = await request(
-        `/api/v3/microservices/${systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application) ? `system/`:""}${selectedMicroservice.uuid}/port-mapping`,
+        `/api/v3/microservices/${systemApplications.length > 0 && systemApplications.some((x) => x.name === selectedMicroservice.application) ? `system/` : ""}${selectedMicroservice.uuid}/port-mapping`,
         {
           method: "POST",
           headers: {
             "content-type": "application/json",
           },
           body: JSON.stringify(PortManipulatedData?.updated_src),
-        }
+        },
       );
       if (!res.ok) {
         pushFeedback({ message: res.statusText, type: "error" });
@@ -252,13 +270,13 @@ export default function MicroserviceDetails({
     if (selectedPortObject !== undefined) {
       try {
         const res = await request(
-          `/api/v3/microservices/${systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application) ? `system/`:""}${selectedMicroservice.uuid}/port-mapping/${selectedPortObject?.internal}`,
+          `/api/v3/microservices/${systemApplications.length > 0 && systemApplications.some((x) => x.name === selectedMicroservice.application) ? `system/` : ""}${selectedMicroservice.uuid}/port-mapping/${selectedPortObject?.internal}`,
           {
             method: "DELETE",
             headers: {
               "content-type": "application/json",
             },
-          }
+          },
         );
         if (!res.ok) {
           pushFeedback({ message: res.statusText, type: "error" });
@@ -273,10 +291,9 @@ export default function MicroserviceDetails({
   }
 
   async function addVolumeMappingFunction() {
-    
     try {
       const res = await request(
-        `/api/v3/microservices/${systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application) ? `system/`:""}${selectedMicroservice.uuid}/volume-mapping`,
+        `/api/v3/microservices/${systemApplications.length > 0 && systemApplications.some((x) => x.name === selectedMicroservice.application) ? `system/` : ""}${selectedMicroservice.uuid}/volume-mapping`,
         {
           method: "POST",
           headers: {
@@ -285,9 +302,9 @@ export default function MicroserviceDetails({
           body: JSON.stringify(
             VolumeMappingManipulatedData?.updated_src !== undefined
               ? VolumeMappingManipulatedData?.updated_src
-              : newVolumeMappingArray
+              : newVolumeMappingArray,
           ),
-        }
+        },
       );
       if (!res.ok) {
         pushFeedback({ message: res.statusText, type: "error" });
@@ -305,19 +322,19 @@ export default function MicroserviceDetails({
     if (selectedVolumeMappingObject?.id !== undefined) {
       try {
         const res = await request(
-          `/api/v3/microservices/${systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application) ? `system/`:""}${selectedMicroservice.uuid}/volume-mapping/${selectedVolumeMappingObject?.id}`,
+          `/api/v3/microservices/${systemApplications.length > 0 && systemApplications.some((x) => x.name === selectedMicroservice.application) ? `system/` : ""}${selectedMicroservice.uuid}/volume-mapping/${selectedVolumeMappingObject?.id}`,
           {
             method: "DELETE",
             headers: {
               "content-type": "application/json",
             },
-          }
+          },
         );
         if (!res.ok) {
           pushFeedback({ message: res.statusText, type: "error" });
         } else {
           pushFeedback({ message: "Controller Updated", type: "success" });
-          setOpenDeleteVolumeMappingDialog(false)
+          setOpenDeleteVolumeMappingDialog(false);
         }
       } catch (e) {
         pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -326,12 +343,12 @@ export default function MicroserviceDetails({
   }
 
   function unsecuredCopyFunction(textToCopy) {
-    const textarea = document.createElement('textarea');
+    const textarea = document.createElement("textarea");
     textarea.value = textToCopy;
 
     // Move the textarea outside the viewport to make it invisible
-    textarea.style.position = 'absolute';
-    textarea.style.left = '-99999999px';
+    textarea.style.position = "absolute";
+    textarea.style.left = "-99999999px";
 
     document.body.prepend(textarea);
 
@@ -339,7 +356,7 @@ export default function MicroserviceDetails({
     textarea.select();
 
     try {
-      document.execCommand('copy');
+      document.execCommand("copy");
     } catch (err) {
       console.log(err);
     } finally {
@@ -347,7 +364,6 @@ export default function MicroserviceDetails({
     }
     setcopyText("Copy All");
   }
-
 
   const _getApplicationYAMLFromJSON = (app) => {
     return {
@@ -360,7 +376,7 @@ export default function MicroserviceDetails({
         uuid: app.uuid,
         name: app.name,
         agent: {
-            name: agent?.name,
+          name: agent?.name,
         },
         images: app.images.reduce(
           (acc, image) => {
@@ -377,7 +393,7 @@ export default function MicroserviceDetails({
           {
             registry: app.registryId,
             catalogItemId: app.catalogItemId,
-          }
+          },
         ),
         container: {
           annotations: JSON.parse(app?.annotations),
@@ -402,9 +418,7 @@ export default function MicroserviceDetails({
           }),
           ports: app.ports.map((p) => {
             if (p.host) {
-              p.host = (
-                reducedAgents.byUUID[p.host] || { name: p.host }
-              ).name;
+              p.host = (reducedAgents.byUUID[p.host] || { name: p.host }).name;
             }
             return p;
           }),
@@ -420,91 +434,99 @@ export default function MicroserviceDetails({
         config: JSON.parse(app?.config),
         application: app?.application,
         rebuild: app?.rebuild,
-      }
+      },
     };
   };
 
   const yamlDump = React.useMemo(
     () => yaml.dump(_getApplicationYAMLFromJSON(microservice)),
-    [microservice]
+    [microservice],
   );
 
   const parseMicroserviceFile = async (doc) => {
     if (API_VERSIONS.indexOf(doc.apiVersion) === -1) {
-      return [{}, `Invalid API Version ${doc.apiVersion}, current version is ${API_VERSIONS.slice(-1)[0]}`]
+      return [
+        {},
+        `Invalid API Version ${doc.apiVersion}, current version is ${API_VERSIONS.slice(-1)[0]}`,
+      ];
     }
-    if (doc.kind !== 'Microservice') {
-      return [{}, `Invalid kind ${doc.kind}`]
+    if (doc.kind !== "Microservice") {
+      return [{}, `Invalid kind ${doc.kind}`];
     }
     if (!doc.metadata || !doc.spec) {
-      return [{}, 'Invalid YAML format']
+      return [{}, "Invalid YAML format"];
     }
-    let tempObject = await parseMicroservice(doc.spec)
+    let tempObject = await parseMicroservice(doc.spec);
     const microserviceData = {
-      name: lget(doc, 'metadata.name', undefined),
+      name: lget(doc, "metadata.name", undefined),
       ...tempObject,
-    }
-    return [microserviceData]
-  }
+    };
+    return [microserviceData];
+  };
 
   async function yamlChangesSave(item) {
-    setFileParsing(true)
+    setFileParsing(true);
     if (item) {
       try {
-        const doc = yaml.load(item)
-        const [microserviceData, err] = await parseMicroserviceFile(doc)
+        const doc = yaml.load(item);
+        const [microserviceData, err] = await parseMicroserviceFile(doc);
         if (err) {
-          setFileParsing(false)
+          setFileParsing(false);
           setOpenChangeYamlMicroserviceDialog(false);
-          return pushFeedback({ message: err, type: 'error' })
+          return pushFeedback({ message: err, type: "error" });
         }
-        const newMicroservice = microserviceData
-        const res = await deployMicroservice(newMicroservice)
+        const newMicroservice = microserviceData;
+        const res = await deployMicroservice(newMicroservice);
         if (!res.ok) {
           try {
-            const error = await res.json()
-            pushFeedback({ message: error.message, type: 'error' })
-            setFileParsing(false)
+            const error = await res.json();
+            pushFeedback({ message: error.message, type: "error" });
+            setFileParsing(false);
             setOpenChangeYamlMicroserviceDialog(false);
           } catch (e) {
-            pushFeedback({ message: res.statusText, type: 'error' })
-            setFileParsing(false)
+            pushFeedback({ message: res.statusText, type: "error" });
+            setFileParsing(false);
             setOpenChangeYamlMicroserviceDialog(false);
           }
         } else {
-          pushFeedback({ message: 'Microservice updated!', type: 'success' })
-          setFileParsing(false)
+          pushFeedback({ message: "Microservice updated!", type: "success" });
+          setFileParsing(false);
           setOpenChangeYamlMicroserviceDialog(false);
         }
       } catch (e) {
-        pushFeedback({ message: e.message, type: 'error' })
-        setFileParsing(false)
+        pushFeedback({ message: e.message, type: "error" });
+        setFileParsing(false);
         setOpenChangeYamlMicroserviceDialog(false);
       }
     }
   }
 
   const deployMicroservice = async (microservice) => {
-    
-    let isSystem = systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application)
-    const url = `/api/v3/microservices/${isSystem ? `system/`:""}${`${selectedMicroservice.uuid}`}`
+    let isSystem =
+      systemApplications.length > 0 &&
+      systemApplications.some(
+        (x) => x.name === selectedMicroservice.application,
+      );
+    const url = `/api/v3/microservices/${isSystem ? `system/` : ""}${`${selectedMicroservice.uuid}`}`;
     try {
       const res = await request(url, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: {
-          'content-type': 'application/json'
+          "content-type": "application/json",
         },
-        body: JSON.stringify(microservice)
-      })
-      return res
+        body: JSON.stringify(microservice),
+      });
+      return res;
     } catch (e) {
-      pushFeedback({ message: e.message, type: 'error' })
+      pushFeedback({ message: e.message, type: "error" });
     }
-  }
-  
+  };
 
   const rebootActions = (
-    <div className={classes.actions} style={{ minWidth: "unset", marginRight: "0.3rem" }}>
+    <div
+      className={classes.actions}
+      style={{ minWidth: "unset", marginRight: "0.3rem" }}
+    >
       <icons.ReplayIcon
         onClick={() => setOpenRebootAgentDialog(true)}
         className={classes.action}
@@ -515,15 +537,19 @@ export default function MicroserviceDetails({
 
   async function rebootAgent() {
     try {
-      let isSystem = systemApplications.length > 0 && systemApplications.some(x=>x.name === selectedMicroservice.application)
+      let isSystem =
+        systemApplications.length > 0 &&
+        systemApplications.some(
+          (x) => x.name === selectedMicroservice.application,
+        );
       const res = await request(
-        `/api/v3/microservices/${isSystem ? `system/`:""}${selectedMicroservice.uuid}/rebuild`,
+        `/api/v3/microservices/${isSystem ? `system/` : ""}${selectedMicroservice.uuid}/rebuild`,
         {
           method: "PATCH",
           headers: {
             "content-type": "application/json",
           },
-        }
+        },
       );
       if (!res.ok) {
         pushFeedback({ message: res.statusText, type: "error" });
@@ -537,8 +563,6 @@ export default function MicroserviceDetails({
       setOpenRebootAgentDialog(false);
     }
   }
-
-
 
   return (
     <>
@@ -665,10 +689,10 @@ export default function MicroserviceDetails({
           <div className={classes.subSection}>
             <span className={classes.subTitle}>Memory Usage</span>
             <span className={classes.text}>{`${prettyBytes(
-              microservice.status.memoryUsage || 0 * MiBFactor
+              microservice.status.memoryUsage || 0 * MiBFactor,
             )} / ${prettyBytes(agent.systemAvailableMemory || 0)} (${(
               (microservice.status.memoryUsage / agent.systemAvailableMemory) *
-              100 || 0
+                100 || 0
             ).toFixed(2)}%)`}</span>
           </div>
         </div>
@@ -740,44 +764,44 @@ export default function MicroserviceDetails({
             <TableBody>
               {ports.length > 0
                 ? ports.map((p) => (
-                  <TableRow
-                    key={p.external}
-                    hover
-                    classes={{ hover: classes.tableRowHover }}
-                  >
-                    <TableCell component="th" scope="row">
-                      {p.internal}
-                    </TableCell>
-                    <TableCell>{p.external}</TableCell>
-                    <TableCell>
-                      {p.protocol
-                        ? p.protocol === "udp"
-                          ? p.protocol
-                          : "tcp"
-                        : ""}
-                    </TableCell>
-                    <TableCell>
-                      <a
-                        className={classes.link}
-                        href={p.public?.links?.join(",")}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {p.public?.links?.join(",")}
-                      </a>
-                    </TableCell>
-                    <TableCell>
-                      <icons.DeleteIcon
-                        onClick={() => {
-                          setselectedPortObject(p);
-                          setOpenDeletePortDialog(true);
-                        }}
-                        className={classes.action}
-                        title="Delete application"
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))
+                    <TableRow
+                      key={p.external}
+                      hover
+                      classes={{ hover: classes.tableRowHover }}
+                    >
+                      <TableCell component="th" scope="row">
+                        {p.internal}
+                      </TableCell>
+                      <TableCell>{p.external}</TableCell>
+                      <TableCell>
+                        {p.protocol
+                          ? p.protocol === "udp"
+                            ? p.protocol
+                            : "tcp"
+                          : ""}
+                      </TableCell>
+                      <TableCell>
+                        <a
+                          className={classes.link}
+                          href={p.public?.links?.join(",")}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {p.public?.links?.join(",")}
+                        </a>
+                      </TableCell>
+                      <TableCell>
+                        <icons.DeleteIcon
+                          onClick={() => {
+                            setselectedPortObject(p);
+                            setOpenDeletePortDialog(true);
+                          }}
+                          className={classes.action}
+                          title="Delete application"
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))
                 : null}
             </TableBody>
           </Table>
@@ -855,29 +879,29 @@ export default function MicroserviceDetails({
             <TableBody>
               {volumes?.length > 0
                 ? volumes?.map((p) => (
-                  <TableRow
-                    key={p.containerDestination}
-                    hover
-                    classes={{ hover: classes.tableRowHover }}
-                  >
-                    <TableCell component="th" scope="row">
-                      {p.hostDestination}
-                    </TableCell>
-                    <TableCell>{p.containerDestination}</TableCell>
-                    <TableCell>{p.accessMode}</TableCell>
-                    <TableCell>{p.type}</TableCell>
-                    <TableCell>
-                      <icons.DeleteIcon
-                        onClick={() => {
-                          setselectedVolumeMappingObject(p);
-                          setOpenDeleteVolumeMappingDialog(true);
-                        }}
-                        className={classes.action}
-                        title="Delete volume"
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))
+                    <TableRow
+                      key={p.containerDestination}
+                      hover
+                      classes={{ hover: classes.tableRowHover }}
+                    >
+                      <TableCell component="th" scope="row">
+                        {p.hostDestination}
+                      </TableCell>
+                      <TableCell>{p.containerDestination}</TableCell>
+                      <TableCell>{p.accessMode}</TableCell>
+                      <TableCell>{p.type}</TableCell>
+                      <TableCell>
+                        <icons.DeleteIcon
+                          onClick={() => {
+                            setselectedVolumeMappingObject(p);
+                            setOpenDeleteVolumeMappingDialog(true);
+                          }}
+                          className={classes.action}
+                          title="Delete volume"
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))
                 : null}
             </TableBody>
           </Table>
@@ -1029,21 +1053,25 @@ export default function MicroserviceDetails({
           </Typography>
 
           <div className={classes.container}>
-            {editorIsChanged ? <div className={classes.copyButton}>
-              <Button
-                onClick={() => {
-                  setOpenChangeYamlMicroserviceDialog(true);
-                }}
-              >
-                {`Save Changes`}
-              </Button>
-            </div> : null}
+            {editorIsChanged ? (
+              <div className={classes.copyButton}>
+                <Button
+                  onClick={() => {
+                    setOpenChangeYamlMicroserviceDialog(true);
+                  }}
+                >
+                  {`Save Changes`}
+                </Button>
+              </div>
+            ) : null}
             <div className={classes.copyButton}>
               <Button
                 autoFocus
                 onClick={() => {
                   setcopyText("Copied");
-                  unsecuredCopyFunction(!editorDataChanged ? yamlDump : editorDataChanged)
+                  unsecuredCopyFunction(
+                    !editorDataChanged ? yamlDump : editorDataChanged,
+                  );
                 }}
               >
                 {copyText}
@@ -1066,8 +1094,8 @@ export default function MicroserviceDetails({
             }}
             change
             onChange={function editorChanged(editor) {
-              setEditorIsChanged(true)
-              setEditorDataChanged(editor)
+              setEditorIsChanged(true);
+              setEditorDataChanged(editor);
             }}
           />
         </div>
@@ -1256,43 +1284,50 @@ export default function MicroserviceDetails({
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            {
-              fileParsing ?
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: "center" }}><CircularProgress color='primary' size={24} /></div>
-                :
-                <>
-                  <span>
-                    Updating a yaml file will update/reinstall/reconfigure <b>{microservice.name}</b>.
-                  </span>
-                  <br />
-                  <br />
-                  <span>Do you want to proceed ?</span>
-                </>
-            }
-
+            {fileParsing ? (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <CircularProgress color="primary" size={24} />
+              </div>
+            ) : (
+              <>
+                <span>
+                  Updating a yaml file will update/reinstall/reconfigure{" "}
+                  <b>{microservice.name}</b>.
+                </span>
+                <br />
+                <br />
+                <span>Do you want to proceed ?</span>
+              </>
+            )}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <>
-            {
-              fileParsing ? null :
-                <>
-                  <Button onClick={() => setOpenChangeYamlMicroserviceDialog(false)}>
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      yamlChangesSave(editorDataChanged)
-                    }}
-                    color="primary"
-                    autoFocus
-                  >
-                    Confirm
-                  </Button>
-                </>
-            }
+            {fileParsing ? null : (
+              <>
+                <Button
+                  onClick={() => setOpenChangeYamlMicroserviceDialog(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    yamlChangesSave(editorDataChanged);
+                  }}
+                  color="primary"
+                  autoFocus
+                >
+                  Confirm
+                </Button>
+              </>
+            )}
           </>
-
         </DialogActions>
       </Dialog>
       <Dialog
@@ -1301,7 +1336,9 @@ export default function MicroserviceDetails({
           setOpenRebootAgentDialog(false);
         }}
       >
-        <DialogTitle id="alert-dialog-title">Rebuild {selectedMicroservice.name}?</DialogTitle>
+        <DialogTitle id="alert-dialog-title">
+          Rebuild {selectedMicroservice.name}?
+        </DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
             <span>Do you want to rebuild your microservice</span>

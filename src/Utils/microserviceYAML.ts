@@ -1,4 +1,4 @@
-import yaml from 'js-yaml';
+import yaml from "js-yaml";
 
 interface Agent {
   uuid: string;
@@ -18,7 +18,7 @@ interface GetYAMLParams {
 export const getMicroserviceYAMLFromJSON = ({
   microservice,
   activeAgents = [],
-  reducedAgents = { byUUID: {} }
+  reducedAgents = { byUUID: {} },
 }: GetYAMLParams) => {
   if (!microservice) return {};
 
@@ -26,7 +26,7 @@ export const getMicroserviceYAMLFromJSON = ({
 
   try {
     parsedConfig =
-      typeof microservice?.config === 'string'
+      typeof microservice?.config === "string"
         ? JSON.parse(microservice.config)
         : microservice.config || {};
   } catch (e) {
@@ -44,7 +44,9 @@ export const getMicroserviceYAMLFromJSON = ({
       uuid: microservice.uuid,
       name: microservice.name,
       agent: {
-        name: activeAgents.find(agent => agent.uuid === microservice.iofogUuid)?.name,
+        name: activeAgents.find(
+          (agent) => agent.uuid === microservice.iofogUuid,
+        )?.name,
       },
       images: microservice.images.reduce(
         (acc: any, image: any) => {
@@ -61,16 +63,16 @@ export const getMicroserviceYAMLFromJSON = ({
         {
           registry: microservice.registryId,
           catalogItemId: microservice.catalogItemId,
-        }
+        },
       ),
       container: {
-        annotations: JSON.parse(microservice.annotations || '{}'),
+        annotations: JSON.parse(microservice.annotations || "{}"),
         rootHostAccess: microservice.rootHostAccess,
-        runAsUser: microservice?.runAsUser ?? '',
-        ipcMode: microservice?.ipcMode ?? '',
-        pidMode: microservice?.pidMode ?? '',
-        platform: microservice?.platform ?? '',
-        runtime: microservice?.runtime ?? '',
+        runAsUser: microservice?.runAsUser ?? "",
+        ipcMode: microservice?.ipcMode ?? "",
+        pidMode: microservice?.pidMode ?? "",
+        platform: microservice?.platform ?? "",
+        runtime: microservice?.runtime ?? "",
         cdiDevices: microservice?.cdiDevices ?? [],
         capAdd: microservice?.capAdd ?? [],
         capDrop: microservice?.capDrop ?? [],
@@ -99,8 +101,11 @@ export const getMicroserviceYAMLFromJSON = ({
           }
           return p;
         }),
-        cpuSetCpus: microservice?.cpuSetCpus ?? '',
-        ...(microservice?.memoryLimit !== undefined && microservice?.memoryLimit !== null && { memoryLimit: microservice.memoryLimit }),
+        cpuSetCpus: microservice?.cpuSetCpus ?? "",
+        ...(microservice?.memoryLimit !== undefined &&
+          microservice?.memoryLimit !== null && {
+            memoryLimit: microservice.memoryLimit,
+          }),
         commands: Array.isArray(microservice.cmd) ? [...microservice.cmd] : [],
         healthCheck: microservice?.healthCheck ?? {},
       },
@@ -112,7 +117,7 @@ export const getMicroserviceYAMLFromJSON = ({
       config: parsedConfig,
       application: microservice?.application,
       rebuild: microservice?.rebuild,
-    }
+    },
   };
 };
 

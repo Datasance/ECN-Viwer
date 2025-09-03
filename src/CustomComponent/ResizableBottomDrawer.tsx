@@ -1,7 +1,7 @@
-import React, { Fragment, useState, useRef, useEffect } from 'react';
-import { Dialog, Transition } from '@headlessui/react';
-import XMarkIcon from '@material-ui/icons/CloseOutlined';
-import UnsavedChangesModal from './UnsavedChangesModal';
+import React, { Fragment, useState, useRef, useEffect } from "react";
+import { Dialog, Transition } from "@headlessui/react";
+import XMarkIcon from "@material-ui/icons/CloseOutlined";
+import UnsavedChangesModal from "./UnsavedChangesModal";
 
 type ResizableBottomDrawerProps = {
   open: boolean;
@@ -25,10 +25,10 @@ const ResizableBottomDrawer = ({
   title,
   children,
   showUnsavedChangesModal = true,
-  unsavedModalTitle = 'Changes Not Saved',
-  unsavedModalMessage = 'Are you sure you want to exit? All unsaved changes will be lost.',
-  unsavedModalCancelLabel = 'Stay',
-  unsavedModalConfirmLabel = 'Exit Anyway',
+  unsavedModalTitle = "Changes Not Saved",
+  unsavedModalMessage = "Are you sure you want to exit? All unsaved changes will be lost.",
+  unsavedModalCancelLabel = "Stay",
+  unsavedModalConfirmLabel = "Exit Anyway",
 }: ResizableBottomDrawerProps) => {
   const [height, setHeight] = useState(300);
   const isResizing = useRef(false);
@@ -45,17 +45,20 @@ const ResizableBottomDrawer = ({
   const resize = (e: MouseEvent) => {
     if (isResizing.current) {
       const newHeight = window.innerHeight - e.clientY;
-      const clamped = Math.min(Math.max(newHeight, 200), window.innerHeight - 100);
+      const clamped = Math.min(
+        Math.max(newHeight, 200),
+        window.innerHeight - 100,
+      );
       setHeight(clamped);
     }
   };
 
   useEffect(() => {
-    window.addEventListener('mousemove', resize);
-    window.addEventListener('mouseup', stopResizing);
+    window.addEventListener("mousemove", resize);
+    window.addEventListener("mouseup", stopResizing);
     return () => {
-      window.removeEventListener('mousemove', resize);
-      window.removeEventListener('mouseup', stopResizing);
+      window.removeEventListener("mousemove", resize);
+      window.removeEventListener("mouseup", stopResizing);
     };
   }, []);
 
@@ -110,7 +113,7 @@ const ResizableBottomDrawer = ({
 
                   <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
                     <Dialog.Title className="text-lg font-medium">
-                      {title || 'Details'}
+                      {title || "Details"}
                     </Dialog.Title>
                     <div className="flex gap-2 items-center">
                       {isEdit && (

@@ -1,5 +1,12 @@
-import React, { createContext, useContext, ReactNode, FC, useEffect, useState } from 'react';
-import { AuthProvider as OidcProvider, useAuth } from 'react-oidc-context';
+import React, {
+  createContext,
+  useContext,
+  ReactNode,
+  FC,
+  useEffect,
+  useState,
+} from "react";
+import { AuthProvider as OidcProvider, useAuth } from "react-oidc-context";
 
 const controllerConfig = window.controllerConfig || {};
 
@@ -7,8 +14,8 @@ const oidcConfig = {
   authority: `${controllerConfig.keycloakURL!}realms/${controllerConfig.keycloakRealm!}`,
   client_id: controllerConfig.keycloakClientid,
   redirect_uri: window.location.origin,
-  response_type: 'code',
-  scope: 'openid profile email',
+  response_type: "code",
+  scope: "openid profile email",
   automaticSilentRenew: true,
   loadUserInfo: true,
   silent_redirect_uri: `${window.location.origin}/silent-renew.html`,
@@ -39,7 +46,6 @@ const KeycloakProviderContent: FC<{ children: ReactNode }> = ({ children }) => {
   }, [auth.isLoading, auth.isAuthenticated, auth]);
 
   useEffect(() => {
-
     const handleTokenExpired = () => {
       auth.signoutRedirect();
     };
@@ -51,7 +57,9 @@ const KeycloakProviderContent: FC<{ children: ReactNode }> = ({ children }) => {
     };
   }, [auth]);
 
-  const profile = auth?.user?.profile as { realm_access?: { roles?: string[] } } | undefined;
+  const profile = auth?.user?.profile as
+    | { realm_access?: { roles?: string[] } }
+    | undefined;
 
   const authValue: KeycloakAuthContextType = {
     keycloak: auth,
@@ -72,7 +80,9 @@ const KeycloakProviderContent: FC<{ children: ReactNode }> = ({ children }) => {
   );
 };
 
-export const KeycloakAuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
+export const KeycloakAuthProvider: FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   return (
     <OidcProvider {...oidcConfig}>
       <KeycloakProviderContent>{children}</KeycloakProviderContent>
@@ -83,7 +93,9 @@ export const KeycloakAuthProvider: FC<{ children: ReactNode }> = ({ children }) 
 export const useKeycloakAuth = (): KeycloakAuthContextType => {
   const context = useContext(KeycloakAuthContext);
   if (!context) {
-    throw new Error('useKeycloakAuth must be used within a KeycloakAuthProvider');
+    throw new Error(
+      "useKeycloakAuth must be used within a KeycloakAuthProvider",
+    );
   }
   return context;
 };

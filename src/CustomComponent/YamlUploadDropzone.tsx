@@ -1,5 +1,5 @@
-import React, { useCallback, useRef, useState } from 'react';
-import CloudUploadRounded from '@material-ui/icons/CloudUploadRounded';
+import React, { useCallback, useRef, useState } from "react";
+import CloudUploadRounded from "@material-ui/icons/CloudUploadRounded";
 
 type Props = {
   onUpload?: (file: File) => void;
@@ -13,15 +13,15 @@ const YamlUploadDropzone: React.FC<Props> = ({ onUpload }) => {
     (files: FileList | null) => {
       if (!files || files.length === 0) return;
       const file = files[0];
-      if (!file.name.endsWith('.yaml') && !file.name.endsWith('.yml')) {
-        alert('Only YAML files are allowed');
+      if (!file.name.endsWith(".yaml") && !file.name.endsWith(".yml")) {
+        alert("Only YAML files are allowed");
         return;
       }
       if (onUpload) {
         onUpload(file);
       }
     },
-    [onUpload]
+    [onUpload],
   );
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -41,7 +41,7 @@ const YamlUploadDropzone: React.FC<Props> = ({ onUpload }) => {
 
   const handleClick = () => {
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
       fileInputRef.current.click();
     }
   };
@@ -63,13 +63,14 @@ const YamlUploadDropzone: React.FC<Props> = ({ onUpload }) => {
         px-4 py-3 sm:py-2 sm:px-4
         cursor-pointer text-center
         transition-colors
-        ${isDragging ? 'border-blue-300 bg-blue-50' : 'border-gray-600 bg-gray-800'}
+        ${isDragging ? "border-blue-300 bg-blue-50" : "border-gray-600 bg-gray-800"}
       `}
     >
       <div className="flex flex-col sm:flex-row items-center gap-2 text-gray-400 text-sm text-center">
         <CloudUploadRounded fontSize="small" className="text-white" />
         <span className="text-white">
-          Drag YAML here or <span className="underline text-blue-300">upload</span>
+          Drag YAML here or{" "}
+          <span className="underline text-blue-300">upload</span>
         </span>
       </div>
       <input

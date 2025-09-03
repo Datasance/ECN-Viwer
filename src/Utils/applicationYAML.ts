@@ -1,4 +1,4 @@
-import yaml from 'js-yaml';
+import yaml from "js-yaml";
 
 interface Agent {
   uuid: string;
@@ -32,7 +32,9 @@ export const getApplicationYAMLFromJSON = ({
     let parsedConfig: any = {};
     try {
       parsedConfig =
-        typeof ms?.config === 'string' ? JSON.parse(ms.config) : ms.config || {};
+        typeof ms?.config === "string"
+          ? JSON.parse(ms.config)
+          : ms.config || {};
     } catch (e) {
       console.warn(`Failed to parse config for ${ms.name}:`, e);
       parsedConfig = ms.config;
@@ -44,7 +46,7 @@ export const getApplicationYAMLFromJSON = ({
         name:
           activeAgents.find((a) => a.uuid === ms.iofogUuid)?.name ??
           reducedAgents.byUUID[ms.iofogUuid]?.name ??
-          '__UNKNOWN__',
+          "__UNKNOWN__",
       },
       images: (ms.images || []).reduce(
         (acc: any, image: any) => {
@@ -61,14 +63,14 @@ export const getApplicationYAMLFromJSON = ({
         {
           registry: ms.registryId ?? null,
           catalogItemId: ms.catalogItemId ?? null,
-        }
+        },
       ),
       container: {
-        annotations: JSON.parse(ms.annotations || '{}'),
+        annotations: JSON.parse(ms.annotations || "{}"),
         rootHostAccess: ms.rootHostAccess ?? false,
         runAsUser: ms.runAsUser ?? null,
-        ipcMode: ms?.ipcMode ?? '',
-        pidMode: ms?.pidMode ?? '',
+        ipcMode: ms?.ipcMode ?? "",
+        pidMode: ms?.pidMode ?? "",
         platform: ms.platform ?? null,
         runtime: ms.runtime ?? null,
         cdiDevices: ms.cdiDevices ?? [],
@@ -81,10 +83,16 @@ export const getApplicationYAMLFromJSON = ({
         env: (ms.env || []).map((env: any) => {
           const { id, ...rest } = env;
           const cleanedEnv: any = { ...rest };
-          if (cleanedEnv.valueFromSecret === null || cleanedEnv.valueFromSecret === undefined) {
+          if (
+            cleanedEnv.valueFromSecret === null ||
+            cleanedEnv.valueFromSecret === undefined
+          ) {
             delete cleanedEnv.valueFromSecret;
           }
-          if (cleanedEnv.valueFromConfigMap === null || cleanedEnv.valueFromConfigMap === undefined) {
+          if (
+            cleanedEnv.valueFromConfigMap === null ||
+            cleanedEnv.valueFromConfigMap === undefined
+          ) {
             delete cleanedEnv.valueFromConfigMap;
           }
           return cleanedEnv;
@@ -100,8 +108,9 @@ export const getApplicationYAMLFromJSON = ({
           return p;
         }),
         commands: Array.isArray(ms.cmd) ? [...ms.cmd] : [],
-        cpuSetCpus: ms?.cpuSetCpus ?? '',
-        ...(ms?.memoryLimit !== undefined && ms?.memoryLimit !== null && { memoryLimit: ms.memoryLimit }),
+        cpuSetCpus: ms?.cpuSetCpus ?? "",
+        ...(ms?.memoryLimit !== undefined &&
+          ms?.memoryLimit !== null && { memoryLimit: ms.memoryLimit }),
         healthCheck: ms?.healthCheck ?? {},
       },
       schedule: ms?.schedule ?? 50,
@@ -120,8 +129,8 @@ export const getApplicationYAMLFromJSON = ({
   }));
 
   return {
-    apiVersion: 'datasance.com/v3',
-    kind: 'Application',
+    apiVersion: "datasance.com/v3",
+    kind: "Application",
     metadata: {
       name: application.name,
     },
@@ -132,7 +141,9 @@ export const getApplicationYAMLFromJSON = ({
   };
 };
 
-export const dumpApplicationYAML = (params: GetApplicationYAMLParams): string => {
+export const dumpApplicationYAML = (
+  params: GetApplicationYAMLParams,
+): string => {
   return yaml.dump(getApplicationYAMLFromJSON(params), {
     noRefs: true,
     lineWidth: 0,
