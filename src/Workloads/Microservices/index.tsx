@@ -639,7 +639,7 @@ function MicroservicesList() {
     {
       label: "Memory Usage",
       render: (row: any) =>
-        `${prettyBytes(row.status?.memoryUsage || 0 * MiBFactor)}`,
+        `${prettyBytes(row.status?.memoryUsage || 0)}`,
     },
     {
       label: "Ports",

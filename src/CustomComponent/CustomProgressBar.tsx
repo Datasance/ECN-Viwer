@@ -21,7 +21,7 @@ const CustomProgressBar = ({
   } else if (unit === "%") {
     displayValue = `${value?.toFixed(2)} % / ${max} %`;
   } else if (unit === "microservice") {
-    displayValue = `${prettyBytes((value || 0) * MiBFactor)} / ${prettyBytes(max)}`;
+    displayValue = `${prettyBytes(value || 0)} / ${prettyBytes(max)}`;
   }
 
   return (

@@ -401,7 +401,7 @@ function SystemMicroserviceList() {
       header: "Memory Usage",
       render: (row: any) => (
         <CustomProgressBar
-          value={row?.status?.memoryUsage}
+          value={(row?.status?.memoryUsage)}
           max={data.reducedAgents.byUUID[row?.iofogUuid]?.systemAvailableMemory}
           unit="microservice"
         />
@@ -643,7 +643,7 @@ function SystemMicroserviceList() {
     {
       label: "Memory Usage",
       render: (row: any) =>
-        `${prettyBytes(row.status?.memoryUsage || 0 * MiBFactor)}`,
+        `${prettyBytes(row.status?.memoryUsage || 0)}`,
     },
     {
       label: "Ports",
