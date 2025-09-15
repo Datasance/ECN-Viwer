@@ -23,6 +23,9 @@ import { StatusColor, StatusType } from "../../Utils/Enums/StatusColor";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "react-router-dom";
 import EditOutlinedIcon from "@material-ui/icons/EditOutlined";
+import CustomActionModal from "../../CustomComponent/CustomActionModal";
+import CustomSSHTerminal from "../../CustomComponent/CustomSSHTerminal";
+import { useAuth } from "react-oidc-context";
 
 function SystemMicroserviceList() {
   const { data } = useData();
@@ -57,6 +60,8 @@ function SystemMicroserviceList() {
   const [editorValues, setEditorValues] = React.useState<string>("");
   const [configData, setConfigData] = useState<any>();
   const [editorContent, setEditorContent] = useState<string>("");
+  const [showTerminalModal, setShowTerminalModal] = useState(false);
+  const auth = useAuth();
 
   useEffect(() => {
     if (microserviceId && flattenedMicroservices) {
@@ -68,7 +73,7 @@ function SystemMicroserviceList() {
         setIsOpen(true);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [microserviceId]);
 
   const handleRowClick = (row: any) => {
@@ -366,6 +371,33 @@ function SystemMicroserviceList() {
       setShowVolumeDeleteConfirmModal(true);
     }
   }, [selectedVolume]);
+
+
+  const enableExecAndOpenTerminal = async (
+    microserviceUuid: string,
+  ) => {
+    try {
+      const res = await request(
+        `/api/v3/microservices/system/${microserviceUuid}/exec`,
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+        },
+      );
+
+      if (!res.ok) {
+        pushFeedback?.({ message: res.statusText, type: "error" });
+        return;
+      }
+
+      pushFeedback?.({ message: "Exec enabled", type: "success" });
+      setShowTerminalModal(true);
+    } catch (err: any) {
+      pushFeedback?.({ message: err.message || "Exec enable failed", type: "error" });
+    }
+  };
 
   const columns = [
     {
@@ -1019,6 +1051,11 @@ function SystemMicroserviceList() {
         onRestart={() => setShowResetConfirmModal(true)}
         onDelete={() => setShowDeleteConfirmModal(true)}
         onEditYaml={handleEditYaml}
+        onTerminal={() =>
+          enableExecAndOpenTerminal(
+            selectedMs?.uuid!
+          )
+        }
         customWidth={750}
       />
       <ResizableBottomDrawer
@@ -1095,6 +1132,30 @@ function SystemMicroserviceList() {
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
       />
+      
+      
+      
+      <ResizableBottomDrawer
+        open={showTerminalModal}
+        isEdit={editorIsChanged}
+        onClose={() => {
+          setShowTerminalModal(false);
+        }}
+        onSave={() => null}
+        title={`SSH Console for ${selectedMs?.name}`}
+      >
+            <CustomSSHTerminal
+              socketUrl={`wss://${(() => {
+                if (!window.controllerConfig?.url) {
+                  return `${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/microservices/exec/${selectedMs?.uuid}`;
+                }
+                const u = new URL(window.controllerConfig.url);
+                return `${u.host}/api/v3/microservices/system/exec/${selectedMs?.uuid}`;
+              })()}`}
+              authToken={auth?.user?.access_token}
+              className="h-full w-full"
+            />
+      </ResizableBottomDrawer>
     </div>
   );
 }

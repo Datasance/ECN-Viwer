@@ -13,6 +13,8 @@ import { ConfigProvider } from "./providers/Config";
 import "./styles/tailwind.css";
 import { KeycloakAuthProvider } from "./auth";
 import "immutable";
+import "xterm/css/xterm.css";
+
 
 function App() {
   useEffect(() => {
