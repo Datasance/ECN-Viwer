@@ -161,38 +161,41 @@ const ExecSessionTerminal: React.FC<ExecSessionTerminalProps> = ({
             clearInterval(pingIntervalRef.current);
         }
         
-        // Send ping via control message every 30 seconds
+        // Send keep-alive messages every 30 seconds
+        // Note: Browser WebSocket API doesn't expose native ping frames directly
+        // We'll use a lightweight keep-alive approach that works with the server
         pingIntervalRef.current = setInterval(() => {
             if (ws.readyState === WebSocket.OPEN) {
                 try {
-                    // Send ping as control message
-                    const pingMsg: Message = {
+                    // Send a lightweight keep-alive message
+                    // The server should respond to keep the connection alive
+                    const keepAliveMsg: Message = {
                         type: MessageTypeControl,
-                        data: new TextEncoder().encode("ping"),
+                        data: new TextEncoder().encode("keepalive"),
                         microserviceUuid: sessionRef.current.microserviceUuid,
                         execId: sessionRef.current.execId,
                         timestamp: Date.now(),
                     };
                     
-                    const encodedPing = msgpack.encode(pingMsg);
-                    ws.send(encodedPing);
+                    const encodedKeepAlive = msgpack.encode(keepAliveMsg);
+                    ws.send(encodedKeepAlive);
                     
-                    // Set timeout for pong response (10 seconds)
+                    // Set timeout for response (10 seconds)
                     if (pongTimeoutRef.current) {
                         clearTimeout(pongTimeoutRef.current);
                     }
                     
                     pongTimeoutRef.current = setTimeout(() => {
-                        console.warn("Pong timeout - connection may be dead");
+                        console.warn("Keep-alive timeout - connection may be dead");
                         setConnectionStatus('error');
                         setStatusMessage('Connection timeout');
                         if (termRef.current) {
-                            termRef.current.writeln("\r\n\x1b[31m✗ Connection timeout - no pong received\x1b[0m");
+                            termRef.current.writeln("\r\n\x1b[31m✗ Connection timeout - no keep-alive response received\x1b[0m");
                         }
                         ws.close();
                     }, 10000);
                 } catch (error) {
-                    console.warn("Failed to send ping:", error);
+                    console.warn("Failed to send keep-alive:", error);
                 }
             }
         }, 30000); // 30 seconds
@@ -271,6 +274,7 @@ const ExecSessionTerminal: React.FC<ExecSessionTerminalProps> = ({
             startPingMechanism(ws);
         };
         ws.onmessage = (evt) => {
+            // Handle application messages
             if (evt.data instanceof ArrayBuffer) {
                 try {
                     const decoded = msgpack.decode(new Uint8Array(evt.data)) as Message;
@@ -284,26 +288,11 @@ const ExecSessionTerminal: React.FC<ExecSessionTerminalProps> = ({
                             break;
                             
                         case MessageTypeControl:
-                            // Control messages (like resize, ping/pong, etc.)
+                            // Control messages (like resize, keep-alive responses, etc.)
                             const controlData = new TextDecoder().decode(decoded.data);
                             
-                            if (controlData === "ping") {
-                                // Respond to ping with pong
-                                const pongMsg: Message = {
-                                    type: MessageTypeControl,
-                                    data: new TextEncoder().encode("pong"),
-                                    microserviceUuid: sessionRef.current.microserviceUuid,
-                                    execId: sessionRef.current.execId,
-                                    timestamp: Date.now(),
-                                };
-                                try {
-                                    const encodedPong = msgpack.encode(pongMsg);
-                                    ws.send(encodedPong);
-                                } catch (error) {
-                                    console.warn("Failed to send pong:", error);
-                                }
-                            } else if (controlData === "pong") {
-                                // Clear pong timeout on receiving pong
+                            if (controlData === "keepalive" || controlData === "pong") {
+                                // Clear keep-alive timeout on receiving response
                                 if (pongTimeoutRef.current) {
                                     clearTimeout(pongTimeoutRef.current);
                                     pongTimeoutRef.current = null;
@@ -319,7 +308,6 @@ const ExecSessionTerminal: React.FC<ExecSessionTerminalProps> = ({
                             if (decoded.execId) {
                                 // Store the exec ID for future messages
                                 sessionRef.current.execId = decoded.execId;
-                                console.log("Session activated with exec ID:", decoded.execId);
                             }
                             if (decoded.microserviceUuid) {
                                 sessionRef.current.microserviceUuid = decoded.microserviceUuid;
