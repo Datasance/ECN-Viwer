@@ -133,7 +133,7 @@ const ResizableBottomDrawer = ({
                     </div>
                   </div>
 
-                  <div className="p-4 space-y-4 overflow-y-auto flex-1">
+                  <div className="flex-1 overflow-hidden">
                     {children}
                   </div>
                 </Dialog.Panel>

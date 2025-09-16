@@ -16,6 +16,8 @@ import { getTextColor, MiBFactor, prettyBytes } from "../../ECNViewer/utils";
 import { StatusColor, StatusType } from "../../Utils/Enums/StatusColor";
 import { NavLink } from "react-router-dom";
 import { useLocation } from "react-router-dom";
+import ExecSessionTerminal from "../../CustomComponent/ExecSessionTerminal";
+import { useAuth } from "react-oidc-context";
 
 const formatDuration = (milliseconds: number): string => {
   if (!milliseconds || milliseconds <= 0) return "N/A";
@@ -55,9 +57,12 @@ function NodesList() {
   const [editorIsChanged, setEditorIsChanged] = React.useState(false);
   const [editorDataChanged, setEditorDataChanged] = React.useState<any>();
   const [yamlDump, setyamlDump] = useState<any>();
+  const [showTerminalModal, setShowTerminalModal] = useState(false);
+  const [debugMicroserviceUuid, setDebugMicroserviceUuid] = useState<string | null>(null);
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const agentId = params.get("agentId");
+  const auth = useAuth();
   const renderTags = (tags: any) => {
     if (!tags) return "N/A";
 
@@ -148,6 +153,93 @@ function NodesList() {
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  };
+
+  const findDebugMicroservice = (nodeUuid: string): string | null => {
+    const debugName = `debug-${nodeUuid}`;
+    
+    // Search in system applications for debug microservice
+    const systemApps = data?.systemApplications || [];
+    for (const app of systemApps) {
+      const microservices = app.microservices || [];
+      for (const ms of microservices) {
+        if (ms.name === debugName) {
+          return ms.uuid;
+        }
+      }
+    }
+    return null;
+  };
+
+  const waitForDebugMicroservice = async (nodeUuid: string, maxAttempts: number = 30): Promise<string | null> => {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const debugUuid = findDebugMicroservice(nodeUuid);
+      
+      if (debugUuid) {
+        // Check if the debug microservice is running
+        const systemApps = data?.systemApplications || [];
+        for (const app of systemApps) {
+          const microservices = app.microservices || [];
+          for (const ms of microservices) {
+            if (ms.uuid === debugUuid && ms.status?.status?.toLowerCase() === "running") {
+              return debugUuid;
+            }
+          }
+        }
+      }
+      
+      // Wait 2 seconds before next attempt
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+    
+    return null;
+  };
+
+  const enableExecAndOpenTerminal = async (nodeUuid: string) => {
+    try {
+      // Check if node is running
+      if (selectedNode?.daemonStatus?.toLowerCase() !== "running") {
+        pushFeedback?.({ message: "Node must be running to enable exec session", type: "error" });
+        return;
+      }
+
+      pushFeedback?.({ message: "Enabling exec session...", type: "info" });
+
+      // Send POST request to enable exec
+      const res = await request(
+        `/api/v3/iofog/${nodeUuid}/exec`,
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+        },
+      );
+
+      if (!res.ok) {
+        pushFeedback?.({ message: res.statusText, type: "error" });
+        return;
+      }
+
+      pushFeedback?.({ message: "Exec enabled, waiting for debug container...", type: "info" });
+
+      // Open terminal immediately to show waiting message
+      setShowTerminalModal(true);
+
+      // Wait for debug microservice to be running
+      const debugUuid = await waitForDebugMicroservice(nodeUuid);
+      
+      if (debugUuid) {
+        setDebugMicroserviceUuid(debugUuid);
+        pushFeedback?.({ message: "Debug container ready, connecting to terminal...", type: "success" });
+      } else {
+        pushFeedback?.({ message: "Timeout waiting for debug container to start", type: "error" });
+        setShowTerminalModal(false);
+      }
+    } catch (err: any) {
+      pushFeedback?.({ message: err.message || "Exec enable failed", type: "error" });
+      setShowTerminalModal(false);
     }
   };
 
@@ -1011,6 +1103,7 @@ function NodesList() {
         onDelete={() => setShowDeleteConfirmModal(true)}
         onClean={() => setShowCleanConfirmModal(true)}
         onEditYaml={handleEditYaml}
+        onTerminal={() => enableExecAndOpenTerminal(selectedNode?.uuid!)}
         customWidth={750}
       />
 
@@ -1081,6 +1174,29 @@ function NodesList() {
         cancelLabel={"Cancel"}
         confirmLabel={"Prune"}
       />
+      
+      <ResizableBottomDrawer
+        open={showTerminalModal}
+        isEdit={false}
+        onClose={() => setShowTerminalModal(false)}
+        onSave={() => null}
+        title={`Exec Session - ${selectedNode?.name}`}
+      >
+        <ExecSessionTerminal
+          socketUrl={`${(() => {
+            if (!window.controllerConfig?.url) {
+              return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/microservices/exec/${debugMicroserviceUuid}`;
+            }
+            const u = new URL(window.controllerConfig.url);
+            const protocol = u.protocol === 'https:' ? 'wss:' : 'ws:';
+            return `${protocol}//${u.host}/api/v3/microservices/exec/${debugMicroserviceUuid}`;
+          })()}`}
+          authToken={auth?.user?.access_token}
+          microserviceUuid={debugMicroserviceUuid || ""}
+          className="h-full w-full"
+          onClose={() => setShowTerminalModal(false)}
+        />
+      </ResizableBottomDrawer>
     </div>
   );
 }
