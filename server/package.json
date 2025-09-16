@@ -1,6 +1,6 @@
 {
   "name": "@datasance/ecn-viewer-server",
-  "version": "v1.1.1",
+  "version": "v1.1.2",
   "description": "Datasance ioFog Edge Cloud Network Viewer project  \\nCopyright (c) 2023 Datasance Teknoloji A.S.",
   "main": "./index.js",
   "author": "Alexandre de Wergifosse",
@@ -19,7 +19,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@datasance/ecn-viewer": "v1.1.1",
+    "@datasance/ecn-viewer": "v1.1.2",
     "express": "4.21.1",
     "express-http-proxy": "2.1.1",
     "external-ip": "2.1.1"
