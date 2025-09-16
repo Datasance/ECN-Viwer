@@ -335,15 +335,24 @@ const ExecSessionTerminal: React.FC<ExecSessionTerminalProps> = ({
         };
         ws.onclose = (evt) => {
             setConnectionStatus('disconnected');
-            const msg = formatWebSocketError(`close ${evt.code} ${evt.reason}`);
-            setStatusMessage(msg);
-            term.writeln(`\r\n\x1b[31m✗ Connection closed: ${msg}\x1b[0m`);
             
-            // Auto-close the drawer when session closes
-            if (onClose) {
-                setTimeout(() => {
-                    onClose();
-                }, 2000); // Give user 2 seconds to see the close message
+            if (evt.code === 1000) {
+                // Normal closure - user exited session successfully
+                setStatusMessage('Exec Session successfully closed');
+                term.writeln(`\r\n\x1b[32m✓ Exec Session successfully closed\x1b[0m`);
+                
+                // Auto-close the drawer when session closes normally
+                if (onClose) {
+                    setTimeout(() => {
+                        onClose();
+                    }, 2000); // Give user 2 seconds to see the success message
+                }
+            } else {
+                // Use existing error handling logic for other close codes
+                const msg = formatWebSocketError(`close ${evt.code} ${evt.reason}`);
+                setStatusMessage(msg);
+                term.writeln(`\r\n\x1b[31m✗ Connection closed: ${msg}\x1b[0m`);
+                // Don't auto-close on errors - let user see the error message
             }
         };
         ws.onerror = (evt: any) => {
