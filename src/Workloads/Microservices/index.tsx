@@ -23,6 +23,8 @@ import { StatusColor, StatusType } from "../../Utils/Enums/StatusColor";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "react-router-dom";
 import EditOutlinedIcon from "@material-ui/icons/EditOutlined";
+import ExecSessionTerminal from "../../CustomComponent/ExecSessionTerminal";
+import { useAuth } from "react-oidc-context";
 
 function MicroservicesList() {
   const { data } = useData();
@@ -58,6 +60,8 @@ function MicroservicesList() {
   const [editorValues, setEditorValues] = React.useState<string>("");
   const [configData, setConfigData] = useState<any>();
   const [editorContent, setEditorContent] = useState<string>("");
+  const [showTerminalModal, setShowTerminalModal] = useState(false);
+  const auth = useAuth();
 
   useEffect(() => {
     if (microserviceId && flattenedMicroservices) {
@@ -332,6 +336,51 @@ function MicroservicesList() {
       } catch (e: any) {
         pushFeedback({ message: e.message, type: "error" });
       }
+    }
+  };
+
+  const enableExecAndOpenTerminal = async (
+    microserviceUuid: string,
+  ) => {
+    try {
+      // Find the microservice to check its exec status
+      const microservice = flattenedMicroservices?.find((ms: any) => ms.uuid === microserviceUuid);
+      
+      if (!microservice) {
+        pushFeedback?.({ message: "Microservice not found", type: "error" });
+        return;
+      }
+
+      // Check exec status - only send POST request if status is "inactive"
+      const execStatus = microservice.execStatus?.status?.toLowerCase();
+      
+      if (execStatus === "inactive") {
+        const res = await request(
+          `/api/v3/microservices/${microserviceUuid}/exec`,
+          {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+            },
+          },
+        );
+
+        if (!res.ok) {
+          pushFeedback?.({ message: res.statusText, type: "error" });
+          return;
+        }
+
+        pushFeedback?.({ message: "Exec enabled", type: "success" });
+      } else if (execStatus === "active") {
+        pushFeedback?.({ message: "Exec session already active", type: "info" });
+      } else {
+        pushFeedback?.({ message: `Exec status: ${microservice.execStatus?.status}`, type: "info" });
+      }
+
+      // Open terminal regardless of exec status (in case it's already active)
+      setShowTerminalModal(true);
+    } catch (err: any) {
+      pushFeedback?.({ message: err.message || "Exec enable failed", type: "error" });
     }
   };
 
@@ -1015,6 +1064,11 @@ function MicroservicesList() {
         onRestart={() => setShowResetConfirmModal(true)}
         onDelete={() => setShowDeleteConfirmModal(true)}
         onEditYaml={handleEditYaml}
+        onTerminal={() =>
+          enableExecAndOpenTerminal(
+            selectedMs?.uuid!
+          )
+        }
         customWidth={750}
       />
       <ResizableBottomDrawer
@@ -1091,6 +1145,29 @@ function MicroservicesList() {
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
       />
+      
+      <ResizableBottomDrawer
+        open={showTerminalModal}
+        isEdit={false}
+        onClose={() => setShowTerminalModal(false)}
+        onSave={() => null}
+        title={`Exec Session - ${selectedMs?.name}`}
+      >
+        <ExecSessionTerminal
+          socketUrl={`${(() => {
+            if (!window.controllerConfig?.url) {
+              return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/microservices/exec/${selectedMs?.uuid}`;
+            }
+            const u = new URL(window.controllerConfig.url);
+            const protocol = u.protocol === 'https:' ? 'wss:' : 'ws:';
+            return `${protocol}//${u.host}/api/v3/microservices/exec/${selectedMs?.uuid}`;
+          })()}`}
+          authToken={auth?.user?.access_token}
+          microserviceUuid={selectedMs?.uuid}
+          className="h-full w-full"
+          onClose={() => setShowTerminalModal(false)}
+        />
+      </ResizableBottomDrawer>
     </div>
   );
 }
