@@ -1,6 +1,9 @@
 import React, { Fragment, useState, useRef, useEffect } from "react";
-import { Dialog, Transition } from "@headlessui/react";
+import { Transition } from "@headlessui/react";
 import XMarkIcon from "@material-ui/icons/CloseOutlined";
+import MinimizeIcon from "@material-ui/icons/Minimize";
+import MaximizeIcon from "@material-ui/icons/CheckBoxOutlineBlank";
+
 import UnsavedChangesModal from "./UnsavedChangesModal";
 
 type ResizableBottomDrawerProps = {
@@ -31,11 +34,13 @@ const ResizableBottomDrawer = ({
   unsavedModalConfirmLabel = "Exit Anyway",
 }: ResizableBottomDrawerProps) => {
   const [height, setHeight] = useState(300);
+  const [lastHeight, setLastHeight] = useState(300);
+  const [minimized, setMinimized] = useState(false);
   const isResizing = useRef(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const startResizing = () => {
-    isResizing.current = true;
+    if (!minimized) isResizing.current = true;
   };
 
   const stopResizing = () => {
@@ -47,9 +52,10 @@ const ResizableBottomDrawer = ({
       const newHeight = window.innerHeight - e.clientY;
       const clamped = Math.min(
         Math.max(newHeight, 200),
-        window.innerHeight - 100,
+        window.innerHeight - 100
       );
       setHeight(clamped);
+      setLastHeight(clamped);
     }
   };
 
@@ -75,72 +81,80 @@ const ResizableBottomDrawer = ({
     onClose();
   };
 
+  const toggleMinimize = () => {
+    if (minimized) {
+      setHeight(lastHeight);
+      setMinimized(false);
+    } else {
+      setLastHeight(height);
+      setHeight(40);
+      setMinimized(true);
+    }
+  };
+
   return (
     <>
       <Transition show={open} as={Fragment}>
-        <Dialog as="div" className="relative z-50" onClose={handleCloseClick}>
+        <div className="fixed inset-0 z-50 pointer-events-none">
           <Transition.Child
             as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
+            enter="transform transition ease-in-out duration-300"
+            enterFrom="translate-y-full"
+            enterTo="translate-y-0"
+            leave="transform transition ease-in-out duration-200"
+            leaveFrom="translate-y-0"
+            leaveTo="translate-y-full"
           >
-            <div className="fixed inset-0 bg-black bg-opacity-50" />
-          </Transition.Child>
+            <div
+              className="absolute bottom-0 w-full bg-gray-800 text-white rounded-t-xl shadow-xl flex flex-col pointer-events-auto"
+              style={{ height }}
+            >
+              {!minimized && (
+                <div
+                  className="w-full h-3 cursor-row-resize bg-gray-700 rounded-t-xl"
+                  onMouseDown={startResizing}
+                />
+              )}
 
-          <div className="fixed inset-0 overflow-hidden">
-            <div className="absolute inset-0 flex items-end justify-center">
-              <Transition.Child
-                as={Fragment}
-                enter="transform transition ease-in-out duration-300"
-                enterFrom="translate-y-full"
-                enterTo="translate-y-0"
-                leave="transform transition ease-in-out duration-200"
-                leaveFrom="translate-y-0"
-                leaveTo="translate-y-full"
-              >
-                <Dialog.Panel
-                  className="w-full bg-gray-800 text-white rounded-t-xl shadow-xl flex flex-col"
-                  style={{ height }}
-                >
-                  <div
-                    className="w-full h-3 cursor-row-resize bg-gray-700 rounded-t-xl"
-                    onMouseDown={startResizing}
-                  />
+              <div className="flex items-center justify-between px-4 py-2 border-b border-gray-700">
+                <h2 className="text-lg font-medium truncate">
+                  {title || "Details"}
+                </h2>
+                <div className="flex gap-2 items-center">
+                  {isEdit && !minimized && (
+                    <button
+                      onClick={onSave}
+                      className="text-white bg-[#e76467ff] hover:bg-gray-700 rounded p-1 px-3"
+                    >
+                      Save Changes
+                    </button>
+                  )}
+                  <button
+                    onClick={toggleMinimize}
+                    className="flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 rounded p-1 w-6 h-6"
+                  >
+                    {minimized ? (
+                      <MaximizeIcon fontSize="small" />
+                    ) : (
+                      <MinimizeIcon fontSize="small" />
+                    )}
+                  </button>
 
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
-                    <Dialog.Title className="text-lg font-medium">
-                      {title || "Details"}
-                    </Dialog.Title>
-                    <div className="flex gap-2 items-center">
-                      {isEdit && (
-                        <button
-                          onClick={onSave}
-                          className="text-white bg-[#e76467ff] hover:bg-gray-700 rounded p-1 px-3"
-                        >
-                          Save Changes
-                        </button>
-                      )}
-                      <button
-                        onClick={handleCloseClick}
-                        className="text-gray-400 hover:text-white hover:bg-gray-700 rounded p-1"
-                      >
-                        <XMarkIcon fontSize="small" />
-                      </button>
-                    </div>
-                  </div>
+                  <button
+                    onClick={handleCloseClick}
+                    className="text-gray-400 hover:text-white hover:bg-gray-700 rounded p-1"
+                  >
+                    <XMarkIcon fontSize="small" />
+                  </button>
+                </div>
+              </div>
 
-                  <div className="flex-1 overflow-hidden">
-                    {children}
-                  </div>
-                </Dialog.Panel>
-              </Transition.Child>
+              <div className={`${minimized ? "h-10 overflow-hidden" : "flex-1 overflow-hidden"}`}>
+                {children}
+              </div>
             </div>
-          </div>
-        </Dialog>
+          </Transition.Child>
+        </div>
       </Transition>
 
       {showUnsavedChangesModal && (

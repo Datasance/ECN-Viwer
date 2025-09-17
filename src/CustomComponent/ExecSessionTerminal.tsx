@@ -441,4 +441,4 @@ const ExecSessionTerminal: React.FC<ExecSessionTerminalProps> = ({
     );
 };
 
-export default ExecSessionTerminal;
+export default React.memo(ExecSessionTerminal);

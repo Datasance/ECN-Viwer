@@ -36,21 +36,21 @@ const Dashboard = () => {
       value: totalMicroservices,
       running: runningMicroservices,
       color: 'from-green-500 to-green-600',
-      icon: '⚙️'
+      icon: (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#fff" d="m9.25 22l-.4-3.2q-.325-.125-.612-.3t-.563-.375L4.7 19.375l-2.75-4.75l2.575-1.95Q4.5 12.5 4.5 12.338v-.675q0-.163.025-.338L1.95 9.375l2.75-4.75l2.975 1.25q.275-.2.575-.375t.6-.3l.4-3.2h5.5l.4 3.2q.325.125.613.3t.562.375l2.975-1.25l2.75 4.75l-2.575 1.95q.025.175.025.338v.674q0 .163-.05.338l2.575 1.95l-2.75 4.75l-2.95-1.25q-.275.2-.575.375t-.6.3l-.4 3.2zm2.8-6.5q1.45 0 2.475-1.025T15.55 12t-1.025-2.475T12.05 8.5q-1.475 0-2.488 1.025T8.55 12t1.013 2.475T12.05 15.5"/></svg>)
     },
     {
       title: 'System Microservices',
       value: totalSystemMicroservices,
       running: runningSystemMicroservices,
       color: 'from-purple-500 to-purple-600',
-      icon: '🔧'
+      icon: (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#fff" d="m22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9c-2-2-5-2.4-7.4-1.3L9 6L6 9L1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4"/></svg>)
     },
     {
       title: 'Overall Health',
       value: `${Math.round(((runningAgents + runningMicroservices + runningSystemMicroservices) / (totalAgents + totalMicroservices + totalSystemMicroservices)) * 100)}%`,
       running: null,
       color: 'from-emerald-500 to-emerald-600',
-      icon: '📊'
+      icon: (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#fff" d="M22 21H2V3h2v16h2v-9h4v9h2V6h4v13h2v-5h4z"/></svg>)
     }
   ]
 
@@ -81,11 +81,11 @@ const Dashboard = () => {
                 <div className='min-w-0 flex-1'>
                   <p className='text-white/80 text-xs sm:text-sm font-medium uppercase tracking-wide truncate'>{metric.title}</p>
                   <p className='text-2xl sm:text-3xl font-bold text-white mt-1 sm:mt-2'>{metric.value}</p>
-                  {metric.running !== null && (
+                  {metric.running !== null ? (
                     <p className='text-white/70 text-xs sm:text-sm mt-1'>
                       {metric.running} running
                     </p>
-                  )}
+                  ) : <p className='mt-5'></p>}
                 </div>
                 <div className='text-3xl sm:text-4xl opacity-80 flex-shrink-0 ml-2'>
                   {metric.icon}
