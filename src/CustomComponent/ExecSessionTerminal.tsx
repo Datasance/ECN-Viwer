@@ -414,7 +414,7 @@ const ExecSessionTerminal: React.FC<ExecSessionTerminalProps> = ({
             ws.close();
             term.dispose();
         };
-    }, [socketUrl, authToken]);
+    }, [socketUrl]);
 
     return (
         <div
