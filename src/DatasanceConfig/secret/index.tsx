@@ -5,7 +5,6 @@ import { FeedbackContext } from "../../Utils/FeedbackContext";
 import SlideOver from "../../CustomComponent/SlideOver";
 import CryptoTextBox from "../../CustomComponent/CustomCryptoTextBox";
 import { useLocation } from "react-router-dom";
-import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/ace";
 import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/mode-yaml";

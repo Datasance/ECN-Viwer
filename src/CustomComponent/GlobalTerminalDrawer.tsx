@@ -16,7 +16,6 @@ const GlobalTerminalDrawer = () => {
     updateYamlContent,
   } = useTerminal();
 
-  const activeSession = sessions.find(s => s.id === activeSessionId);
   const activeYamlSession = yamlSessions.find(s => s.id === activeSessionId);
 
   // Use refs to store stable tab components

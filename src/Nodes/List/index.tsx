@@ -7,11 +7,9 @@ import { formatDistanceToNow, format } from "date-fns";
 import { useController } from "../../ControllerProvider";
 import { useFeedback } from "../../Utils/FeedbackContext";
 import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
-import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/ace";
 import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/mode-yaml";
-import ResizableBottomDrawer from "../../CustomComponent/ResizableBottomDrawer";
 import yaml from "js-yaml";
 import { getTextColor, MiBFactor, prettyBytes } from "../../ECNViewer/utils";
 import { StatusColor, StatusType } from "../../Utils/Enums/StatusColor";
@@ -54,10 +52,7 @@ function NodesList() {
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [showCleanConfirmModal, setShowCleanConfirmModal] = useState(false);
-  const [isBottomDrawerOpen, setIsBottomDrawerOpen] = useState(false);
-  const [editorIsChanged, setEditorIsChanged] = React.useState(false);
   const [editorDataChanged, setEditorDataChanged] = React.useState<any>();
-  const [yamlDump, setyamlDump] = useState<any>();
   const { addTerminalSession, addYamlSession } = useTerminal();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
@@ -92,6 +87,7 @@ function NodesList() {
         setIsOpen(true);
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentId]);
 
   const handleRowClick = (row: any) => {
@@ -367,8 +363,6 @@ function NodesList() {
         throw new Error(res.statusText);
       } else {
         pushFeedback({ message: "Controller Updated", type: "success" });
-        setIsBottomDrawerOpen(false);
-        setEditorIsChanged(false);
         setEditorDataChanged(null);
         setIsOpen(false);
       }

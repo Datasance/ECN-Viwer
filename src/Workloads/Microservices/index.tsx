@@ -6,7 +6,6 @@ import SlideOver from "../../CustomComponent/SlideOver";
 import { formatDistanceToNow, format } from "date-fns";
 import { useController } from "../../ControllerProvider";
 import { useFeedback } from "../../Utils/FeedbackContext";
-import ResizableBottomDrawer from "../../CustomComponent/ResizableBottomDrawer";
 import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/ace";
 import "ace-builds/src-noconflict/theme-tomorrow";
@@ -19,7 +18,7 @@ import { API_VERSIONS } from "../../Utils/constants";
 import { parseMicroservice } from "../../Utils/ApplicationParser";
 import lget from "lodash/get";
 import CryptoTextBox from "../../CustomComponent/CustomCryptoTextBox";
-import { getTextColor, MiBFactor, prettyBytes } from "../../ECNViewer/utils";
+import { getTextColor, prettyBytes } from "../../ECNViewer/utils";
 import { StatusColor, StatusType } from "../../Utils/Enums/StatusColor";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "react-router-dom";
@@ -33,8 +32,6 @@ function MicroservicesList() {
   const { pushFeedback } = useFeedback();
   const [selectedMs, setSelectedMs] = useState<any | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [isBottomDrawerOpen, setIsBottomDrawerOpen] = useState(false);
-  const [editorIsChanged, setEditorIsChanged] = React.useState(false);
   const [editorDataChanged, setEditorDataChanged] = React.useState<any>();
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
@@ -333,8 +330,6 @@ function MicroservicesList() {
         }
       } else {
         pushFeedback({ message: "Microservice updated!", type: "success" });
-        setIsBottomDrawerOpen(false);
-        setEditorIsChanged(false);
         setEditorDataChanged(null);
       }
     } catch (e: any) {

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
@@ -152,9 +152,6 @@ const ExecSessionTerminal: React.FC<ExecSessionTerminalProps> = ({
     const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const pongTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const isInitializedRef = useRef<boolean>(false);
-    
-    const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('connecting');
-    const [statusMessage, setStatusMessage] = useState('Connecting...');
 
     const startPingMechanism = (ws: WebSocket) => {
         // Clear any existing ping interval
@@ -188,8 +185,6 @@ const ExecSessionTerminal: React.FC<ExecSessionTerminalProps> = ({
                     
                     pongTimeoutRef.current = setTimeout(() => {
                         console.warn("Keep-alive timeout - connection may be dead");
-                        setConnectionStatus('error');
-                        setStatusMessage('Connection timeout');
                         if (termRef.current) {
                             termRef.current.writeln("\r\n\x1b[31m✗ Connection timeout - no keep-alive response received\x1b[0m");
                         }
@@ -220,6 +215,7 @@ const ExecSessionTerminal: React.FC<ExecSessionTerminalProps> = ({
         }
         
         isInitializedRef.current = true;
+        const session = { ...sessionRef.current };
         
         const term = new Terminal({
             cursorBlink: true,
@@ -274,8 +270,6 @@ const ExecSessionTerminal: React.FC<ExecSessionTerminalProps> = ({
         wsRef.current = ws;
 
         ws.onopen = () => {
-            setConnectionStatus('connected');
-            setStatusMessage('Connected');
             term.writeln("\x1b[32m✓ Connected to Exec session\x1b[0m");
             
             // Start ping mechanism to keep connection alive
@@ -342,11 +336,9 @@ const ExecSessionTerminal: React.FC<ExecSessionTerminalProps> = ({
             }
         };
         ws.onclose = (evt) => {
-            setConnectionStatus('disconnected');
             
             if (evt.code === 1000) {
                 // Normal closure - user exited session successfully
-                setStatusMessage('Exec Session successfully closed');
                 term.writeln(`\r\n\x1b[32m✓ Exec Session successfully closed\x1b[0m`);
                 
                 // Don't auto-close the drawer when session closes normally
@@ -355,15 +347,12 @@ const ExecSessionTerminal: React.FC<ExecSessionTerminalProps> = ({
             } else {
                 // Use existing error handling logic for other close codes
                 const msg = formatWebSocketError(`close ${evt.code} ${evt.reason}`);
-                setStatusMessage(msg);
                 term.writeln(`\r\n\x1b[31m✗ Connection closed: ${msg}\x1b[0m`);
                 // Don't auto-close on errors - let user see the error message
             }
         };
         ws.onerror = (evt: any) => {
-            setConnectionStatus('error');
             const msg = formatWebSocketError(evt.message || "Connection error");
-            setStatusMessage(msg);
             term.writeln(`\r\n\x1b[31m✗ Connection error: ${msg}\x1b[0m`);
         };
 
@@ -404,8 +393,8 @@ const ExecSessionTerminal: React.FC<ExecSessionTerminalProps> = ({
                 const closeMsg: Message = {
                     type: MessageTypeClose,
                     data: new Uint8Array(0),
-                    microserviceUuid: sessionRef.current.microserviceUuid,
-                    execId: sessionRef.current.execId,
+                    microserviceUuid: session.microserviceUuid,
+                    execId: session.execId,
                     timestamp: Date.now(),
                 };
                 try {
@@ -420,6 +409,7 @@ const ExecSessionTerminal: React.FC<ExecSessionTerminalProps> = ({
             term.dispose();
             isInitializedRef.current = false;
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [socketUrl]);
 
     return (
