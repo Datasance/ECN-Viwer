@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
-import YamlEditorTab from './YamlEditorTab';
+import React, { useRef, useEffect, useState } from "react";
+import YamlEditorTab from "./YamlEditorTab";
 
 interface StableYamlTabProps {
   sessionId: string;
@@ -28,25 +28,22 @@ const StableYamlTab: React.FC<StableYamlTabProps> = ({
 
   if (!isReady) {
     return (
-      <div style={{ 
-        height: '100%', 
-        width: '100%', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        backgroundColor: '#1a1a1a'
-      }}>
+      <div
+        style={{
+          height: "100%",
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#1a1a1a",
+        }}
+      >
         <div className="text-gray-400">Starting YAML editor...</div>
       </div>
     );
   }
 
-  return (
-    <YamlEditorTab
-      content={content}
-      onChange={onChange}
-    />
-  );
+  return <YamlEditorTab content={content} onChange={onChange} />;
 };
 
 // Use a more strict memo comparison

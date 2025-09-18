@@ -1,8 +1,8 @@
-import React, { useMemo, useCallback, useRef } from 'react';
-import { useTerminal } from '../providers/Terminal/TerminalProvider';
-import ResizableBottomDrawer from './ResizableBottomDrawer';
-import StableTerminalTab from './StableTerminalTab';
-import StableYamlTab from './StableYamlTab';
+import React, { useMemo, useCallback, useRef } from "react";
+import { useTerminal } from "../providers/Terminal/TerminalProvider";
+import ResizableBottomDrawer from "./ResizableBottomDrawer";
+import StableTerminalTab from "./StableTerminalTab";
+import StableYamlTab from "./StableYamlTab";
 
 const GlobalTerminalDrawer = () => {
   const {
@@ -16,23 +16,26 @@ const GlobalTerminalDrawer = () => {
     updateYamlContent,
   } = useTerminal();
 
-  const activeYamlSession = yamlSessions.find(s => s.id === activeSessionId);
+  const activeYamlSession = yamlSessions.find((s) => s.id === activeSessionId);
 
   // Use refs to store stable tab components
   const terminalTabsRef = useRef(new Map());
   const yamlTabsRef = useRef(new Map());
 
   // Create stable callback functions
-  const handleRemoveSession = useCallback((sessionId: string) => {
-    removeSession(sessionId);
-  }, [removeSession]);
+  const handleRemoveSession = useCallback(
+    (sessionId: string) => {
+      removeSession(sessionId);
+    },
+    [removeSession],
+  );
 
   // Build tabs with useMemo to avoid unnecessary recreation
   const tabs = useMemo(() => {
     const allTabs: any[] = [];
 
     // Add terminal tabs
-    sessions.forEach(session => {
+    sessions.forEach((session) => {
       if (!terminalTabsRef.current.has(session.id)) {
         const terminalElement = (
           <StableTerminalTab
@@ -46,7 +49,7 @@ const GlobalTerminalDrawer = () => {
             }}
           />
         );
-        
+
         terminalTabsRef.current.set(session.id, {
           id: session.id,
           title: session.title,
@@ -61,7 +64,7 @@ const GlobalTerminalDrawer = () => {
     });
 
     // Add YAML tabs
-    yamlSessions.forEach(session => {
+    yamlSessions.forEach((session) => {
       if (!yamlTabsRef.current.has(session.id)) {
         const yamlElement = (
           <StableYamlTab
@@ -70,10 +73,10 @@ const GlobalTerminalDrawer = () => {
             onChange={(value) => updateYamlContent(session.id, value, true)}
           />
         );
-        
+
         yamlTabsRef.current.set(session.id, {
           id: session.id,
-          title: session.title + (session.isDirty ? ' *' : ''),
+          title: session.title + (session.isDirty ? " *" : ""),
           content: yamlElement,
         });
       }
@@ -84,7 +87,10 @@ const GlobalTerminalDrawer = () => {
     });
 
     // Clean up removed sessions
-    const currentSessionIds = new Set([...sessions.map(s => s.id), ...yamlSessions.map(s => s.id)]);
+    const currentSessionIds = new Set([
+      ...sessions.map((s) => s.id),
+      ...yamlSessions.map((s) => s.id),
+    ]);
     terminalTabsRef.current.forEach((_, sessionId) => {
       if (!currentSessionIds.has(sessionId)) {
         terminalTabsRef.current.delete(sessionId);
@@ -103,9 +109,12 @@ const GlobalTerminalDrawer = () => {
     setActiveSession(tabId);
   };
 
-  const handleTabClose = useCallback((tabId: string) => {
-    removeSession(tabId);
-  }, [removeSession]);
+  const handleTabClose = useCallback(
+    (tabId: string) => {
+      removeSession(tabId);
+    },
+    [removeSession],
+  );
 
   const handleClose = () => {
     closeDrawer();
@@ -115,9 +124,13 @@ const GlobalTerminalDrawer = () => {
     if (activeYamlSession) {
       try {
         await activeYamlSession.onSave(activeYamlSession.content);
-        updateYamlContent(activeYamlSession.id, activeYamlSession.content, false);
+        updateYamlContent(
+          activeYamlSession.id,
+          activeYamlSession.content,
+          false,
+        );
       } catch (error) {
-        console.error('Failed to save YAML:', error);
+        console.error("Failed to save YAML:", error);
       }
     }
   };
@@ -130,13 +143,12 @@ const GlobalTerminalDrawer = () => {
       if (terminalTab) {
         return terminalTab.content;
       }
-      
+
       // Try YAML tabs
       const yamlTab = yamlTabsRef.current.get(activeSessionId);
       if (yamlTab) {
         return yamlTab.content;
       }
-      
     }
     return null;
   }, [activeSessionId]); // Only depend on activeSessionId, not the session objects

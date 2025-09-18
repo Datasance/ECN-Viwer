@@ -101,7 +101,7 @@ function Secrets() {
       data: selectedSecret?.data,
     };
     const yamlString = yaml.dump(yamlObj, { noRefs: true, indent: 2 });
-    
+
     // Add YAML editor session to global state
     addYamlSession({
       title: `YAML: ${selectedSecret?.name}`,

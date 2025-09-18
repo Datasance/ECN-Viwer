@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
-import ExecSessionTerminal from './ExecSessionTerminal';
+import React, { useRef, useEffect, useState } from "react";
+import ExecSessionTerminal from "./ExecSessionTerminal";
 
 interface StableTerminalTabProps {
   sessionId: string;
@@ -35,20 +35,21 @@ const StableTerminalTab: React.FC<StableTerminalTabProps> = ({
 
   // Add cleanup effect to track unmounting
   useEffect(() => {
-    return () => {
-    };
+    return () => {};
   }, [sessionId]);
 
   if (!isReady) {
     return (
-      <div style={{ 
-        height: '100%', 
-        width: '100%', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        backgroundColor: '#0d1117'
-      }}>
+      <div
+        style={{
+          height: "100%",
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#0d1117",
+        }}
+      >
         <div className="text-gray-400">Starting terminal session...</div>
       </div>
     );

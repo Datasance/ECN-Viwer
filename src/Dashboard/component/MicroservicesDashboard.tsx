@@ -18,7 +18,9 @@ const MicroservicesDashboard: React.FC<MicroservicesDashboardProps> = ({
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
-            <p className="text-gray-400 text-lg">Loading microservices data...</p>
+            <p className="text-gray-400 text-lg">
+              Loading microservices data...
+            </p>
           </div>
         </div>
       </div>
@@ -35,9 +37,23 @@ const MicroservicesDashboard: React.FC<MicroservicesDashboardProps> = ({
       <div className="bg-white/5 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 shadow-2xl w-full h-full flex flex-col">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="text-6xl mb-4"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#fff" d="m9.25 22l-.4-3.2q-.325-.125-.612-.3t-.563-.375L4.7 19.375l-2.75-4.75l2.575-1.95Q4.5 12.5 4.5 12.338v-.675q0-.163.025-.338L1.95 9.375l2.75-4.75l2.975 1.25q.275-.2.575-.375t.6-.3l.4-3.2h5.5l.4 3.2q.325.125.613.3t.562.375l2.975-1.25l2.75 4.75l-2.575 1.95q.025.175.025.338v.674q0 .163-.05.338l2.575 1.95l-2.75 4.75l-2.95-1.25q-.275.2-.575.375t-.6.3l-.4 3.2zm2.8-6.5q1.45 0 2.475-1.025T15.55 12t-1.025-2.475T12.05 8.5q-1.475 0-2.488 1.025T8.55 12t1.013 2.475T12.05 15.5"/></svg></div>
+            <div className="text-6xl mb-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  fill="#fff"
+                  d="m9.25 22l-.4-3.2q-.325-.125-.612-.3t-.563-.375L4.7 19.375l-2.75-4.75l2.575-1.95Q4.5 12.5 4.5 12.338v-.675q0-.163.025-.338L1.95 9.375l2.75-4.75l2.975 1.25q.275-.2.575-.375t.6-.3l.4-3.2h5.5l.4 3.2q.325.125.613.3t.562.375l2.975-1.25l2.75 4.75l-2.575 1.95q.025.175.025.338v.674q0 .163-.05.338l2.575 1.95l-2.75 4.75l-2.95-1.25q-.275.2-.575.375t-.6.3l-.4 3.2zm2.8-6.5q1.45 0 2.475-1.025T15.55 12t-1.025-2.475T12.05 8.5q-1.475 0-2.488 1.025T8.55 12t1.013 2.475T12.05 15.5"
+                />
+              </svg>
+            </div>
             <p className="text-gray-400 text-lg mb-2">No microservices found</p>
-            <p className="text-gray-500 text-sm">No microservice data is currently available</p>
+            <p className="text-gray-500 text-sm">
+              No microservice data is currently available
+            </p>
           </div>
         </div>
       </div>
@@ -56,28 +72,29 @@ const MicroservicesDashboard: React.FC<MicroservicesDashboardProps> = ({
 
   const donutLabels = Object.keys(statusGroups);
   const donutColors = donutLabels.map(
-    (status) => StatusColor[status as keyof typeof StatusColor] || StatusColor.UNKNOWN,
+    (status) =>
+      StatusColor[status as keyof typeof StatusColor] || StatusColor.UNKNOWN,
   );
 
   const donutChartOptions = {
-    chart: { 
-      type: "donut" as const, 
+    chart: {
+      type: "donut" as const,
       background: "transparent",
       fontFamily: "Inter, system-ui, sans-serif",
-      toolbar: { show: false }
+      toolbar: { show: false },
     },
     labels: donutLabels,
     colors: donutColors,
-    dataLabels: { 
+    dataLabels: {
       enabled: true,
       style: {
         fontSize: "14px",
         fontWeight: "600",
-        colors: ["#ffffff"]
+        colors: ["#ffffff"],
       },
       formatter: function (val: string) {
-        return Math.round(parseFloat(val)) + "%"
-      }
+        return Math.round(parseFloat(val)) + "%";
+      },
     },
     plotOptions: {
       pie: {
@@ -92,12 +109,12 @@ const MicroservicesDashboard: React.FC<MicroservicesDashboardProps> = ({
               fontWeight: "600",
               color: "#ffffff",
               formatter: function () {
-                return totalMicroservices.toString()
-              }
-            }
-          }
-        }
-      }
+                return totalMicroservices.toString();
+              },
+            },
+          },
+        },
+      },
     },
     tooltip: {
       y: {
@@ -111,28 +128,28 @@ const MicroservicesDashboard: React.FC<MicroservicesDashboardProps> = ({
       },
       style: {
         fontSize: "14px",
-        fontFamily: "Inter, system-ui, sans-serif"
-      }
+        fontFamily: "Inter, system-ui, sans-serif",
+      },
     },
     legend: {
-      labels: { 
+      labels: {
         colors: "#e5e7eb",
         fontSize: "14px",
-        fontWeight: "500"
+        fontWeight: "500",
       },
       position: "bottom" as const,
       horizontalAlign: "center" as const,
       itemMargin: {
         horizontal: 20,
-        vertical: 5
-      }
+        vertical: 5,
+      },
     },
     theme: { mode: "dark" as const },
     stroke: {
       show: true,
       width: 2,
-      colors: ["#1f2937"]
-    }
+      colors: ["#1f2937"],
+    },
   };
   const donutChartSeries = donutLabels.map(
     (status) => statusGroups[status].length,
@@ -189,11 +206,11 @@ const MicroservicesDashboard: React.FC<MicroservicesDashboardProps> = ({
       animations: {
         enabled: true,
         easing: "easeinout" as const,
-        speed: 800
-      }
+        speed: 800,
+      },
     },
     dataLabels: { enabled: false },
-    fill: { 
+    fill: {
       opacity: 0.8,
       gradient: {
         enabled: true,
@@ -204,8 +221,8 @@ const MicroservicesDashboard: React.FC<MicroservicesDashboardProps> = ({
         inverseColors: false,
         opacityFrom: 0.8,
         opacityTo: 0.6,
-        stops: [0, 100]
-      }
+        stops: [0, 100],
+      },
     },
     colors: uniqueStatuses.map(
       (status) =>
@@ -215,7 +232,7 @@ const MicroservicesDashboard: React.FC<MicroservicesDashboardProps> = ({
       bubble: {
         minBubbleRadius: 6,
         maxBubbleRadius: 25,
-        zScaling: true
+        zScaling: true,
       },
     },
     tooltip: {
@@ -230,7 +247,10 @@ const MicroservicesDashboard: React.FC<MicroservicesDashboardProps> = ({
         if (!point)
           return '<div style="padding:12px; color:#fff; font-family: Inter, system-ui, sans-serif;">No data available</div>';
         const memoryPretty = prettyBytes(point.y * MiBFactor);
-        const statusColor = StatusColor[uniqueStatuses[seriesIndex] as keyof typeof StatusColor] || StatusColor.UNKNOWN;
+        const statusColor =
+          StatusColor[
+            uniqueStatuses[seriesIndex] as keyof typeof StatusColor
+          ] || StatusColor.UNKNOWN;
         return `
           <div style="padding:12px; color:#fff; font-family: Inter, system-ui, sans-serif; background: rgba(0,0,0,0.8); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
             <div style="font-weight: 600; font-size: 16px; margin-bottom: 8px; color: #f3f4f6;">${point.name}</div>
@@ -245,72 +265,72 @@ const MicroservicesDashboard: React.FC<MicroservicesDashboardProps> = ({
       min: -2,
       max: dynamicXMax,
       tickAmount: 5,
-      title: { 
-        text: "CPU Usage (%)", 
-        style: { 
+      title: {
+        text: "CPU Usage (%)",
+        style: {
           color: "#e5e7eb",
           fontSize: "14px",
-          fontWeight: "600"
-        }, 
-        offsetY: -10 
+          fontWeight: "600",
+        },
+        offsetY: -10,
       },
-      labels: { 
-        style: { 
+      labels: {
+        style: {
           colors: "#9ca3af",
           fontSize: "12px",
-          fontWeight: "500"
+          fontWeight: "500",
         },
-        formatter: (val: string) => val + "%"
+        formatter: (val: string) => val + "%",
       },
       axisBorder: {
         show: true,
-        color: "#374151"
+        color: "#374151",
       },
       axisTicks: {
         show: true,
-        color: "#374151"
-      }
+        color: "#374151",
+      },
     },
     yaxis: {
       min: 0,
       max: dynamicYMax,
       tickAmount: 5,
-      title: { 
-        text: "Memory Usage (MB)", 
-        style: { 
+      title: {
+        text: "Memory Usage (MB)",
+        style: {
           color: "#e5e7eb",
           fontSize: "14px",
-          fontWeight: "600"
-        } 
+          fontWeight: "600",
+        },
       },
       labels: {
-        style: { 
+        style: {
           colors: "#9ca3af",
           fontSize: "12px",
-          fontWeight: "500"
+          fontWeight: "500",
         },
         formatter: (val: number) => val.toFixed(0) + " MB",
       },
       axisBorder: {
         show: true,
-        color: "#374151"
+        color: "#374151",
       },
       axisTicks: {
         show: true,
-        color: "#374151"
-      }
+        color: "#374151",
+      },
     },
     legend: {
       show: true,
-      labels: { 
+      labels: {
         colors: "#e5e7eb",
         fontSize: "14px",
-        fontWeight: "500"
+        fontWeight: "500",
       },
       itemMargin: {
         horizontal: 15,
-        vertical: 5
-      }
+        vertical: 5,
+      },
     },
     theme: { mode: "dark" as const },
     grid: {
@@ -319,15 +339,15 @@ const MicroservicesDashboard: React.FC<MicroservicesDashboardProps> = ({
       strokeDashArray: 3,
       xaxis: {
         lines: {
-          show: true
-        }
+          show: true,
+        },
       },
       yaxis: {
         lines: {
-          show: true
-        }
-      }
-    }
+          show: true,
+        },
+      },
+    },
   };
 
   return (
@@ -336,30 +356,64 @@ const MicroservicesDashboard: React.FC<MicroservicesDashboardProps> = ({
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
-            <span className="text-white text-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#fff" d="m9.25 22l-.4-3.2q-.325-.125-.612-.3t-.563-.375L4.7 19.375l-2.75-4.75l2.575-1.95Q4.5 12.5 4.5 12.338v-.675q0-.163.025-.338L1.95 9.375l2.75-4.75l2.975 1.25q.275-.2.575-.375t.6-.3l.4-3.2h5.5l.4 3.2q.325.125.613.3t.562.375l2.975-1.25l2.75 4.75l-2.575 1.95q.025.175.025.338v.674q0 .163-.05.338l2.575 1.95l-2.75 4.75l-2.95-1.25q-.275.2-.575.375t-.6.3l-.4 3.2zm2.8-6.5q1.45 0 2.475-1.025T15.55 12t-1.025-2.475T12.05 8.5q-1.475 0-2.488 1.025T8.55 12t1.013 2.475T12.05 15.5"/></svg></span>
+            <span className="text-white text-lg">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  fill="#fff"
+                  d="m9.25 22l-.4-3.2q-.325-.125-.612-.3t-.563-.375L4.7 19.375l-2.75-4.75l2.575-1.95Q4.5 12.5 4.5 12.338v-.675q0-.163.025-.338L1.95 9.375l2.75-4.75l2.975 1.25q.275-.2.575-.375t.6-.3l.4-3.2h5.5l.4 3.2q.325.125.613.3t.562.375l2.975-1.25l2.75 4.75l-2.575 1.95q.025.175.025.338v.674q0 .163-.05.338l2.575 1.95l-2.75 4.75l-2.95-1.25q-.275.2-.575.375t-.6.3l-.4 3.2zm2.8-6.5q1.45 0 2.475-1.025T15.55 12t-1.025-2.475T12.05 8.5q-1.475 0-2.488 1.025T8.55 12t1.013 2.475T12.05 15.5"
+                />
+              </svg>
+            </span>
           </div>
           <div>
             <h1 className="text-2xl font-bold text-white">
               {`${title}${totalMicroservices !== 1 ? "s" : ""}`}
             </h1>
-            <p className="text-gray-400 text-sm">Application microservices monitoring</p>
+            <p className="text-gray-400 text-sm">
+              Application microservices monitoring
+            </p>
           </div>
         </div>
         <div className="text-right">
-          <div className="text-3xl font-bold text-white">{totalMicroservices}</div>
+          <div className="text-3xl font-bold text-white">
+            {totalMicroservices}
+          </div>
           <div className="text-sm text-gray-400">Total Services</div>
         </div>
       </div>
 
       {/* Status Summary */}
-      <div className={`grid gap-3 sm:gap-4 mb-4 sm:mb-6 ${donutLabels.length <= 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+      <div
+        className={`grid gap-3 sm:gap-4 mb-4 sm:mb-6 ${donutLabels.length <= 2 ? "grid-cols-2" : "grid-cols-3"}`}
+      >
         {donutLabels.map((status, index) => {
           const count = statusGroups[status].length;
-          const color = StatusColor[status as keyof typeof StatusColor] || StatusColor.UNKNOWN;
+          const color =
+            StatusColor[status as keyof typeof StatusColor] ||
+            StatusColor.UNKNOWN;
           return (
-            <div key={status} className="border rounded-lg p-3 sm:p-4" style={{ backgroundColor: `${color}20`, borderColor: `${color}30` }}>
-              <div className="text-xl sm:text-2xl font-bold" style={{ color: color }}>{count}</div>
-              <div className="text-xs sm:text-sm" style={{ color: color }}>{status}</div>
+            <div
+              key={status}
+              className="border rounded-lg p-3 sm:p-4"
+              style={{
+                backgroundColor: `${color}20`,
+                borderColor: `${color}30`,
+              }}
+            >
+              <div
+                className="text-xl sm:text-2xl font-bold"
+                style={{ color: color }}
+              >
+                {count}
+              </div>
+              <div className="text-xs sm:text-sm" style={{ color: color }}>
+                {status}
+              </div>
             </div>
           );
         })}
@@ -368,7 +422,9 @@ const MicroservicesDashboard: React.FC<MicroservicesDashboardProps> = ({
       <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-2 3xl:grid-cols-2 gap-6 sm:gap-8 xl:gap-10 2xl:gap-12 w-full flex-1">
         <div className="w-full">
           <div className="flex items-center justify-between mb-3 sm:mb-4">
-            <h2 className="text-white text-base sm:text-lg xl:text-xl 2xl:text-2xl font-semibold">Microservices Status Distribution</h2>
+            <h2 className="text-white text-base sm:text-lg xl:text-xl 2xl:text-2xl font-semibold">
+              Microservices Status Distribution
+            </h2>
             <div className="text-xs sm:text-sm text-gray-400">Real-time</div>
           </div>
           <div className="bg-gray-800/50 rounded-xl p-3 sm:p-4 border border-gray-700/50">
@@ -376,22 +432,38 @@ const MicroservicesDashboard: React.FC<MicroservicesDashboardProps> = ({
               options={donutChartOptions}
               series={donutChartSeries}
               type="donut"
-              height={window.innerWidth >= 1920 ? 350 : window.innerWidth >= 1536 ? 300 : 250}
+              height={
+                window.innerWidth >= 1920
+                  ? 350
+                  : window.innerWidth >= 1536
+                    ? 300
+                    : 250
+              }
               width="100%"
             />
           </div>
         </div>
         <div className="w-full">
           <div className="flex items-center justify-between mb-3 sm:mb-4">
-            <h2 className="text-white text-base sm:text-lg xl:text-xl 2xl:text-2xl font-semibold">Resource Utilization</h2>
-            <div className="text-xs sm:text-sm text-gray-400">CPU vs Memory</div>
+            <h2 className="text-white text-base sm:text-lg xl:text-xl 2xl:text-2xl font-semibold">
+              Resource Utilization
+            </h2>
+            <div className="text-xs sm:text-sm text-gray-400">
+              CPU vs Memory
+            </div>
           </div>
           <div className="bg-gray-800/50 rounded-xl p-3 sm:p-4 border border-gray-700/50">
             <ApexCharts
               options={bubbleChartOptions}
               series={bubbleSeries}
               type="bubble"
-              height={window.innerWidth >= 1920 ? 350 : window.innerWidth >= 1536 ? 300 : 250}
+              height={
+                window.innerWidth >= 1920
+                  ? 350
+                  : window.innerWidth >= 1536
+                    ? 300
+                    : 250
+              }
               width="100%"
             />
           </div>

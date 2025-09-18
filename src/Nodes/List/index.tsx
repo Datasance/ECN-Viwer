@@ -87,7 +87,7 @@ function NodesList() {
         setIsOpen(true);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentId]);
 
   const handleRowClick = (row: any) => {
@@ -154,7 +154,7 @@ function NodesList() {
 
   const findDebugMicroservice = (nodeUuid: string): string | null => {
     const debugName = `debug-${nodeUuid}`;
-    
+
     // Search in system applications for debug microservice
     const systemApps = data?.systemApplications || [];
     for (const app of systemApps) {
@@ -168,27 +168,33 @@ function NodesList() {
     return null;
   };
 
-  const waitForDebugMicroservice = async (nodeUuid: string, maxAttempts: number = 30): Promise<string | null> => {
+  const waitForDebugMicroservice = async (
+    nodeUuid: string,
+    maxAttempts: number = 30,
+  ): Promise<string | null> => {
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       const debugUuid = findDebugMicroservice(nodeUuid);
-      
+
       if (debugUuid) {
         // Check if the debug microservice is running
         const systemApps = data?.systemApplications || [];
         for (const app of systemApps) {
           const microservices = app.microservices || [];
           for (const ms of microservices) {
-            if (ms.uuid === debugUuid && ms.status?.status?.toLowerCase() === "running") {
+            if (
+              ms.uuid === debugUuid &&
+              ms.status?.status?.toLowerCase() === "running"
+            ) {
               return debugUuid;
             }
           }
         }
       }
-      
+
       // Wait 2 seconds before next attempt
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     }
-    
+
     return null;
   };
 
@@ -196,33 +202,36 @@ function NodesList() {
     try {
       // Check if node is running
       if (selectedNode?.daemonStatus?.toLowerCase() !== "running") {
-        pushFeedback?.({ message: "Node must be running to enable exec session", type: "error" });
+        pushFeedback?.({
+          message: "Node must be running to enable exec session",
+          type: "error",
+        });
         return;
       }
 
       pushFeedback?.({ message: "Enabling exec session...", type: "info" });
 
       // Send POST request to enable exec
-      const res = await request(
-        `/api/v3/iofog/${nodeUuid}/exec`,
-        {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-          },
+      const res = await request(`/api/v3/iofog/${nodeUuid}/exec`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
         },
-      );
+      });
 
       if (!res.ok) {
         pushFeedback?.({ message: res.statusText, type: "error" });
         return;
       }
 
-      pushFeedback?.({ message: "Exec enabled, waiting for debug container...", type: "info" });
+      pushFeedback?.({
+        message: "Exec enabled, waiting for debug container...",
+        type: "info",
+      });
 
       // Wait for debug microservice to be running
       const debugUuid = await waitForDebugMicroservice(nodeUuid);
-      
+
       if (debugUuid) {
         // Create socket URL
         const socketUrl = (() => {
@@ -230,7 +239,7 @@ function NodesList() {
             return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/microservices/exec/${debugUuid}`;
           }
           const u = new URL(window.controllerConfig.url);
-          const protocol = u.protocol === 'https:' ? 'wss:' : 'ws:';
+          const protocol = u.protocol === "https:" ? "wss:" : "ws:";
           return `${protocol}//${u.host}/api/v3/microservices/exec/${debugUuid}`;
         })();
 
@@ -242,12 +251,21 @@ function NodesList() {
           microserviceUuid: debugUuid,
         });
 
-        pushFeedback?.({ message: "Debug container ready, connecting to terminal...", type: "success" });
+        pushFeedback?.({
+          message: "Debug container ready, connecting to terminal...",
+          type: "success",
+        });
       } else {
-        pushFeedback?.({ message: "Timeout waiting for debug container to start", type: "error" });
+        pushFeedback?.({
+          message: "Timeout waiting for debug container to start",
+          type: "error",
+        });
       }
     } catch (err: any) {
-      pushFeedback?.({ message: err.message || "Exec enable failed", type: "error" });
+      pushFeedback?.({
+        message: err.message || "Exec enable failed",
+        type: "error",
+      });
     }
   };
 
@@ -309,7 +327,7 @@ function NodesList() {
     };
 
     const yamlString = yaml.dump(yamlDump, { noRefs: true, indent: 2 });
-    
+
     // Add YAML editor session to global state
     addYamlSession({
       title: `YAML: ${selectedNode?.name}`,
@@ -1154,7 +1172,6 @@ function NodesList() {
         cancelLabel={"Cancel"}
         confirmLabel={"Prune"}
       />
-      
     </div>
   );
 }

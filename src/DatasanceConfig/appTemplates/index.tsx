@@ -374,7 +374,7 @@ function AppTemplates() {
     };
 
     const yamlString = yaml.dump(yamlDump, { noRefs: true, indent: 2 });
-    
+
     // Add YAML editor session to global state
     addYamlSession({
       title: `YAML: ${selectedApplicationTemplate?.name}`,

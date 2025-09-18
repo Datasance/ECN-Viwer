@@ -71,7 +71,7 @@ function MicroservicesList() {
         setIsOpen(true);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [microserviceId]);
 
   const handleRowClick = (row: any) => {
@@ -338,13 +338,13 @@ function MicroservicesList() {
     }
   };
 
-  const enableExecAndOpenTerminal = async (
-    microserviceUuid: string,
-  ) => {
+  const enableExecAndOpenTerminal = async (microserviceUuid: string) => {
     try {
       // Find the microservice to check its exec status
-      const microservice = flattenedMicroservices?.find((ms: any) => ms.uuid === microserviceUuid);
-      
+      const microservice = flattenedMicroservices?.find(
+        (ms: any) => ms.uuid === microserviceUuid,
+      );
+
       if (!microservice) {
         pushFeedback?.({ message: "Microservice not found", type: "error" });
         return;
@@ -352,7 +352,7 @@ function MicroservicesList() {
 
       // Check exec status - only send POST request if status is "inactive"
       const execStatus = microservice.execStatus?.status?.toLowerCase();
-      
+
       if (execStatus === "inactive") {
         const res = await request(
           `/api/v3/microservices/${microserviceUuid}/exec`,
@@ -371,9 +371,15 @@ function MicroservicesList() {
 
         pushFeedback?.({ message: "Exec enabled", type: "success" });
       } else if (execStatus === "active") {
-        pushFeedback?.({ message: "Exec session already active", type: "info" });
+        pushFeedback?.({
+          message: "Exec session already active",
+          type: "info",
+        });
       } else {
-        pushFeedback?.({ message: `Exec status: ${microservice.execStatus?.status}`, type: "info" });
+        pushFeedback?.({
+          message: `Exec status: ${microservice.execStatus?.status}`,
+          type: "info",
+        });
       }
 
       // Create socket URL
@@ -382,7 +388,7 @@ function MicroservicesList() {
           return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/microservices/exec/${microserviceUuid}`;
         }
         const u = new URL(window.controllerConfig.url);
-        const protocol = u.protocol === 'https:' ? 'wss:' : 'ws:';
+        const protocol = u.protocol === "https:" ? "wss:" : "ws:";
         return `${protocol}//${u.host}/api/v3/microservices/exec/${microserviceUuid}`;
       })();
 
@@ -394,7 +400,10 @@ function MicroservicesList() {
         microserviceUuid: microserviceUuid,
       });
     } catch (err: any) {
-      pushFeedback?.({ message: err.message || "Exec enable failed", type: "error" });
+      pushFeedback?.({
+        message: err.message || "Exec enable failed",
+        type: "error",
+      });
     }
   };
 
@@ -709,8 +718,7 @@ function MicroservicesList() {
     },
     {
       label: "Memory Usage",
-      render: (row: any) =>
-        `${prettyBytes(row.status?.memoryUsage || 0)}`,
+      render: (row: any) => `${prettyBytes(row.status?.memoryUsage || 0)}`,
     },
     {
       label: "Ports",
@@ -1018,14 +1026,14 @@ function MicroservicesList() {
               <div className="flex space-x-2">
                 {dirtyEditors && (
                   <button
-                    onClick={()=> handleConfigPatch}
+                    onClick={() => handleConfigPatch}
                     className="hover:text-green-600 hover:bg-white rounded"
                   >
                     <EditOutlinedIcon fontSize="small" />
                   </button>
                 )}
                 <button
-                  onClick={()=> handleConfigDelete}
+                  onClick={() => handleConfigDelete}
                   className="hover:text-green-600 hover:bg-white rounded"
                 >
                   <DeleteOutlineIcon fontSize="small" />
@@ -1086,11 +1094,7 @@ function MicroservicesList() {
         onRestart={() => setShowResetConfirmModal(true)}
         onDelete={() => setShowDeleteConfirmModal(true)}
         onEditYaml={handleEditYaml}
-        onTerminal={() =>
-          enableExecAndOpenTerminal(
-            selectedMs?.uuid!
-          )
-        }
+        onTerminal={() => enableExecAndOpenTerminal(selectedMs?.uuid!)}
         customWidth={750}
       />
       <UnsavedChangesModal
@@ -1130,7 +1134,6 @@ function MicroservicesList() {
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
       />
-      
     </div>
   );
 }

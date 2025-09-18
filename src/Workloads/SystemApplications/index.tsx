@@ -45,7 +45,7 @@ function SystemApplicationList() {
         setIsOpen(true);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [applicationId]);
 
   const handleRowClick = (row: any) => {
@@ -394,9 +394,7 @@ function SystemApplicationList() {
           key: `${ms.uuid}`,
           name: ms.name || "-",
           status: ms.status?.status || "-",
-          agent:
-           data.reducedAgents.byUUID[ms.iofogUuid]
-              ?.name ?? "-",
+          agent: data.reducedAgents.byUUID[ms.iofogUuid]?.name ?? "-",
           agentId: ms.iofogUuid,
           ports: Array.isArray(ms.ports)
             ? ms.ports.map((p: any, i: number) => (

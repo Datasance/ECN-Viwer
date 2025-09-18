@@ -1,8 +1,8 @@
-import React from 'react';
-import AceEditor from 'react-ace';
-import 'ace-builds/src-noconflict/ace';
-import 'ace-builds/src-noconflict/theme-tomorrow';
-import 'ace-builds/src-noconflict/mode-yaml';
+import React from "react";
+import AceEditor from "react-ace";
+import "ace-builds/src-noconflict/ace";
+import "ace-builds/src-noconflict/theme-tomorrow";
+import "ace-builds/src-noconflict/mode-yaml";
 
 interface YamlEditorTabProps {
   content: string;

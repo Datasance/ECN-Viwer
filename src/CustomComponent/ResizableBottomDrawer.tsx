@@ -71,7 +71,7 @@ const ResizableBottomDrawer = ({
       const newHeight = window.innerHeight - e.clientY;
       const clamped = Math.min(
         Math.max(newHeight, 200),
-        window.innerHeight - 100
+        window.innerHeight - 100,
       );
       setHeight(clamped);
       setLastHeight(clamped);
@@ -149,10 +149,16 @@ const ResizableBottomDrawer = ({
                           }`}
                           onClick={() => onTabChange?.(tab.id)}
                         >
-                          {tab.title.startsWith('Shell:') ? (
-                            <TerminalIcon className="mr-2 text-yellow-400" fontSize="small" />
-                          ) : tab.title.startsWith('YAML:') ? (
-                            <CodeIcon className="mr-2 text-blue-400" fontSize="small" />
+                          {tab.title.startsWith("Shell:") ? (
+                            <TerminalIcon
+                              className="mr-2 text-yellow-400"
+                              fontSize="small"
+                            />
+                          ) : tab.title.startsWith("YAML:") ? (
+                            <CodeIcon
+                              className="mr-2 text-blue-400"
+                              fontSize="small"
+                            />
                           ) : null}
                           <span className="text-sm font-medium truncate max-w-48">
                             {tab.title}
@@ -204,32 +210,38 @@ const ResizableBottomDrawer = ({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <span className="text-sm text-gray-300">
-                        {tabs.find(tab => tab.id === activeTabId)?.title?.startsWith('Shell:') 
-                          ? `Shell into ${tabs.find(tab => tab.id === activeTabId)?.title?.replace('Shell: ', '')}`
-                          : `Editing ${tabs.find(tab => tab.id === activeTabId)?.title?.replace('YAML: ', '')} YAML`
-                        }
+                        {tabs
+                          .find((tab) => tab.id === activeTabId)
+                          ?.title?.startsWith("Shell:")
+                          ? `Shell into ${tabs.find((tab) => tab.id === activeTabId)?.title?.replace("Shell: ", "")}`
+                          : `Editing ${tabs.find((tab) => tab.id === activeTabId)?.title?.replace("YAML: ", "")} YAML`}
                       </span>
                     </div>
-                    {tabs.find(tab => tab.id === activeTabId)?.title?.startsWith('YAML:') && isEdit && (
-                      <button
-                        onClick={onSave}
-                        className="text-white bg-[#e76467ff] hover:bg-[#d55a5d] rounded px-3 py-1 text-sm font-medium transition-colors"
-                      >
-                        Save Changes
-                      </button>
-                    )}
+                    {tabs
+                      .find((tab) => tab.id === activeTabId)
+                      ?.title?.startsWith("YAML:") &&
+                      isEdit && (
+                        <button
+                          onClick={onSave}
+                          className="text-white bg-[#e76467ff] hover:bg-[#d55a5d] rounded px-3 py-1 text-sm font-medium transition-colors"
+                        >
+                          Save Changes
+                        </button>
+                      )}
                   </div>
                 </div>
               )}
 
-              <div className={`${minimized ? "h-10 overflow-hidden" : "flex-1 overflow-hidden"}`}>
+              <div
+                className={`${minimized ? "h-10 overflow-hidden" : "flex-1 overflow-hidden"}`}
+              >
                 {tabs && tabs.length > 0 ? (
                   <div className="h-full w-full relative">
-                    {tabs.map(tab => (
+                    {tabs.map((tab) => (
                       <div
                         key={tab.id}
                         className={`absolute inset-0 h-full w-full ${
-                          tab.id === activeTabId ? 'visible' : 'invisible'
+                          tab.id === activeTabId ? "visible" : "invisible"
                         }`}
                       >
                         {tab.content}

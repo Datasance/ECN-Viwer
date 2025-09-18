@@ -16,7 +16,6 @@ import { KeycloakAuthProvider } from "./auth";
 import "immutable";
 import "xterm/css/xterm.css";
 
-
 function App() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);

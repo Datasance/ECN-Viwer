@@ -378,14 +378,13 @@ function SystemMicroserviceList() {
     }
   }, [selectedVolume]);
 
-
-  const enableExecAndOpenTerminal = async (
-    microserviceUuid: string,
-  ) => {
+  const enableExecAndOpenTerminal = async (microserviceUuid: string) => {
     try {
       // Find the microservice to check its exec status
-      const microservice = flattenedMicroservices?.find((ms: any) => ms.uuid === microserviceUuid);
-      
+      const microservice = flattenedMicroservices?.find(
+        (ms: any) => ms.uuid === microserviceUuid,
+      );
+
       if (!microservice) {
         pushFeedback?.({ message: "Microservice not found", type: "error" });
         return;
@@ -393,7 +392,7 @@ function SystemMicroserviceList() {
 
       // Check exec status - only send POST request if status is "inactive"
       const execStatus = microservice.execStatus?.status?.toLowerCase();
-      
+
       if (execStatus === "inactive") {
         const res = await request(
           `/api/v3/microservices/system/${microserviceUuid}/exec`,
@@ -412,9 +411,15 @@ function SystemMicroserviceList() {
 
         pushFeedback?.({ message: "Exec enabled", type: "success" });
       } else if (execStatus === "active") {
-        pushFeedback?.({ message: "Exec session already active", type: "info" });
+        pushFeedback?.({
+          message: "Exec session already active",
+          type: "info",
+        });
       } else {
-        pushFeedback?.({ message: `Exec status: ${microservice.execStatus?.status}`, type: "info" });
+        pushFeedback?.({
+          message: `Exec status: ${microservice.execStatus?.status}`,
+          type: "info",
+        });
       }
 
       // Create socket URL
@@ -423,7 +428,7 @@ function SystemMicroserviceList() {
           return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/microservices/exec/${microserviceUuid}`;
         }
         const u = new URL(window.controllerConfig.url);
-        const protocol = u.protocol === 'https:' ? 'wss:' : 'ws:';
+        const protocol = u.protocol === "https:" ? "wss:" : "ws:";
         return `${protocol}//${u.host}/api/v3/microservices/exec/${microserviceUuid}`;
       })();
 
@@ -435,7 +440,10 @@ function SystemMicroserviceList() {
         microserviceUuid: microserviceUuid,
       });
     } catch (err: any) {
-      pushFeedback?.({ message: err.message || "Exec enable failed", type: "error" });
+      pushFeedback?.({
+        message: err.message || "Exec enable failed",
+        type: "error",
+      });
     }
   };
 
@@ -473,7 +481,7 @@ function SystemMicroserviceList() {
       header: "Memory Usage",
       render: (row: any) => (
         <CustomProgressBar
-          value={(row?.status?.memoryUsage)}
+          value={row?.status?.memoryUsage}
           max={data.reducedAgents.byUUID[row?.iofogUuid]?.systemAvailableMemory}
           unit="microservice"
         />
@@ -714,8 +722,7 @@ function SystemMicroserviceList() {
     },
     {
       label: "Memory Usage",
-      render: (row: any) =>
-        `${prettyBytes(row.status?.memoryUsage || 0)}`,
+      render: (row: any) => `${prettyBytes(row.status?.memoryUsage || 0)}`,
     },
     {
       label: "Ports",
@@ -1091,11 +1098,7 @@ function SystemMicroserviceList() {
         onRestart={() => setShowResetConfirmModal(true)}
         onDelete={() => setShowDeleteConfirmModal(true)}
         onEditYaml={handleEditYaml}
-        onTerminal={() =>
-          enableExecAndOpenTerminal(
-            selectedMs?.uuid!
-          )
-        }
+        onTerminal={() => enableExecAndOpenTerminal(selectedMs?.uuid!)}
         customWidth={750}
       />
       <UnsavedChangesModal
@@ -1135,9 +1138,6 @@ function SystemMicroserviceList() {
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
       />
-      
-      
-      
     </div>
   );
 }
