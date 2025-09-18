@@ -229,7 +229,7 @@ const ResizableBottomDrawer = ({
                       <div
                         key={tab.id}
                         className={`absolute inset-0 h-full w-full ${
-                          tab.id === activeTabId ? 'block' : 'hidden'
+                          tab.id === activeTabId ? 'visible' : 'invisible'
                         }`}
                       >
                         {tab.content}
