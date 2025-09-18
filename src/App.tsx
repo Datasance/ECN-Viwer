@@ -4,6 +4,7 @@ import { DndProvider } from "react-dnd";
 import React, { useEffect } from "react";
 import { ControllerProvider } from "./ControllerProvider";
 import { DataProvider } from "./providers/Data";
+import { TerminalProvider } from "./providers/Terminal/TerminalProvider";
 import Layout from "./Layout";
 import "./App.scss";
 
@@ -14,7 +15,6 @@ import "./styles/tailwind.css";
 import { KeycloakAuthProvider } from "./auth";
 import "immutable";
 import "xterm/css/xterm.css";
-
 
 function App() {
   useEffect(() => {
@@ -33,9 +33,11 @@ function App() {
           <ControllerProvider>
             <ConfigProvider>
               <DataProvider>
-                <FeedbackContext>
-                  <Layout />
-                </FeedbackContext>
+                <TerminalProvider>
+                  <FeedbackContext>
+                    <Layout />
+                  </FeedbackContext>
+                </TerminalProvider>
               </DataProvider>
             </ConfigProvider>
           </ControllerProvider>

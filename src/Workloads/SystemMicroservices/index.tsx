@@ -8,9 +8,9 @@ import { useController } from "../../ControllerProvider";
 import { useFeedback } from "../../Utils/FeedbackContext";
 import { dumpMicroserviceYAML } from "../../Utils/microserviceYAML";
 import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
-import ResizableBottomDrawer from "../../CustomComponent/ResizableBottomDrawer";
 import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import AceEditor from "react-ace";
+import "ace-builds/src-noconflict/ace";
 import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/mode-yaml";
 import { parseMicroservice } from "../../Utils/ApplicationParser";
@@ -18,13 +18,12 @@ import { API_VERSIONS } from "../../Utils/constants";
 import lget from "lodash/get";
 import yaml from "js-yaml";
 import CryptoTextBox from "../../CustomComponent/CustomCryptoTextBox";
-import { getTextColor, MiBFactor, prettyBytes } from "../../ECNViewer/utils";
+import { getTextColor, prettyBytes } from "../../ECNViewer/utils";
 import { StatusColor, StatusType } from "../../Utils/Enums/StatusColor";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "react-router-dom";
 import EditOutlinedIcon from "@material-ui/icons/EditOutlined";
-import CustomActionModal from "../../CustomComponent/CustomActionModal";
-import ExecSessionTerminal from "../../CustomComponent/ExecSessionTerminal";
+import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 import { useAuth } from "react-oidc-context";
 
 function SystemMicroserviceList() {
@@ -42,8 +41,6 @@ function SystemMicroserviceList() {
   const { pushFeedback } = useFeedback();
   const [selectedMs, setSelectedMs] = useState<any | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [isBottomDrawerOpen, setIsBottomDrawerOpen] = useState(false);
-  const [editorIsChanged, setEditorIsChanged] = React.useState(false);
   const [editorDataChanged, setEditorDataChanged] = React.useState<any>();
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
@@ -60,7 +57,7 @@ function SystemMicroserviceList() {
   const [editorValues, setEditorValues] = React.useState<string>("");
   const [configData, setConfigData] = useState<any>();
   const [editorContent, setEditorContent] = useState<string>("");
-  const [showTerminalModal, setShowTerminalModal] = useState(false);
+  const { addTerminalSession, addYamlSession } = useTerminal();
   const auth = useAuth();
 
   useEffect(() => {
@@ -319,32 +316,33 @@ function SystemMicroserviceList() {
     }
   };
 
-  const handleYamlUpdate = async () => {
-    if (editorIsChanged) {
-      try {
-        const doc = yaml.load(editorDataChanged);
-        const [microserviceData, err] = await parseMicroserviceFile(doc);
-        if (err) {
-          return pushFeedback({ message: err, type: "error" });
-        }
-        const newMicroservice = microserviceData;
-        const res = await deployMicroservice(newMicroservice);
-        if (!res.ok) {
-          try {
-            const error = await res.json();
-            pushFeedback({ message: error.message, type: "error" });
-          } catch (e) {
-            pushFeedback({ message: res.statusText, type: "error" });
-          }
-        } else {
-          pushFeedback({ message: "Microservice updated!", type: "success" });
-          setIsBottomDrawerOpen(false);
-          setEditorIsChanged(false);
-          setEditorDataChanged(null);
-        }
-      } catch (e: any) {
-        pushFeedback({ message: e.message, type: "error" });
+  const handleYamlUpdate = async (content?: string) => {
+    try {
+      const yamlContent = content || editorDataChanged;
+      const doc = yaml.load(yamlContent);
+      const [microserviceData, err] = await parseMicroserviceFile(doc);
+      if (err) {
+        pushFeedback({ message: err, type: "error" });
+        throw new Error(err);
       }
+      const newMicroservice = microserviceData;
+      const res = await deployMicroservice(newMicroservice);
+      if (!res.ok) {
+        try {
+          const error = await res.json();
+          pushFeedback({ message: error.message, type: "error" });
+          throw new Error(error.message);
+        } catch (e) {
+          pushFeedback({ message: res.statusText, type: "error" });
+          throw new Error(res.statusText);
+        }
+      } else {
+        pushFeedback({ message: "Microservice updated!", type: "success" });
+        setEditorDataChanged(null);
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error" });
+      throw e;
     }
   };
 
@@ -357,7 +355,15 @@ function SystemMicroserviceList() {
   }, [selectedMs, data]);
 
   const handleEditYaml = () => {
-    setIsBottomDrawerOpen(true);
+    // Add YAML editor session to global state
+    addYamlSession({
+      title: `YAML: ${selectedMs?.name}`,
+      content: yamlDump,
+      isDirty: false,
+      onSave: async (content: string) => {
+        await handleYamlUpdate(content);
+      },
+    });
   };
 
   useEffect(() => {
@@ -372,14 +378,13 @@ function SystemMicroserviceList() {
     }
   }, [selectedVolume]);
 
-
-  const enableExecAndOpenTerminal = async (
-    microserviceUuid: string,
-  ) => {
+  const enableExecAndOpenTerminal = async (microserviceUuid: string) => {
     try {
       // Find the microservice to check its exec status
-      const microservice = flattenedMicroservices?.find((ms: any) => ms.uuid === microserviceUuid);
-      
+      const microservice = flattenedMicroservices?.find(
+        (ms: any) => ms.uuid === microserviceUuid,
+      );
+
       if (!microservice) {
         pushFeedback?.({ message: "Microservice not found", type: "error" });
         return;
@@ -387,7 +392,7 @@ function SystemMicroserviceList() {
 
       // Check exec status - only send POST request if status is "inactive"
       const execStatus = microservice.execStatus?.status?.toLowerCase();
-      
+
       if (execStatus === "inactive") {
         const res = await request(
           `/api/v3/microservices/system/${microserviceUuid}/exec`,
@@ -406,15 +411,39 @@ function SystemMicroserviceList() {
 
         pushFeedback?.({ message: "Exec enabled", type: "success" });
       } else if (execStatus === "active") {
-        pushFeedback?.({ message: "Exec session already active", type: "info" });
+        pushFeedback?.({
+          message: "Exec session already active",
+          type: "info",
+        });
       } else {
-        pushFeedback?.({ message: `Exec status: ${microservice.execStatus?.status}`, type: "info" });
+        pushFeedback?.({
+          message: `Exec status: ${microservice.execStatus?.status}`,
+          type: "info",
+        });
       }
 
-      // Open terminal regardless of exec status (in case it's already active)
-      setShowTerminalModal(true);
+      // Create socket URL
+      const socketUrl = (() => {
+        if (!window.controllerConfig?.url) {
+          return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/microservices/exec/${microserviceUuid}`;
+        }
+        const u = new URL(window.controllerConfig.url);
+        const protocol = u.protocol === "https:" ? "wss:" : "ws:";
+        return `${protocol}//${u.host}/api/v3/microservices/exec/${microserviceUuid}`;
+      })();
+
+      // Add terminal session to global state
+      addTerminalSession({
+        title: `Shell: ${microservice.name}`,
+        socketUrl,
+        authToken: auth?.user?.access_token,
+        microserviceUuid: microserviceUuid,
+      });
     } catch (err: any) {
-      pushFeedback?.({ message: err.message || "Exec enable failed", type: "error" });
+      pushFeedback?.({
+        message: err.message || "Exec enable failed",
+        type: "error",
+      });
     }
   };
 
@@ -452,7 +481,7 @@ function SystemMicroserviceList() {
       header: "Memory Usage",
       render: (row: any) => (
         <CustomProgressBar
-          value={(row?.status?.memoryUsage)}
+          value={row?.status?.memoryUsage}
           max={data.reducedAgents.byUUID[row?.iofogUuid]?.systemAvailableMemory}
           unit="microservice"
         />
@@ -693,8 +722,7 @@ function SystemMicroserviceList() {
     },
     {
       label: "Memory Usage",
-      render: (row: any) =>
-        `${prettyBytes(row.status?.memoryUsage || 0)}`,
+      render: (row: any) => `${prettyBytes(row.status?.memoryUsage || 0)}`,
     },
     {
       label: "Ports",
@@ -1070,50 +1098,9 @@ function SystemMicroserviceList() {
         onRestart={() => setShowResetConfirmModal(true)}
         onDelete={() => setShowDeleteConfirmModal(true)}
         onEditYaml={handleEditYaml}
-        onTerminal={() =>
-          enableExecAndOpenTerminal(
-            selectedMs?.uuid!
-          )
-        }
+        onTerminal={() => enableExecAndOpenTerminal(selectedMs?.uuid!)}
         customWidth={750}
       />
-      <ResizableBottomDrawer
-        open={isBottomDrawerOpen}
-        isEdit={editorIsChanged}
-        onClose={() => {
-          setIsBottomDrawerOpen(false);
-          setEditorIsChanged(false);
-          setEditorDataChanged(null);
-        }}
-        onSave={() => handleYamlUpdate()}
-        title={`${selectedMs?.name} YAML`}
-        showUnsavedChangesModal
-        unsavedModalTitle="Changes Not Saved"
-        unsavedModalMessage="Are you sure you want to exit? All unsaved changes will be lost."
-        unsavedModalCancelLabel="Stay"
-        unsavedModalConfirmLabel="Exit Anyway"
-      >
-        <AceEditor
-          setOptions={{ useWorker: false, tabSize: 2 }}
-          mode="yaml"
-          theme="tomorrow"
-          defaultValue={yamlDump}
-          showPrintMargin={false}
-          onLoad={function (editor) {
-            editor.renderer.setPadding(10);
-            editor.renderer.setScrollMargin(10);
-          }}
-          style={{
-            width: "100%",
-            height: "100%",
-            borderRadius: "4px",
-          }}
-          onChange={function editorChanged(editor: any) {
-            setEditorIsChanged(true);
-            setEditorDataChanged(editor);
-          }}
-        />
-      </ResizableBottomDrawer>
       <UnsavedChangesModal
         open={showResetConfirmModal}
         onCancel={() => setShowResetConfirmModal(false)}
@@ -1151,31 +1138,6 @@ function SystemMicroserviceList() {
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
       />
-      
-      
-      
-      <ResizableBottomDrawer
-        open={showTerminalModal}
-        isEdit={false}
-        onClose={() => setShowTerminalModal(false)}
-        onSave={() => null}
-        title={`Exec Session - ${selectedMs?.name}`}
-      >
-        <ExecSessionTerminal
-          socketUrl={`${(() => {
-            if (!window.controllerConfig?.url) {
-              return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/microservices/exec/${selectedMs?.uuid}`;
-            }
-            const u = new URL(window.controllerConfig.url);
-            const protocol = u.protocol === 'https:' ? 'wss:' : 'ws:';
-            return `${protocol}//${u.host}/api/v3/microservices/exec/${selectedMs?.uuid}`;
-          })()}`}
-          authToken={auth?.user?.access_token}
-          microserviceUuid={selectedMs?.uuid}
-          className="h-full w-full"
-          onClose={() => setShowTerminalModal(false)}
-        />
-      </ResizableBottomDrawer>
     </div>
   );
 }

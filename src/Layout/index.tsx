@@ -40,6 +40,7 @@ import Secrets from "../DatasanceConfig/secret";
 import Certificates from "../DatasanceConfig/certificates";
 import Services from "../DatasanceConfig/services";
 import Map from "../ECNViewer/Map/Map";
+import GlobalTerminalDrawer from "../CustomComponent/GlobalTerminalDrawer";
 
 const controllerJson = window.controllerConfig || null;
 
@@ -375,6 +376,7 @@ export default function Layout() {
             </Routes>
           </div>
         </div>
+        <GlobalTerminalDrawer />
       </div>
     </HashRouter>
   );
