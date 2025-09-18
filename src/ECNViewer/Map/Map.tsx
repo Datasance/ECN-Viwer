@@ -9,6 +9,7 @@ import { useController } from "../../ControllerProvider";
 import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import CustomSelect from "../../CustomComponent/CustomSelect";
 import AceEditor from "react-ace";
+import "ace-builds/src-noconflict/ace";
 import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/mode-yaml";
 import ResizableBottomDrawer from "../../CustomComponent/ResizableBottomDrawer";
@@ -17,7 +18,7 @@ import { MiBFactor, prettyBytes } from "../utils";
 import { StatusColor, StatusType } from "../../Utils/Enums/StatusColor";
 import { getTextColor } from "../../ECNViewer/utils";
 import { NavLink } from "react-router-dom";
-import ExecSessionTerminal from "../../CustomComponent/ExecSessionTerminal";
+import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 import { useAuth } from "react-oidc-context";
 
 interface CustomLeafletProps {
@@ -67,8 +68,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
   const [editorIsChanged, setEditorIsChanged] = React.useState(false);
   const [editorDataChanged, setEditorDataChanged] = React.useState<any>();
   const [yamlDump, setyamlDump] = useState<any>();
-  const [showTerminalModal, setShowTerminalModal] = useState(false);
-  const [debugMicroserviceUuid, setDebugMicroserviceUuid] = useState<string | null>(null);
+  const { addTerminalSession, addYamlSession } = useTerminal();
   const auth = useAuth();
 
   const markers = data?.reducedAgents?.byName
@@ -263,22 +263,34 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
 
       pushFeedback?.({ message: "Exec enabled, waiting for debug container...", type: "info" });
 
-      // Open terminal immediately to show waiting message
-      setShowTerminalModal(true);
-
       // Wait for debug microservice to be running
       const debugUuid = await waitForDebugMicroservice(nodeUuid);
       
       if (debugUuid) {
-        setDebugMicroserviceUuid(debugUuid);
+        // Create socket URL
+        const socketUrl = (() => {
+          if (!window.controllerConfig?.url) {
+            return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/microservices/exec/${debugUuid}`;
+          }
+          const u = new URL(window.controllerConfig.url);
+          const protocol = u.protocol === 'https:' ? 'wss:' : 'ws:';
+          return `${protocol}//${u.host}/api/v3/microservices/exec/${debugUuid}`;
+        })();
+
+        // Add terminal session to global state
+        addTerminalSession({
+          title: `Shell: ${selectedNode?.name}`,
+          socketUrl,
+          authToken: auth?.user?.access_token,
+          microserviceUuid: debugUuid,
+        });
+
         pushFeedback?.({ message: "Debug container ready, connecting to terminal...", type: "success" });
       } else {
         pushFeedback?.({ message: "Timeout waiting for debug container to start", type: "error" });
-        setShowTerminalModal(false);
       }
     } catch (err: any) {
       pushFeedback?.({ message: err.message || "Exec enable failed", type: "error" });
-      setShowTerminalModal(false);
     }
   };
 
@@ -340,13 +352,22 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
     };
 
     const yamlString = yaml.dump(yamlDump, { noRefs: true, indent: 2 });
-    setyamlDump(yamlString);
-    setIsBottomDrawerOpen(true);
+    
+    // Add YAML editor session to global state
+    addYamlSession({
+      title: `YAML: ${selectedNode?.name}`,
+      content: yamlString,
+      isDirty: false,
+      onSave: async (content: string) => {
+        await handleYamlUpdate(content);
+      },
+    });
   };
 
-  async function handleYamlUpdate() {
+  async function handleYamlUpdate(content?: string) {
     try {
-      const parsed = yaml.load(editorDataChanged) as any;
+      const yamlContent = content || editorDataChanged;
+      const parsed = yaml.load(yamlContent) as any;
       const spec = parsed?.spec ?? {};
       const metadata = parsed?.metadata ?? {};
       const patchBody = { ...spec };
@@ -377,6 +398,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
 
       if (!res.ok) {
         pushFeedback({ message: res.statusText, type: "error" });
+        throw new Error(res.statusText);
       } else {
         pushFeedback({ message: "Controller Updated", type: "success" });
         setIsBottomDrawerOpen(false);
@@ -386,6 +408,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
+      throw e;
     }
   }
 
@@ -1072,43 +1095,6 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
         onEditYaml={handleEditYaml}
         onTerminal={() => enableExecAndOpenTerminal(selectedNode?.uuid!)}
       />
-      <ResizableBottomDrawer
-        open={isBottomDrawerOpen}
-        isEdit={editorIsChanged}
-        onClose={() => {
-          setIsBottomDrawerOpen(false);
-          setEditorIsChanged(false);
-          setEditorDataChanged(null);
-        }}
-        onSave={() => handleYamlUpdate()}
-        title={`${selectedNode?.name} Config`}
-        showUnsavedChangesModal
-        unsavedModalTitle="Changes Not Saved"
-        unsavedModalMessage="Are you sure you want to exit? All unsaved changes will be lost."
-        unsavedModalCancelLabel="Stay"
-        unsavedModalConfirmLabel="Exit Anyway"
-      >
-        <AceEditor
-          setOptions={{ useWorker: false, tabSize: 2 }}
-          mode="yaml"
-          theme="tomorrow"
-          defaultValue={yamlDump}
-          showPrintMargin={false}
-          onLoad={function (editor) {
-            editor.renderer.setPadding(10);
-            editor.renderer.setScrollMargin(10);
-          }}
-          style={{
-            width: "100%",
-            height: "100%",
-            borderRadius: "4px",
-          }}
-          onChange={function editorChanged(editor: any) {
-            setEditorIsChanged(true);
-            setEditorDataChanged(editor);
-          }}
-        />
-      </ResizableBottomDrawer>
       <UnsavedChangesModal
         open={showResetConfirmModal}
         onCancel={() => setShowResetConfirmModal(false)}
@@ -1141,28 +1127,6 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
         confirmLabel={"Prune"}
       />
       
-      <ResizableBottomDrawer
-        open={showTerminalModal}
-        isEdit={false}
-        onClose={() => setShowTerminalModal(false)}
-        onSave={() => null}
-        title={`Exec Session - ${selectedNode?.name}`}
-      >
-        <ExecSessionTerminal
-          socketUrl={`${(() => {
-            if (!window.controllerConfig?.url) {
-              return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/microservices/exec/${debugMicroserviceUuid}`;
-            }
-            const u = new URL(window.controllerConfig.url);
-            const protocol = u.protocol === 'https:' ? 'wss:' : 'ws:';
-            return `${protocol}//${u.host}/api/v3/microservices/exec/${debugMicroserviceUuid}`;
-          })()}`}
-          authToken={auth?.user?.access_token}
-          microserviceUuid={debugMicroserviceUuid || ""}
-          className="h-full w-full"
-          onClose={() => setShowTerminalModal(false)}
-        />
-      </ResizableBottomDrawer>
     </div>
   );
 };

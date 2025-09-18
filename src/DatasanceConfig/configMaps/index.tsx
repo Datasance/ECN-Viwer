@@ -5,15 +5,16 @@ import { ControllerContext } from "../../ControllerProvider";
 import { FeedbackContext } from "../../Utils/FeedbackContext";
 import SlideOver from "../../CustomComponent/SlideOver";
 import AceEditor from "react-ace";
+import "ace-builds/src-noconflict/ace";
 import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/mode-yaml";
 import yaml from "js-yaml";
-import ResizableBottomDrawer from "../../CustomComponent/ResizableBottomDrawer";
 import { useLocation } from "react-router-dom";
 import lget from "lodash/get";
 import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
 import EditOutlinedIcon from "@material-ui/icons/EditOutlined";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
+import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 
 function ConfigMaps() {
   const [fetching, setFetching] = React.useState(true);
@@ -22,10 +23,7 @@ function ConfigMaps() {
   const { pushFeedback } = React.useContext(FeedbackContext);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedConfigMap, setSelectedConfigMap] = useState<any | null>(null);
-  const [isBottomDrawerOpen, setIsBottomDrawerOpen] = useState(false);
-  const [editorIsChanged, setEditorIsChanged] = React.useState(false);
-  const [editorDataChanged, setEditorDataChanged] = React.useState<any>();
-  const [yamlDump, setyamlDump] = useState<any>();
+  const { addYamlSession } = useTerminal();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const configMapName = params.get("configMapName");
@@ -131,8 +129,15 @@ function ConfigMaps() {
 
     const yamlString = `${yamlHeader}\n${dataSection}`;
 
-    setyamlDump(yamlString);
-    setIsBottomDrawerOpen(true);
+    // Add YAML editor session to global state
+    addYamlSession({
+      title: `YAML: ${selectedConfigMap?.name}`,
+      content: yamlString,
+      isDirty: false,
+      onSave: async (content: string) => {
+        await handleYamlUpdate(content);
+      },
+    });
   };
 
   const parseConfigMap = async (doc: any) => {
@@ -157,9 +162,9 @@ function ConfigMaps() {
     return [configMap];
   };
 
-  async function handleYamlUpdate() {
+  async function handleYamlUpdate(content: string) {
     try {
-      const parsed = yaml.load(editorDataChanged) as any;
+      const parsed = yaml.load(content) as any;
       const [configMap, err] = await parseConfigMap(parsed);
       if (err) {
         return pushFeedback({ message: err, type: "error" });
@@ -182,9 +187,6 @@ function ConfigMaps() {
           message: `${selectedConfigMap?.name} Updated`,
           type: "success",
         });
-        setIsBottomDrawerOpen(false);
-        setEditorIsChanged(false);
-        setEditorDataChanged(null);
         setIsOpen(false);
       }
     } catch (e: any) {
@@ -255,9 +257,6 @@ function ConfigMaps() {
           message: `${selectedConfigMap?.name} Updated`,
           type: "success",
         });
-        setIsBottomDrawerOpen(false);
-        setEditorIsChanged(false);
-        setEditorDataChanged(null);
         setIsOpen(false);
       }
     } catch (e: any) {
@@ -324,9 +323,6 @@ function ConfigMaps() {
           message: `${selectedConfigMap?.name} Deleted key ${key}`,
           type: "success",
         });
-        setIsBottomDrawerOpen(false);
-        setEditorIsChanged(false);
-        setEditorDataChanged(null);
         setIsOpen(false);
       }
     } catch (e: any) {
@@ -523,47 +519,6 @@ function ConfigMaps() {
               fields={slideOverFields}
               customWidth={600}
             />
-            <ResizableBottomDrawer
-              open={isBottomDrawerOpen}
-              isEdit={editorIsChanged}
-              onClose={() => {
-                setIsBottomDrawerOpen(false);
-                setEditorIsChanged(false);
-                setEditorDataChanged(null);
-              }}
-              onSave={() => handleYamlUpdate()}
-              title={`${selectedConfigMap?.name} Config Map`}
-              showUnsavedChangesModal
-              unsavedModalTitle="Changes Not Saved"
-              unsavedModalMessage="Are you sure you want to exit? All unsaved changes will be lost."
-              unsavedModalCancelLabel="Stay"
-              unsavedModalConfirmLabel="Exit Anyway"
-            >
-              <AceEditor
-                setOptions={{
-                  useWorker: false,
-                  wrap: true,
-                  tabSize: 2,
-                }}
-                mode="yaml"
-                theme="tomorrow"
-                defaultValue={yamlDump}
-                showPrintMargin={false}
-                onLoad={function (editor) {
-                  editor.renderer.setPadding(10);
-                  editor.renderer.setScrollMargin(10);
-                }}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  borderRadius: "4px",
-                }}
-                onChange={function editorChanged(editor: any) {
-                  setEditorIsChanged(true);
-                  setEditorDataChanged(editor);
-                }}
-              />
-            </ResizableBottomDrawer>
           </div>
         </>
       )}

@@ -6,10 +6,6 @@ import { format, formatDistanceToNow } from "date-fns";
 import { useController } from "../../ControllerProvider";
 import { useFeedback } from "../../Utils/FeedbackContext";
 import { dumpApplicationYAML } from "../../Utils/applicationYAML";
-import AceEditor from "react-ace";
-import "ace-builds/src-noconflict/theme-tomorrow";
-import "ace-builds/src-noconflict/mode-yaml";
-import ResizableBottomDrawer from "../../CustomComponent/ResizableBottomDrawer";
 import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import { parseMicroservice } from "../../Utils/ApplicationParser";
 import { API_VERSIONS } from "../../Utils/constants";
@@ -19,6 +15,7 @@ import { StatusColor, StatusType } from "../../Utils/Enums/StatusColor";
 import { getTextColor } from "../../ECNViewer/utils";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "react-router-dom";
+import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 
 function SystemApplicationList() {
   const { data } = useData();
@@ -29,9 +26,7 @@ function SystemApplicationList() {
   const [selectedApplication, setSelectedApplication] = useState<any | null>(
     null,
   );
-  const [isBottomDrawerOpen, setIsBottomDrawerOpen] = useState(false);
-  const [editorIsChanged, setEditorIsChanged] = React.useState(false);
-  const [editorDataChanged, setEditorDataChanged] = React.useState<any>();
+  const { addYamlSession } = useTerminal();
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [showStartStopConfirmModal, setShowStartStopConfirmModal] =
@@ -144,9 +139,9 @@ function SystemApplicationList() {
     return [application];
   };
 
-  const handleYamlUpdate = async () => {
+  const handleYamlUpdate = async (content: string) => {
     try {
-      const doc = yaml.load(editorDataChanged);
+      const doc = yaml.load(content);
       const [applicationData, err] = await parseApplicationFile(doc);
       if (err) {
         return pushFeedback({ message: err, type: "error" });
@@ -169,12 +164,10 @@ function SystemApplicationList() {
             : "Application updated!",
           type: "success",
         });
-        setIsBottomDrawerOpen(false);
-        setEditorIsChanged(false);
-        setEditorDataChanged(null);
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error" });
+      throw e;
     }
   };
   const deployApplication = async (application: any, newApplication: any) => {
@@ -202,7 +195,15 @@ function SystemApplicationList() {
   }, [selectedApplication, data]);
 
   const handleEditYaml = () => {
-    setIsBottomDrawerOpen(true);
+    // Add YAML editor session to global state
+    addYamlSession({
+      title: `YAML: ${selectedApplication?.name}`,
+      content: yamlDump,
+      isDirty: false,
+      onSave: async (content: string) => {
+        await handleYamlUpdate(content);
+      },
+    });
   };
 
   const readApplicationFile = async (item: any) => {
@@ -549,44 +550,6 @@ function SystemApplicationList() {
         onStartStop={() => setShowStartStopConfirmModal(true)}
         startStopValue={selectedApplication?.isActivated}
       />
-      <ResizableBottomDrawer
-        open={isBottomDrawerOpen}
-        isEdit={editorIsChanged}
-        onClose={() => {
-          setIsBottomDrawerOpen(false);
-          setEditorIsChanged(false);
-          setEditorDataChanged(null);
-        }}
-        onSave={() => handleYamlUpdate()}
-        title={`${selectedApplication?.name} YAML`}
-        showUnsavedChangesModal
-        unsavedModalTitle="Changes Not Saved"
-        unsavedModalMessage="Are you sure you want to exit? All unsaved changes will be lost."
-        unsavedModalCancelLabel="Stay"
-        unsavedModalConfirmLabel="Exit Anyway"
-      >
-        <AceEditor
-          setOptions={{ useWorker: false, tabSize: 2 }}
-          mode="yaml"
-          theme="tomorrow"
-          defaultValue={yamlDump}
-          showPrintMargin={false}
-          showGutter={true}
-          onLoad={function (editor) {
-            editor.renderer.setPadding(10);
-            editor.renderer.setScrollMargin(10);
-          }}
-          style={{
-            width: "100%",
-            height: "100%",
-            borderRadius: "4px",
-          }}
-          onChange={function editorChanged(editor: any) {
-            setEditorIsChanged(true);
-            setEditorDataChanged(editor);
-          }}
-        />
-      </ResizableBottomDrawer>
 
       <UnsavedChangesModal
         open={showResetConfirmModal}

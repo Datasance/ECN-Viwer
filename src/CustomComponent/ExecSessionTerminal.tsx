@@ -151,6 +151,7 @@ const ExecSessionTerminal: React.FC<ExecSessionTerminalProps> = ({
     });
     const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const pongTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const isInitializedRef = useRef<boolean>(false);
     
     const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('connecting');
     const [statusMessage, setStatusMessage] = useState('Connecting...');
@@ -213,6 +214,13 @@ const ExecSessionTerminal: React.FC<ExecSessionTerminalProps> = ({
     };
 
     useEffect(() => {
+        // Prevent multiple initializations
+        if (isInitializedRef.current) {
+            return;
+        }
+        
+        isInitializedRef.current = true;
+        
         const term = new Terminal({
             cursorBlink: true,
             fontSize: 14,
@@ -341,12 +349,9 @@ const ExecSessionTerminal: React.FC<ExecSessionTerminalProps> = ({
                 setStatusMessage('Exec Session successfully closed');
                 term.writeln(`\r\n\x1b[32m✓ Exec Session successfully closed\x1b[0m`);
                 
-                // Auto-close the drawer when session closes normally
-                if (onClose) {
-                    setTimeout(() => {
-                        onClose();
-                    }, 2000); // Give user 2 seconds to see the success message
-                }
+                // Don't auto-close the drawer when session closes normally
+                // The user should manually close the tab if they want to
+                // This prevents accidental closure when switching tabs
             } else {
                 // Use existing error handling logic for other close codes
                 const msg = formatWebSocketError(`close ${evt.code} ${evt.reason}`);
@@ -413,6 +418,7 @@ const ExecSessionTerminal: React.FC<ExecSessionTerminalProps> = ({
             
             ws.close();
             term.dispose();
+            isInitializedRef.current = false;
         };
     }, [socketUrl]);
 
@@ -441,4 +447,18 @@ const ExecSessionTerminal: React.FC<ExecSessionTerminalProps> = ({
     );
 };
 
-export default React.memo(ExecSessionTerminal);
+export default React.memo(ExecSessionTerminal, (prevProps, nextProps) => {
+  // Only re-render if essential props change
+  const shouldReRender = (
+    prevProps.socketUrl === nextProps.socketUrl &&
+    prevProps.authToken === nextProps.authToken &&
+    prevProps.microserviceUuid === nextProps.microserviceUuid &&
+    prevProps.execId === nextProps.execId &&
+    prevProps.className === nextProps.className
+  );
+  
+  if (!shouldReRender) {
+  }
+  
+  return shouldReRender;
+});

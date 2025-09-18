@@ -3,8 +3,18 @@ import { Transition } from "@headlessui/react";
 import XMarkIcon from "@material-ui/icons/CloseOutlined";
 import MinimizeIcon from "@material-ui/icons/Minimize";
 import MaximizeIcon from "@material-ui/icons/CheckBoxOutlineBlank";
+import CloseIcon from "@material-ui/icons/Close";
+import TerminalIcon from "@material-ui/icons/Computer";
+import CodeIcon from "@material-ui/icons/Description";
 
 import UnsavedChangesModal from "./UnsavedChangesModal";
+
+type DrawerTab = {
+  id: string;
+  title: string;
+  content: React.ReactNode;
+  onClose?: () => void;
+};
 
 type ResizableBottomDrawerProps = {
   open: boolean;
@@ -18,6 +28,11 @@ type ResizableBottomDrawerProps = {
   unsavedModalMessage?: string;
   unsavedModalCancelLabel?: string;
   unsavedModalConfirmLabel?: string;
+  // Tab support
+  tabs?: DrawerTab[];
+  activeTabId?: string;
+  onTabChange?: (tabId: string) => void;
+  onTabClose?: (tabId: string) => void;
 };
 
 const ResizableBottomDrawer = ({
@@ -32,6 +47,10 @@ const ResizableBottomDrawer = ({
   unsavedModalMessage = "Are you sure you want to exit? All unsaved changes will be lost.",
   unsavedModalCancelLabel = "Stay",
   unsavedModalConfirmLabel = "Exit Anyway",
+  tabs,
+  activeTabId,
+  onTabChange,
+  onTabClose,
 }: ResizableBottomDrawerProps) => {
   const [height, setHeight] = useState(300);
   const [lastHeight, setLastHeight] = useState(300);
@@ -117,18 +136,48 @@ const ResizableBottomDrawer = ({
               )}
 
               <div className="flex items-center justify-between px-4 py-2 border-b border-gray-700">
-                <h2 className="text-lg font-medium truncate">
-                  {title || "Details"}
-                </h2>
-                <div className="flex gap-2 items-center">
-                  {isEdit && !minimized && (
-                    <button
-                      onClick={onSave}
-                      className="text-white bg-[#e76467ff] hover:bg-gray-700 rounded p-1 px-3"
-                    >
-                      Save Changes
-                    </button>
+                <div className="flex-1">
+                  {tabs && tabs.length > 0 ? (
+                    <div className="flex items-center space-x-1">
+                      {tabs.map((tab) => (
+                        <div
+                          key={tab.id}
+                          className={`flex items-center px-4 py-2 rounded-t-md cursor-pointer transition-colors min-w-0 ${
+                            activeTabId === tab.id
+                              ? "bg-gray-700 text-white border-b-2 border-yellow-400"
+                              : "bg-gray-600 text-gray-300 hover:bg-gray-650"
+                          }`}
+                          onClick={() => onTabChange?.(tab.id)}
+                        >
+                          {tab.title.startsWith('Shell:') ? (
+                            <TerminalIcon className="mr-2 text-yellow-400" fontSize="small" />
+                          ) : tab.title.startsWith('YAML:') ? (
+                            <CodeIcon className="mr-2 text-blue-400" fontSize="small" />
+                          ) : null}
+                          <span className="text-sm font-medium truncate max-w-48">
+                            {tab.title}
+                          </span>
+                          {onTabClose && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onTabClose(tab.id);
+                              }}
+                              className="ml-2 text-gray-400 hover:text-white rounded p-0.5"
+                            >
+                              <CloseIcon fontSize="small" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <h2 className="text-lg font-medium truncate">
+                      {title || "Details"}
+                    </h2>
                   )}
+                </div>
+                <div className="flex gap-2 items-center">
                   <button
                     onClick={toggleMinimize}
                     className="flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 rounded p-1 w-6 h-6"
@@ -149,8 +198,47 @@ const ResizableBottomDrawer = ({
                 </div>
               </div>
 
+              {/* Resource Information Bar */}
+              {tabs && tabs.length > 0 && activeTabId && !minimized && (
+                <div className="px-4 py-2 bg-gray-800 border-b border-gray-700">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-300">
+                        {tabs.find(tab => tab.id === activeTabId)?.title?.startsWith('Shell:') 
+                          ? `Shell into ${tabs.find(tab => tab.id === activeTabId)?.title?.replace('Shell: ', '')}`
+                          : `Editing ${tabs.find(tab => tab.id === activeTabId)?.title?.replace('YAML: ', '')} YAML`
+                        }
+                      </span>
+                    </div>
+                    {tabs.find(tab => tab.id === activeTabId)?.title?.startsWith('YAML:') && isEdit && (
+                      <button
+                        onClick={onSave}
+                        className="text-white bg-[#e76467ff] hover:bg-[#d55a5d] rounded px-3 py-1 text-sm font-medium transition-colors"
+                      >
+                        Save Changes
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className={`${minimized ? "h-10 overflow-hidden" : "flex-1 overflow-hidden"}`}>
-                {children}
+                {tabs && tabs.length > 0 ? (
+                  <div className="h-full w-full relative">
+                    {tabs.map(tab => (
+                      <div
+                        key={tab.id}
+                        className={`absolute inset-0 h-full w-full ${
+                          tab.id === activeTabId ? 'block' : 'hidden'
+                        }`}
+                      >
+                        {tab.content}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  children
+                )}
               </div>
             </div>
           </Transition.Child>

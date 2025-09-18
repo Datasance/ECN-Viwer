@@ -357,10 +357,10 @@ const SystemMicroservicesDashboard: React.FC<
         })}
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8 w-full flex-1">
+      <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-2 3xl:grid-cols-2 gap-6 sm:gap-8 xl:gap-10 2xl:gap-12 w-full flex-1">
         <div className="w-full">
           <div className="flex items-center justify-between mb-3 sm:mb-4">
-            <h2 className="text-white text-base sm:text-lg font-semibold">System Microservices Status Distribution</h2>
+            <h2 className="text-white text-base sm:text-lg xl:text-xl 2xl:text-2xl font-semibold">System Microservices Status Distribution</h2>
             <div className="text-xs sm:text-sm text-gray-400">Real-time</div>
           </div>
           <div className="bg-gray-800/50 rounded-xl p-3 sm:p-4 border border-gray-700/50">
@@ -368,14 +368,14 @@ const SystemMicroservicesDashboard: React.FC<
               options={donutChartOptions}
               series={donutChartSeries}
               type="donut"
-              height={250}
+              height={window.innerWidth >= 1920 ? 350 : window.innerWidth >= 1536 ? 300 : 250}
               width="100%"
             />
           </div>
         </div>
         <div className="w-full">
           <div className="flex items-center justify-between mb-3 sm:mb-4">
-            <h2 className="text-white text-base sm:text-lg font-semibold">Resource Utilization</h2>
+            <h2 className="text-white text-base sm:text-lg xl:text-xl 2xl:text-2xl font-semibold">Resource Utilization</h2>
             <div className="text-xs sm:text-sm text-gray-400">CPU vs Memory</div>
           </div>
           <div className="bg-gray-800/50 rounded-xl p-3 sm:p-4 border border-gray-700/50">
@@ -383,7 +383,7 @@ const SystemMicroservicesDashboard: React.FC<
               options={bubbleChartOptions}
               series={bubbleSeries}
               type="bubble"
-              height={250}
+              height={window.innerWidth >= 1920 ? 350 : window.innerWidth >= 1536 ? 300 : 250}
               width="100%"
             />
           </div>

@@ -6,12 +6,13 @@ import SlideOver from "../../CustomComponent/SlideOver";
 import CryptoTextBox from "../../CustomComponent/CustomCryptoTextBox";
 import { useLocation } from "react-router-dom";
 import AceEditor from "react-ace";
+import "ace-builds/src-noconflict/ace";
 import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/mode-yaml";
 import yaml from "js-yaml";
-import ResizableBottomDrawer from "../../CustomComponent/ResizableBottomDrawer";
 import lget from "lodash/get";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
+import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 
 function Secrets() {
   const [fetching, setFetching] = React.useState(true);
@@ -20,10 +21,7 @@ function Secrets() {
   const { pushFeedback } = React.useContext(FeedbackContext);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedSecret, setselectedSecret] = useState<any | null>(null);
-  const [isBottomDrawerOpen, setIsBottomDrawerOpen] = useState(false);
-  const [editorIsChanged, setEditorIsChanged] = React.useState(false);
-  const [editorDataChanged, setEditorDataChanged] = React.useState<any>();
-  const [yamlDump, setyamlDump] = useState<any>();
+  const { addYamlSession } = useTerminal();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const secretName = params.get("secretName");
@@ -104,8 +102,16 @@ function Secrets() {
       data: selectedSecret?.data,
     };
     const yamlString = yaml.dump(yamlObj, { noRefs: true, indent: 2 });
-    setyamlDump(yamlString);
-    setIsBottomDrawerOpen(true);
+    
+    // Add YAML editor session to global state
+    addYamlSession({
+      title: `YAML: ${selectedSecret?.name}`,
+      content: yamlString,
+      isDirty: false,
+      onSave: async (content: string) => {
+        await handleYamlUpdate(content);
+      },
+    });
   };
 
   const parseSecret = async (doc: any) => {
@@ -129,9 +135,9 @@ function Secrets() {
     return [secret];
   };
 
-  async function handleYamlUpdate() {
+  async function handleYamlUpdate(content: string) {
     try {
-      const parsed = yaml.load(editorDataChanged) as any;
+      const parsed = yaml.load(content) as any;
       const [secret, err] = await parseSecret(parsed);
       if (err) {
         return pushFeedback({ message: err, type: "error" });
@@ -151,9 +157,6 @@ function Secrets() {
           message: `${selectedSecret?.name} Updated`,
           type: "success",
         });
-        setIsBottomDrawerOpen(false);
-        setEditorIsChanged(false);
-        setEditorDataChanged(null);
         setIsOpen(false);
       }
     } catch (e: any) {
@@ -275,47 +278,6 @@ function Secrets() {
               customWidth={600}
             />
           </div>
-          <ResizableBottomDrawer
-            open={isBottomDrawerOpen}
-            isEdit={editorIsChanged}
-            onClose={() => {
-              setIsBottomDrawerOpen(false);
-              setEditorIsChanged(false);
-              setEditorDataChanged(null);
-            }}
-            onSave={() => handleYamlUpdate()}
-            title={`${selectedSecret?.name} Secret`}
-            showUnsavedChangesModal
-            unsavedModalTitle="Changes Not Saved"
-            unsavedModalMessage="Are you sure you want to exit? All unsaved changes will be lost."
-            unsavedModalCancelLabel="Stay"
-            unsavedModalConfirmLabel="Exit Anyway"
-          >
-            <AceEditor
-              setOptions={{
-                useWorker: false,
-                wrap: true,
-                tabSize: 2,
-              }}
-              mode="yaml"
-              theme="tomorrow"
-              defaultValue={yamlDump}
-              showPrintMargin={false}
-              onLoad={function (editor) {
-                editor.renderer.setPadding(10);
-                editor.renderer.setScrollMargin(10);
-              }}
-              style={{
-                width: "100%",
-                height: "100%",
-                borderRadius: "4px",
-              }}
-              onChange={function editorChanged(editor: any) {
-                setEditorIsChanged(true);
-                setEditorDataChanged(editor);
-              }}
-            />
-          </ResizableBottomDrawer>
         </>
       )}
     </>

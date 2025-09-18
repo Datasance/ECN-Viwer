@@ -58,34 +58,36 @@ const Dashboard = () => {
     <div className='min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white overflow-auto'>
       {/* Header */}
       <div className='bg-gray-800/50 backdrop-blur-sm border-b border-gray-700/50 sticky top-0 z-10'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6'>
+        <div className='w-full max-w-none px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 3xl:px-20 py-6'>
           <div className='flex items-center justify-between'>
             <div>
-              <h1 className='text-3xl font-bold text-white mb-2'>Cluster Dashboard</h1>
-              <p className='text-gray-300 text-sm'>Real-time cluster monitoring</p>
+              <h1 className='text-3xl xl:text-4xl 2xl:text-5xl font-bold text-white mb-2'>Cluster Dashboard</h1>
+              <p className='text-gray-300 text-sm xl:text-base 2xl:text-lg'>Real-time cluster monitoring</p>
             </div>
             <div className='text-right'>
-              <div className='text-sm text-gray-400'>Last Updated</div>
-              <div className='text-lg font-semibold text-white'>{new Date().toLocaleTimeString()}</div>
+              <div className='text-sm xl:text-base text-gray-400'>Last Updated</div>
+              <div className='text-lg xl:text-xl 2xl:text-2xl font-semibold text-white'>{new Date().toLocaleTimeString()}</div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
+      <div className='w-full max-w-none px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 3xl:px-20 py-8'>
         {/* Key Metrics Cards */}
-        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8'>
+        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-4 3xl:grid-cols-4 gap-4 sm:gap-6 xl:gap-8 2xl:gap-10 mb-6 sm:mb-8 xl:mb-10'>
           {metrics.map((metric, index) => (
-            <div key={index} className={`bg-gradient-to-br ${metric.color} rounded-xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1`}>
+            <div key={index} className={`bg-gradient-to-br ${metric.color} rounded-xl p-4 sm:p-6 xl:p-8 2xl:p-10 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1`}>
               <div className='flex items-center justify-between'>
                 <div className='min-w-0 flex-1'>
                   <p className='text-white/80 text-xs sm:text-sm font-medium uppercase tracking-wide truncate'>{metric.title}</p>
-                  <p className='text-2xl sm:text-3xl font-bold text-white mt-1 sm:mt-2'>{metric.value}</p>
-                  {metric.running !== null ? (
-                    <p className='text-white/70 text-xs sm:text-sm mt-1'>
-                      {metric.running} running
-                    </p>
-                  ) : <p className='mt-5'></p>}
+                  <p className='text-2xl sm:text-3xl xl:text-4xl 2xl:text-5xl font-bold text-white mt-1 sm:mt-2'>{metric.value}</p>
+                  {metric.running !== null 
+                    ? (
+                        <p className='text-white/70 text-xs sm:text-sm mt-1'>
+                          {metric.running} running
+                        </p>
+                      ) 
+                    : <p className='mt-5' />}
                 </div>
                 <div className='text-3xl sm:text-4xl opacity-80 flex-shrink-0 ml-2'>
                   {metric.icon}
@@ -96,7 +98,7 @@ const Dashboard = () => {
         </div>
 
         {/* Dashboard Cards */}
-        <div className='space-y-8'>
+        <div className='space-y-8 xl:space-y-12 2xl:space-y-16'>
           <AgentDashboard
             agentData={agentData}
           />
