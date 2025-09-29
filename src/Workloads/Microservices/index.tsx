@@ -456,7 +456,7 @@ function MicroservicesList() {
   }
 
   const handleStartStop = async () => {
-    await restartFunction(selectedMs?.status?.status === "ACTIVE" ? false : true);
+    await restartFunction(selectedMs?.isActivated === true ? false : true);
   };
 
   useEffect(() => {
@@ -554,10 +554,10 @@ function MicroservicesList() {
       render: (row: any) => row.uuid || "N/A",
     },
     {
-      label: "Status",
+      label: "Activation",
       render: (row: any) => {
         const bgColor =
-          StatusColor[row.status?.status as StatusType] ?? "#9CA3AF";
+          StatusColor[row.isActivated ? "ACTIVE" : "INACTIVE"] ?? "#9CA3AF";
         const textColor = getTextColor(bgColor);
         return (
           <span
@@ -567,7 +567,7 @@ function MicroservicesList() {
               color: textColor,
             }}
           >
-            {row.status?.status}
+            {row.isActivated ? "ACTIVE" : "INACTIVE"}
           </span>
         );
       },
@@ -1128,6 +1128,7 @@ function MicroservicesList() {
         onEditYaml={handleEditYaml}
         onTerminal={() => enableExecAndOpenTerminal(selectedMs?.uuid!)}
         onStartStop={() => setShowStartStopConfirmModal(true)}
+        startStopValue={selectedMs?.isActivated ? "stop" : ""}
         customWidth={750}
       />
       <UnsavedChangesModal
@@ -1171,11 +1172,11 @@ function MicroservicesList() {
         open={showStartStopConfirmModal}
         onCancel={() => setShowStartStopConfirmModal(false)}
         onConfirm={handleStartStop}
-        title={`${!selectedMs?.isActivated ? "ACTIVE" : "INACTIVE"} ${selectedMs?.name}`}
-        message={"This is not reversible."}
+        title={`${selectedMs?.isActivated ? "Stop" : "Start"} ${selectedMs?.name}`}
+        message={`Are you sure you want to ${selectedMs?.isActivated ? "stop" : "start"} this microservice?`}
         cancelLabel={"Cancel"}
-        confirmLabel={`${selectedMs?.status?.status !== "ACTIVE" ? "ACTIVE" : "INACTIVE"}`}
-        confirmColor={`${selectedMs?.status?.status !== "ACTIVE" ? "bg-green" : "bg-red"}`}
+        confirmLabel={selectedMs?.isActivated ? "Stop" : "Start"}
+        confirmColor={selectedMs?.isActivated ? "bg-red" : "bg-red"}
       />
     </div>
   );

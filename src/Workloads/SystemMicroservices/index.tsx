@@ -530,10 +530,10 @@ function SystemMicroserviceList() {
       render: (row: any) => row.uuid || "N/A",
     },
     {
-      label: "Status",
+      label: "Activation",
       render: (row: any) => {
         const bgColor =
-          StatusColor[row.status?.status as StatusType] ?? "#9CA3AF";
+          StatusColor[row.isActivated ? "ACTIVE" : "INACTIVE"] ?? "#9CA3AF";
         const textColor = getTextColor(bgColor);
         return (
           <span
@@ -543,7 +543,7 @@ function SystemMicroserviceList() {
               color: textColor,
             }}
           >
-            {row.status?.status}
+            {row.isActivated ? "ACTIVE" : "INACTIVE"}
           </span>
         );
       },
