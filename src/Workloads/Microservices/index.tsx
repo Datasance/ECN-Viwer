@@ -50,7 +50,8 @@ function MicroservicesList() {
       appCreatedAt: app.createdAt,
     })),
   );
-
+  const [showStartStopConfirmModal, setShowStartStopConfirmModal] =
+    useState(false);
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const microserviceId = params.get("microserviceId");
@@ -425,6 +426,37 @@ function MicroservicesList() {
         await handleYamlUpdate(content);
       },
     });
+  };
+
+  async function restartFunction(type: boolean) {
+    try {
+      const res = await request(
+        `/api/v3/microservices/${selectedMs.uuid}${type ? "/start" : "/stop"}`,
+        {
+          method: "PATCH",
+          headers: {
+            "content-type": "application/json",
+          },
+        },
+      );
+      if (res.ok) {
+        pushFeedback({
+          message: !type ? "Microservices stopped!" : "Microservices started!",
+          type: "success",
+        });
+        setShowResetConfirmModal(false);
+        setShowStartStopConfirmModal(false);
+        setIsOpen(false);
+      } else {
+        pushFeedback({ message: res.statusText, type: "error" });
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error" });
+    }
+  }
+
+  const handleStartStop = async () => {
+    await restartFunction(selectedMs?.status?.status === "ACTIVE" ? false : true);
   };
 
   useEffect(() => {
@@ -1095,6 +1127,7 @@ function MicroservicesList() {
         onDelete={() => setShowDeleteConfirmModal(true)}
         onEditYaml={handleEditYaml}
         onTerminal={() => enableExecAndOpenTerminal(selectedMs?.uuid!)}
+        onStartStop={() => setShowStartStopConfirmModal(true)}
         customWidth={750}
       />
       <UnsavedChangesModal
@@ -1133,6 +1166,16 @@ function MicroservicesList() {
         message={"This is not reversible."}
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
+      />
+      <UnsavedChangesModal
+        open={showStartStopConfirmModal}
+        onCancel={() => setShowStartStopConfirmModal(false)}
+        onConfirm={handleStartStop}
+        title={`${!selectedMs?.isActivated ? "ACTIVE" : "INACTIVE"} ${selectedMs?.name}`}
+        message={"This is not reversible."}
+        cancelLabel={"Cancel"}
+        confirmLabel={`${selectedMs?.status?.status !== "ACTIVE" ? "ACTIVE" : "INACTIVE"}`}
+        confirmColor={`${selectedMs?.status?.status !== "ACTIVE" ? "bg-green" : "bg-red"}`}
       />
     </div>
   );
