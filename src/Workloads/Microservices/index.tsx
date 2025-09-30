@@ -577,10 +577,6 @@ function MicroservicesList() {
       render: (row: any) => row.status.ipAddress || "N/A",
     },
     {
-      label: "Image",
-      render: (row: any) => row.images?.[0]?.containerImage || "N/A",
-    },
-    {
       label: "Agent",
       render: (row: any) => {
         const agent = data.reducedAgents.byUUID[row.iofogUuid];
@@ -650,6 +646,47 @@ function MicroservicesList() {
         const seconds = totalSeconds % 60;
 
         return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+      },
+    },
+    {
+      label: "Images",
+      render: () => "",
+      isSectionHeader: true,
+    },
+    {
+      label: "X86 Image",
+      render: (row: any) => row.images?.[0]?.containerImage || "N/A",
+    },
+    {
+      label: "ARM Image",
+      render: (row: any) => row.images?.[1]?.containerImage || "N/A",
+    },
+    {
+      label: "Registry",
+      render: (row: any) => {
+        if (!row?.registryId) return <span className="text-gray-400">N/A</span>;
+        return (
+          <NavLink
+            to={`/config/registries?registryId=${encodeURIComponent(row.registryId)}`}
+            className="text-blue-400 underline cursor-pointer"
+          >
+            {row.registryId}
+          </NavLink>
+        );
+      },
+    },
+    {
+      label: "Catalog Item Id",
+      render: (row: any) => {
+        if (!row?.catalogItemId) return <span className="text-gray-400">N/A</span>;
+        return (
+          <NavLink
+            to={`/config/CatalogMicroservices?catalogItemid=${encodeURIComponent(row.catalogItemId)}`}
+            className="text-blue-400 underline cursor-pointer"
+          >
+            {row.catalogItemId}
+          </NavLink>
+        );
       },
     },
     {

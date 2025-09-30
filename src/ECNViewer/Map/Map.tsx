@@ -413,7 +413,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
         pushFeedback({ message: res.statusText, type: "error" });
         throw new Error(res.statusText);
       } else {
-        pushFeedback({ message: "Controller Updated", type: "success" });
+        pushFeedback({ message: `Agent: ${selectedNode?.name} Config Updated`, type: "success" });
         setEditorDataChanged(null);
         setIsOpen(false);
       }
