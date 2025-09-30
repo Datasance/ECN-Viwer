@@ -530,10 +530,10 @@ function SystemMicroserviceList() {
       render: (row: any) => row.uuid || "N/A",
     },
     {
-      label: "Status",
+      label: "Activation",
       render: (row: any) => {
         const bgColor =
-          StatusColor[row.status?.status as StatusType] ?? "#9CA3AF";
+          StatusColor[row.isActivated ? "ACTIVE" : "INACTIVE"] ?? "#9CA3AF";
         const textColor = getTextColor(bgColor);
         return (
           <span
@@ -543,7 +543,7 @@ function SystemMicroserviceList() {
               color: textColor,
             }}
           >
-            {row.status?.status}
+            {row.isActivated ? "ACTIVE" : "INACTIVE"}
           </span>
         );
       },
@@ -551,10 +551,6 @@ function SystemMicroserviceList() {
     {
       label: "Ip Address",
       render: (row: any) => row.status.ipAddress || "N/A",
-    },
-    {
-      label: "Image",
-      render: (row: any) => row.images?.[0]?.containerImage || "N/A",
     },
     {
       label: "Agent",
@@ -626,6 +622,47 @@ function SystemMicroserviceList() {
         const seconds = totalSeconds % 60;
 
         return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+      },
+    },
+    {
+      label: "Images",
+      render: () => "",
+      isSectionHeader: true,
+    },
+    {
+      label: "X86 Image",
+      render: (row: any) => row.images?.[0]?.containerImage || "N/A",
+    },
+    {
+      label: "ARM Image",
+      render: (row: any) => row.images?.[1]?.containerImage || "N/A",
+    },
+    {
+      label: "Registry",
+      render: (row: any) => {
+        if (!row?.registryId) return <span className="text-gray-400">N/A</span>;
+        return (
+          <NavLink
+            to={`/config/registries?registryId=${encodeURIComponent(row.registryId)}`}
+            className="text-blue-400 underline cursor-pointer"
+          >
+            {row.registryId}
+          </NavLink>
+        );
+      },
+    },
+    {
+      label: "Catalog Item Id",
+      render: (row: any) => {
+        if (!row?.catalogItemId) return <span className="text-gray-400">N/A</span>;
+        return (
+          <NavLink
+            to={`/config/CatalogMicroservices?catalogItemid=${encodeURIComponent(row.catalogItemId)}`}
+            className="text-blue-400 underline cursor-pointer"
+          >
+            {row.catalogItemId}
+          </NavLink>
+        );
       },
     },
     {

@@ -4,6 +4,7 @@ import { ControllerContext } from "../../ControllerProvider";
 import { FeedbackContext } from "../../Utils/FeedbackContext";
 import SlideOver from "../../CustomComponent/SlideOver";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
+import { useLocation, NavLink } from "react-router-dom";
 
 function CatalogMicroservices() {
   const [fetching, setFetching] = React.useState(true);
@@ -13,6 +14,9 @@ function CatalogMicroservices() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedCatalogMicroservice, setselectedCatalogMicroservice] =
     useState<any | null>(null);
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const catalogItemId = params.get("catalogItemid");
 
   const handleRowClick = (row: any) => {
     if (row.id) {
@@ -71,6 +75,17 @@ function CatalogMicroservices() {
     fetchCatalog();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (catalogItemId && catalog) {
+      const found = catalog.find((item: any) => item.id.toString() === catalogItemId);
+      if (found) {
+        handleRowClick(found);
+        setIsOpen(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [catalogItemId, catalog]);
 
   const columns = [
     {
@@ -174,7 +189,17 @@ function CatalogMicroservices() {
     },
     {
       label: "Registry Id",
-      render: (row: any) => row.registryId.toString() || "N/A",
+      render: (row: any) => {
+        if (!row?.registryId) return <span className="text-gray-400">N/A</span>;
+        return (
+          <NavLink
+            to={`/config/registries?registryId=${encodeURIComponent(row.registryId)}`}
+            className="text-blue-400 underline cursor-pointer"
+          >
+            {row.registryId}
+          </NavLink>
+        );
+      },
     },
     {
       label: "Images",
@@ -250,20 +275,20 @@ function CatalogMicroservices() {
               data={catalog}
               getRowKey={(row: any) => row.id}
             />
-            <SlideOver
-              open={isOpen}
-              onClose={() => setIsOpen(false)}
-              title={
-                selectedCatalogMicroservice?.name ||
-                "Catalog Microservice Details"
-              }
-              data={selectedCatalogMicroservice}
-              fields={slideOverFields}
-              customWidth={600}
-            />
           </div>
         </>
       )}
+      <SlideOver
+        open={isOpen}
+        onClose={() => setIsOpen(false)}
+        title={
+          selectedCatalogMicroservice?.name ||
+          "Catalog Microservice Details"
+        }
+        data={selectedCatalogMicroservice}
+        fields={slideOverFields}
+        customWidth={600}
+      />
     </>
   );
 }

@@ -50,7 +50,8 @@ function MicroservicesList() {
       appCreatedAt: app.createdAt,
     })),
   );
-
+  const [showStartStopConfirmModal, setShowStartStopConfirmModal] =
+    useState(false);
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const microserviceId = params.get("microserviceId");
@@ -427,6 +428,37 @@ function MicroservicesList() {
     });
   };
 
+  async function restartFunction(type: boolean) {
+    try {
+      const res = await request(
+        `/api/v3/microservices/${selectedMs.uuid}${type ? "/start" : "/stop"}`,
+        {
+          method: "PATCH",
+          headers: {
+            "content-type": "application/json",
+          },
+        },
+      );
+      if (res.ok) {
+        pushFeedback({
+          message: !type ? "Microservices stopped!" : "Microservices started!",
+          type: "success",
+        });
+        setShowResetConfirmModal(false);
+        setShowStartStopConfirmModal(false);
+        setIsOpen(false);
+      } else {
+        pushFeedback({ message: res.statusText, type: "error" });
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error" });
+    }
+  }
+
+  const handleStartStop = async () => {
+    await restartFunction(selectedMs?.isActivated === true ? false : true);
+  };
+
   useEffect(() => {
     if (selectedPort) {
       setShowPortDeleteConfirmModal(true);
@@ -522,10 +554,10 @@ function MicroservicesList() {
       render: (row: any) => row.uuid || "N/A",
     },
     {
-      label: "Status",
+      label: "Activation",
       render: (row: any) => {
         const bgColor =
-          StatusColor[row.status?.status as StatusType] ?? "#9CA3AF";
+          StatusColor[row.isActivated ? "ACTIVE" : "INACTIVE"] ?? "#9CA3AF";
         const textColor = getTextColor(bgColor);
         return (
           <span
@@ -535,7 +567,7 @@ function MicroservicesList() {
               color: textColor,
             }}
           >
-            {row.status?.status}
+            {row.isActivated ? "ACTIVE" : "INACTIVE"}
           </span>
         );
       },
@@ -543,10 +575,6 @@ function MicroservicesList() {
     {
       label: "Ip Address",
       render: (row: any) => row.status.ipAddress || "N/A",
-    },
-    {
-      label: "Image",
-      render: (row: any) => row.images?.[0]?.containerImage || "N/A",
     },
     {
       label: "Agent",
@@ -618,6 +646,47 @@ function MicroservicesList() {
         const seconds = totalSeconds % 60;
 
         return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+      },
+    },
+    {
+      label: "Images",
+      render: () => "",
+      isSectionHeader: true,
+    },
+    {
+      label: "X86 Image",
+      render: (row: any) => row.images?.[0]?.containerImage || "N/A",
+    },
+    {
+      label: "ARM Image",
+      render: (row: any) => row.images?.[1]?.containerImage || "N/A",
+    },
+    {
+      label: "Registry",
+      render: (row: any) => {
+        if (!row?.registryId) return <span className="text-gray-400">N/A</span>;
+        return (
+          <NavLink
+            to={`/config/registries?registryId=${encodeURIComponent(row.registryId)}`}
+            className="text-blue-400 underline cursor-pointer"
+          >
+            {row.registryId}
+          </NavLink>
+        );
+      },
+    },
+    {
+      label: "Catalog Item Id",
+      render: (row: any) => {
+        if (!row?.catalogItemId) return <span className="text-gray-400">N/A</span>;
+        return (
+          <NavLink
+            to={`/config/CatalogMicroservices?catalogItemid=${encodeURIComponent(row.catalogItemId)}`}
+            className="text-blue-400 underline cursor-pointer"
+          >
+            {row.catalogItemId}
+          </NavLink>
+        );
       },
     },
     {
@@ -1095,6 +1164,8 @@ function MicroservicesList() {
         onDelete={() => setShowDeleteConfirmModal(true)}
         onEditYaml={handleEditYaml}
         onTerminal={() => enableExecAndOpenTerminal(selectedMs?.uuid!)}
+        onStartStop={() => setShowStartStopConfirmModal(true)}
+        startStopValue={selectedMs?.isActivated ? "stop" : ""}
         customWidth={750}
       />
       <UnsavedChangesModal
@@ -1133,6 +1204,16 @@ function MicroservicesList() {
         message={"This is not reversible."}
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
+      />
+      <UnsavedChangesModal
+        open={showStartStopConfirmModal}
+        onCancel={() => setShowStartStopConfirmModal(false)}
+        onConfirm={handleStartStop}
+        title={`${selectedMs?.isActivated ? "Stop" : "Start"} ${selectedMs?.name}`}
+        message={`Are you sure you want to ${selectedMs?.isActivated ? "stop" : "start"} this microservice?`}
+        cancelLabel={"Cancel"}
+        confirmLabel={selectedMs?.isActivated ? "Stop" : "Start"}
+        confirmColor={selectedMs?.isActivated ? "bg-red" : "bg-red"}
       />
     </div>
   );

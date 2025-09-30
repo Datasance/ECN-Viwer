@@ -2047,6 +2047,64 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+  "/microservices/{uuid}/start":
+    patch:
+      tags:
+        - Microservices
+      summary: Starts a microservice
+      operationId: startMicroservice
+      parameters:
+        - in: path
+          name: uuid
+          description: Microservice Uuid
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      responses:
+        "204":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+  "/microservices/{uuid}/stop":
+    patch:
+      tags:
+        - Microservices
+      summary: Stops a microservice
+      operationId: stopMicroservice
+      parameters:
+        - in: path
+          name: uuid
+          description: Microservice Uuid
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      responses:
+        "204":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
   "/microservices/{uuid}/exec":
     post:
       tags:

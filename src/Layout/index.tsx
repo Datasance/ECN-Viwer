@@ -34,6 +34,7 @@ import ApplicationList from "../Workloads/Applications";
 import SystemApplicationList from "../Workloads/SystemApplications";
 import AppTemplates from "../DatasanceConfig/appTemplates/index";
 import CatalogMicroservices from "../DatasanceConfig/catalogMicroservices";
+import Registries from "../DatasanceConfig/registries";
 import ConfigMaps from "../DatasanceConfig/configMaps";
 import VolumeMounts from "../DatasanceConfig/volumeMounts";
 import Secrets from "../DatasanceConfig/secret";
@@ -204,6 +205,11 @@ export default function Layout() {
                           </MenuItem>
                         )}
                       </NavLink>
+                      <NavLink to="/config/Registries">
+                        {({ isActive }) => (
+                          <MenuItem active={isActive}>Registries</MenuItem>
+                        )}
+                      </NavLink>
                       <NavLink to="/config/ConfigMaps">
                         {({ isActive }) => (
                           <MenuItem active={isActive}>Config Maps</MenuItem>
@@ -367,6 +373,7 @@ export default function Layout() {
                 path="/config/CatalogMicroservices"
                 Component={CatalogMicroservices}
               />
+              <Route path="/config/Registries" Component={Registries} />
               <Route path="/config/ConfigMaps" Component={ConfigMaps} />
               <Route path="/config/secret" Component={Secrets} />
               <Route path="/config/VolumeMounts" Component={VolumeMounts} />
