@@ -740,15 +740,15 @@ function NodesList() {
     },
     {
       label: "Cpu Violation",
-      render: (row: any) => (row.cpuViolation === "0" ? "false" : "true"),
+      render: (row: any) => (row.cpuViolation === "0" || row.cpuViolation === "false" ? "false" : "true"),
     },
     {
       label: "Disk Violation",
-      render: (row: any) => (row.diskViolation === "0" ? "false" : "true"),
+      render: (row: any) => (row.diskViolation === "0" || row.diskViolation === "false" ? "false" : "true"),
     },
     {
       label: "Memory Violation",
-      render: (row: any) => (row.memoryViolation === "0" ? "false" : "true"),
+      render: (row: any) => (row.memoryViolation === "0" || row.memoryViolation === "false" ? "false" : "true"),
     },
     {
       label: "Is Ready To Rollback",

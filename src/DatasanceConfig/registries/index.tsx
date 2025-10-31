@@ -85,11 +85,6 @@ function Registries() {
       header: "PRIVATE",
       render: (row: any) => <span>{row.isPublic ? "false" : "true"}</span>,
     },
-    {
-      key: "isSecure",
-      header: "SECURE",
-      render: (row: any) => <span>{row.isSecure ? "true" : "false"}</span>,
-    },
   ];
 
   const slideOverFields = [
@@ -110,20 +105,8 @@ function Registries() {
       render: (row: any) => row.userEmail || "N/A",
     },
     {
-      label: "Is Public",
-      render: (row: any) => row.isPublic ? "true" : "false",
-    },
-    {
-      label: "Is Secure",
-      render: (row: any) => row.isSecure ? "true" : "false",
-    },
-    {
-      label: "Requires Certificate",
-      render: (row: any) => row.requiresCert ? "true" : "false",
-    },
-    {
-      label: "Certificate",
-      render: (row: any) => row.certificate || "N/A",
+      label: "Private",
+      render: (row: any) => <span>{row.isPublic ? "false" : "true"}</span>,
     },
   ];
 

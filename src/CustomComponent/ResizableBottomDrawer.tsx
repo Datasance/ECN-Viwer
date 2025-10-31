@@ -33,6 +33,8 @@ type ResizableBottomDrawerProps = {
   activeTabId?: string;
   onTabChange?: (tabId: string) => void;
   onTabClose?: (tabId: string) => void;
+  // Custom action buttons
+  customActions?: React.ReactNode;
 };
 
 const ResizableBottomDrawer = ({
@@ -51,6 +53,7 @@ const ResizableBottomDrawer = ({
   activeTabId,
   onTabChange,
   onTabClose,
+  customActions,
 }: ResizableBottomDrawerProps) => {
   const [height, setHeight] = useState(300);
   const [lastHeight, setLastHeight] = useState(300);
@@ -184,6 +187,12 @@ const ResizableBottomDrawer = ({
                   )}
                 </div>
                 <div className="flex gap-2 items-center">
+                  {customActions && (
+                    <div className="flex gap-2 items-center mr-2">
+                      {customActions}
+                    </div>
+                  )}
+                  
                   <button
                     onClick={toggleMinimize}
                     className="flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 rounded p-1 w-6 h-6"
@@ -226,6 +235,17 @@ const ResizableBottomDrawer = ({
                           className="text-white bg-[#e76467ff] hover:bg-[#d55a5d] rounded px-3 py-1 text-sm font-medium transition-colors"
                         >
                           Save Changes
+                        </button>
+                      )}
+                    {tabs
+                      .find((tab) => tab.id === activeTabId)
+                      ?.title?.startsWith("Deploy") &&
+                      isEdit && (
+                        <button
+                          onClick={onSave}
+                          className="text-white bg-green-600 hover:bg-green-700 rounded px-3 py-1 text-sm font-medium transition-colors"
+                        >
+                          Deploy
                         </button>
                       )}
                   </div>
