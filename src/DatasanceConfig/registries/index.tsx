@@ -5,6 +5,10 @@ import { FeedbackContext } from "../../Utils/FeedbackContext";
 import SlideOver from "../../CustomComponent/SlideOver";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
 import { useLocation } from "react-router-dom";
+import yaml from "js-yaml";
+import lget from "lodash/get";
+import { useTerminal } from "../../providers/Terminal/TerminalProvider";
+import { parseRegistries } from "../../Utils/parseRegistriesYaml";
 
 function Registries() {
   const [fetching, setFetching] = React.useState(true);
@@ -17,6 +21,7 @@ function Registries() {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const registryId = params.get("registryId");
+  const { addYamlSession } = useTerminal();
 
   const handleRowClick = (row: any) => {
     setSelectedRegistry(row);
@@ -61,6 +66,136 @@ function Registries() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [registryId, registries]);
+
+  const handleEditYaml = () => {
+    const name = selectedRegistry?.url.replace(/\./g, '-') || 'untitled';
+
+    const yamlObj = {
+      apiVersion: "datasance.com/v3",
+      kind: "Registries",
+      metadata: {
+        name: name,
+      },
+      spec: {
+        immutable: selectedRegistry?.immutable || false,
+      },
+      data: selectedRegistry,
+    };
+
+    const yamlString = yaml.dump(yamlObj, {
+      noRefs: true,
+      indent: 2,
+      lineWidth: -1
+    });
+
+    addYamlSession({
+      title: `YAML: ${name}`,
+      content: yamlString,
+      isDirty: false,
+      onSave: async (content: string) => {
+        try {
+          const parsedDoc = yaml.load(content);
+          const [registry, err] = await parseRegistries(parsedDoc);
+
+          if (err) {
+            pushFeedback({ message: err, type: "error" });
+            return;
+          }
+
+          await handleYamlUpdate(registry, "PATCH");
+        } catch (e: any) {
+          pushFeedback({ message: e.message, type: "error", uuid: "error" });
+        }
+      },
+    });
+  };
+
+  async function handleYamlUpdate(registries: any, method?: string) {
+    try {
+      const res = await request(
+        `/api/v3/registries/${method === "PATCH" ? "/" + selectedRegistry.id : ''}`,
+        {
+          method: method,
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify(registries),
+        }
+      );
+
+      if (!res.ok) {
+        pushFeedback({ message: res.statusText, type: "error" });
+      } else {
+        pushFeedback({
+          message: `${selectedRegistry.id || "New"} ${method === "POST" ? "Added" : "Updated"}`,
+          type: "success",
+        });
+        setIsOpen(false);
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  }
+
+  const handleYamlParse = async (item: any) => {
+    const file = item;
+    if (file) {
+      const reader = new window.FileReader();
+
+      reader.onload = async function (evt: any) {
+        try {
+          const docs = yaml.loadAll(evt.target.result);
+
+          if (!Array.isArray(docs)) {
+            pushFeedback({ message: "Could not parse the file: Invalid YAML format", type: "error" });
+            return;
+          }
+
+          let successCount = 0;
+          let errorCount = 0;
+
+          for (const doc of docs) {
+            if (!doc) {
+              continue;
+            }
+
+            const [registry, err] = await parseRegistries(doc);
+
+            if (err) {
+              console.error("Error parsing a document:", err);
+              pushFeedback({ message: `Error processing item: ${err}`, type: "error" });
+              errorCount++;
+            } else {
+              try {
+                await handleYamlUpdate(registry, "POST");
+                successCount++;
+              } catch (e) {
+                console.error("Error updating a document:", e);
+                errorCount++;
+              }
+            }
+          }
+
+          if (successCount > 0) {
+            pushFeedback({ message: `Successfully processed ${successCount} item(s).`, type: "success" });
+          }
+          if (errorCount > 0) {
+            pushFeedback({ message: `Failed to process ${errorCount} item(s).`, type: "error" });
+          }
+
+        } catch (e) {
+          console.error({ e });
+          pushFeedback({ message: "Could not parse the file", type: "error" });
+        }
+      };
+
+      reader.onerror = function (evt) {
+        pushFeedback({ message: evt, type: "error" });
+      };
+
+      reader.readAsText(file, "UTF-8");
+    }
+  };
 
   const columns = [
     {
@@ -133,6 +268,8 @@ function Registries() {
               columns={columns}
               data={registries}
               getRowKey={(row: any) => row.id}
+              uploadDropzone
+              uploadFunction={handleYamlParse}
             />
           </div>
         </>
@@ -147,6 +284,7 @@ function Registries() {
         data={selectedRegistry}
         fields={slideOverFields}
         customWidth={600}
+        onEditYaml={handleEditYaml}
       />
     </>
   );

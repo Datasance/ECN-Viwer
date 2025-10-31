@@ -145,7 +145,7 @@ export const TerminalProvider: React.FC<TerminalProviderProps> = ({
         isActive: true,
         createdAt: Date.now(),
       };
-
+      
       setYamlSessions((prev) => {
         // Check if a session with the same title already exists
         const existingIndex = prev.findIndex(
@@ -157,7 +157,6 @@ export const TerminalProvider: React.FC<TerminalProviderProps> = ({
           const updated = [...prev];
           updated[existingIndex] = {
             ...newSession,
-            id: prev[existingIndex].id,
           };
           return updated;
         } else {

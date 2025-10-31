@@ -1,14 +1,13 @@
 module.exports = {
-    plugins: [
-        require('@tailwindcss/postcss'),
-        require('autoprefixer'),
+  plugins: [
+    require('tailwindcss'),
+    require('autoprefixer'),
+  ],
+  overrides: {
+    'tailwindcss': {
+      exclude: [
+        '**/node_modules/leaflet/*',
       ],
-    overrides: {
-      'tailwindcss': {
-        exclude: [
-          '**/node_modules/leaflet/*',
-        ],
-      },
     },
-  }
-  
+  },
+}

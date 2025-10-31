@@ -33,6 +33,9 @@ function ConfigMaps() {
   const [editorValues, setEditorValues] = React.useState<
     Record<string, string>
   >({});
+  const [loading, setLoading] = React.useState(false);
+  const [loadingMessage, setLoadingMessage] =
+    React.useState("Config Map Adding...");
 
   const handleRowClick = (row: any) => {
     if (row.name) {
@@ -129,16 +132,117 @@ function ConfigMaps() {
 
     const yamlString = `${yamlHeader}\n${dataSection}`;
 
-    // Add YAML editor session to global state
     addYamlSession({
       title: `YAML: ${selectedConfigMap?.name}`,
       content: yamlString,
       isDirty: false,
       onSave: async (content: string) => {
-        await handleYamlUpdate(content);
+        try {
+          const parsedDoc = yaml.load(content);
+          const [configMap, err] = await parseConfigMap(parsedDoc);
+
+          if (err) {
+            pushFeedback({ message: err, type: "error" });
+            return;
+          }
+
+          await handleYamlUpdate(configMap, "PATCH");
+        } catch (e: any) {
+          pushFeedback({ message: e.message, type: "error", uuid: "error" });
+        }
       },
     });
   };
+
+  const handleYamlParse = async (item: any) => {
+    const file = item;
+    if (file) {
+      const reader = new window.FileReader();
+
+      reader.onload = async function (evt: any) {
+        try {
+          const docs = yaml.loadAll(evt.target.result);
+
+          if (!Array.isArray(docs)) {
+            pushFeedback({ message: "Could not parse the file: Invalid YAML format", type: "error" });
+            return;
+          }
+
+          let successCount = 0;
+          let errorCount = 0;
+
+          for (const doc of docs) {
+            if (!doc) {
+              continue;
+            }
+
+            const [configMap, err] = await parseConfigMap(doc);
+
+            if (err) {
+              console.error("Error parsing a document:", err);
+              pushFeedback({ message: `Error processing item: ${err}`, type: "error" });
+              errorCount++;
+            } else {
+              try {
+                await handleYamlUpdate(configMap, "POST");
+                successCount++;
+              } catch (e) {
+                console.error("Error updating a document:", e);
+                errorCount++;
+              }
+            }
+          }
+
+          if (successCount > 0) {
+            pushFeedback({ message: `Successfully processed ${successCount} item(s).`, type: "success" });
+          }
+          if (errorCount > 0) {
+            pushFeedback({ message: `Failed to process ${errorCount} item(s).`, type: "error" });
+          }
+
+        } catch (e) {
+          console.error({ e });
+          pushFeedback({ message: "Could not parse the file", type: "error" });
+        }
+      };
+
+      reader.onerror = function (evt) {
+        pushFeedback({ message: evt, type: "error" });
+      };
+
+      reader.readAsText(file, "UTF-8");
+    }
+  };
+
+  async function handleYamlUpdate(configMap: any, method?: string) {
+    try {
+      const name = configMap.name;
+
+      const res = await request(
+        `/api/v3/configmaps/${method === "PATCH" ? "/" + name : ''}`,
+        {
+          method: method,
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify(configMap),
+        }
+      );
+
+      if (!res.ok) {
+        pushFeedback({ message: res.statusText, type: "error" });
+      } else {
+        pushFeedback({
+          message: `${name} ${method === "POST" ? "Added" : "Updated"}`,
+          type: "success",
+        });
+        setIsOpen(false);
+        fetchConfigMaps();
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  }
 
   const parseConfigMap = async (doc: any) => {
     if (doc.apiVersion !== "datasance.com/v3") {
@@ -161,38 +265,6 @@ function ConfigMaps() {
 
     return [configMap];
   };
-
-  async function handleYamlUpdate(content: string) {
-    try {
-      const parsed = yaml.load(content) as any;
-      const [configMap, err] = await parseConfigMap(parsed);
-      if (err) {
-        return pushFeedback({ message: err, type: "error" });
-      }
-      const res = await request(
-        `/api/v3/configmaps/${selectedConfigMap?.name}`,
-        {
-          method: "PATCH",
-          headers: {
-            "content-type": "application/json",
-          },
-          body: JSON.stringify(configMap),
-        },
-      );
-
-      if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
-      } else {
-        pushFeedback({
-          message: `${selectedConfigMap?.name} Updated`,
-          type: "success",
-        });
-        setIsOpen(false);
-      }
-    } catch (e: any) {
-      pushFeedback({ message: e.message, type: "error", uuid: "error" });
-    }
-  }
 
   const handleSave = async (key: string, updatedYamlString: string) => {
     try {
@@ -327,6 +399,31 @@ function ConfigMaps() {
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  };
+
+  const postCertificateItem = async (item: any) => {
+    const newItem = { ...item };
+    setLoadingMessage("Certificate Adding...");
+    setLoading(true);
+    const response = await request(
+      `/api/v3/certificates/yaml`,
+      {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newItem),
+      },
+    );
+    if (response?.ok) {
+      pushFeedback({ message: "Certificate Added!", type: "success" });
+      fetchConfigMaps();
+      setLoading(false);
+    } else {
+      pushFeedback({ message: response?.statusText || "Something went wrong", type: "error" });
+      setLoading(false);
     }
   };
 
@@ -509,6 +606,8 @@ function ConfigMaps() {
               columns={columns}
               data={configMaps}
               getRowKey={(row: any) => row.id}
+              uploadDropzone
+              uploadFunction={handleYamlParse}
             />
             <SlideOver
               open={isOpen}

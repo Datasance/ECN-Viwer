@@ -1,35 +1,67 @@
-import Select, { Props as SelectProps, GroupBase } from "react-select";
+import Select, { GroupBase, MultiValue, SingleValue, ActionMeta } from "react-select";
 
-export type CustomSelectProps<
-  OptionType,
-  IsMulti extends boolean = false,
-> = SelectProps<OptionType, IsMulti, GroupBase<OptionType>> & {
-  className?: string;
+type OptionType = {
+  label: string;
+  value: string;
 };
 
-function CustomSelect<OptionType, IsMulti extends boolean = false>({
+type CustomSelectProps = {
+  options: OptionType[];
+  isMulti?: boolean;
+  placeholder?: string;
+  className?: string;
+  isClearable?: boolean;
+  selected?: OptionType | OptionType[] | null;
+  setSelected?: (value: any) => void;
+  setIsOpen?: (value: boolean) => void;
+};
+
+export default function CustomSelect({
+  options,
+  isMulti,
+  placeholder,
   className,
-  ...props
-}: CustomSelectProps<OptionType, IsMulti>) {
+  isClearable,
+  selected,
+  setSelected,
+  setIsOpen,
+}: CustomSelectProps) {
+
+  const handleChange = (
+    value: SingleValue<OptionType> | MultiValue<OptionType>,
+    actionMeta: ActionMeta<OptionType>
+  ) => {
+    const selectedValue = isMulti
+      ? ((value as MultiValue<OptionType>)?.slice() || null)
+      : (value as SingleValue<OptionType> | null);
+
+    if (setSelected) {
+      if (!selectedValue) {
+        setSelected(null);
+        setIsOpen?.(false);
+      } else if (Array.isArray(selectedValue)) {
+        setSelected(selectedValue);
+        setIsOpen?.(true);
+      } else {
+        setSelected(selectedValue.value);
+        setIsOpen?.(true);
+      }
+    }
+  };
+
   return (
-    <Select<OptionType, IsMulti, GroupBase<OptionType>>
+    <Select<OptionType, boolean, GroupBase<OptionType>>
       className={className}
-      {...props}
+      isMulti={isMulti}
+      options={options}
+      onChange={handleChange}
+      value={selected as any}
+      placeholder={placeholder}
+      isClearable={isClearable}
       styles={{
-        control: (provided) => ({
-          ...provided,
-          backgroundColor: "white",
-          color: "black",
-        }),
-        menu: (provided) => ({
-          ...provided,
-          backgroundColor: "white",
-          color: "black",
-        }),
-        singleValue: (provided) => ({
-          ...provided,
-          color: "black",
-        }),
+        control: (provided) => ({ ...provided, backgroundColor: "white", color: "black" }),
+        menu: (provided) => ({ ...provided, backgroundColor: "white", color: "black" }),
+        singleValue: (provided) => ({ ...provided, color: "black" }),
         option: (provided, state) => ({
           ...provided,
           backgroundColor: state.isFocused ? "#f0f0f0" : "white",
@@ -39,5 +71,3 @@ function CustomSelect<OptionType, IsMulti extends boolean = false>({
     />
   );
 }
-
-export default CustomSelect;

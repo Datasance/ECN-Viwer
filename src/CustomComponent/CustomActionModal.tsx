@@ -75,7 +75,7 @@ const CustomActionModal = ({
               )}
 
               {/* Content */}
-              <div className="mb-6">{child}</div>
+              <div className="mb-6 min-h-[10vh]">{child}</div>
 
               {/* Footer Buttons */}
               {(onCancel || onConfirm) && (

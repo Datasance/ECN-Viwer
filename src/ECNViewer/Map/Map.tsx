@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import CustomLeaflet from "../../CustomComponent/CustomLeaflet";
 import { useData } from "../../providers/Data";
 import SlideOver from "../../CustomComponent/SlideOver";
@@ -22,11 +22,6 @@ import { useAuth } from "react-oidc-context";
 interface CustomLeafletProps {
   collapsed: boolean;
 }
-
-type OptionType = {
-  label: string;
-  value: string;
-};
 
 const formatDuration = (milliseconds: number): string => {
   if (!milliseconds || milliseconds <= 0) return "N/A";
@@ -65,7 +60,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
   const [editorDataChanged, setEditorDataChanged] = React.useState<any>();
   const { addTerminalSession, addYamlSession } = useTerminal();
   const auth = useAuth();
-
+  const [selectedAgentItem, setSelectedAgentItem] = useState<any>(null);
   const markers = data?.reducedAgents?.byName
     ? Object.values(data.reducedAgents.byName)
         .filter((agent: any) => agent.latitude && agent.longitude)
@@ -81,21 +76,23 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
         }))
     : [];
 
-  const selectOptions: OptionType[] = markers.map((m) => ({
+  const selectOptions = markers.map((m) => ({
     value: m.id,
     label: m.label,
   }));
 
-  const handleSelectChange = (option: OptionType | null) => {
-    if (option) {
-      const selectedAgent = data.reducedAgents.byUUID[option.value];
+  useEffect(() => {
+    if (selectedAgentItem) {
+      const selectedAgent = data.reducedAgents.byUUID[selectedAgentItem];
       setSelectedNode(selectedAgent);
       setIsOpen(true);
     } else {
       setSelectedNode(null);
       setIsOpen(false);
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAgentItem])
+  
 
   const handleButtonClick = (marker: any) => {
     if (marker) {
@@ -1085,9 +1082,9 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
           collapsed={collapsed}
           selectedMarkerId={selectedNode?.uuid || undefined}
         />
-        <CustomSelect<OptionType>
+        <CustomSelect
           options={selectOptions}
-          onChange={handleSelectChange}
+          setSelected={setSelectedAgentItem}
           isClearable
           placeholder="Select an agent..."
           className="!absolute top-3 left-16 w-[250px] z-[50] bg-white rounded shadow"

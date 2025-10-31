@@ -9,9 +9,9 @@ import "ace-builds/src-noconflict/ace";
 import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/mode-yaml";
 import yaml from "js-yaml";
-import lget from "lodash/get";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
+import { parseSecret } from "../../Utils/parseSecretYaml";
 
 function Secrets() {
   const [fetching, setFetching] = React.useState(true);
@@ -102,61 +102,112 @@ function Secrets() {
     };
     const yamlString = yaml.dump(yamlObj, { noRefs: true, indent: 2 });
 
-    // Add YAML editor session to global state
     addYamlSession({
       title: `YAML: ${selectedSecret?.name}`,
       content: yamlString,
       isDirty: false,
       onSave: async (content: string) => {
-        await handleYamlUpdate(content);
+        try {
+          const parsedDoc = yaml.load(content);
+          const [secret, err] = await parseSecret(parsedDoc);
+
+          if (err) {
+            pushFeedback({ message: err, type: "error" });
+            return;
+          }
+
+          await handleYamlUpdate(secret, "PATCH");
+        } catch (e: any) {
+          pushFeedback({ message: e.message, type: "error", uuid: "error" });
+        }
       },
     });
   };
 
-  const parseSecret = async (doc: any) => {
-    if (doc.apiVersion !== "datasance.com/v3") {
-      return [
-        {},
-        `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v3`,
-      ];
-    }
-    if (doc.kind !== "Secret") {
-      return [{}, `Invalid kind ${doc.kind}`];
-    }
-    if (!doc.metadata || !doc.data) {
-      return [{}, "Invalid YAML format"];
-    }
-    const secret = {
-      name: lget(doc, "metadata.name", lget(doc, "spec.name", undefined)),
-      data: lget(doc, "data", {}),
-    };
+  const handleYamlParse = async (item: any) => {
+    const file = item;
+    if (file) {
+      const reader = new window.FileReader();
 
-    return [secret];
+      reader.onload = async function (evt: any) {
+        try {
+          const docs = yaml.loadAll(evt.target.result);
+
+          if (!Array.isArray(docs)) {
+            pushFeedback({ message: "Could not parse the file: Invalid YAML format", type: "error" });
+            return;
+          }
+
+          let successCount = 0;
+          let errorCount = 0;
+
+          for (const doc of docs) {
+            if (!doc) {
+              continue;
+            }
+
+            const [secret, err] = await parseSecret(doc);
+
+            if (err) {
+              console.error("Error parsing a document:", err);
+              pushFeedback({ message: `Error processing item: ${err}`, type: "error" });
+              errorCount++;
+            } else {
+              try {
+                await handleYamlUpdate(secret, "POST");
+                successCount++;
+              } catch (e) {
+                console.error("Error updating a document:", e);
+                errorCount++;
+              }
+            }
+          }
+
+          if (successCount > 0) {
+            pushFeedback({ message: `Successfully processed ${successCount} item(s).`, type: "success" });
+          }
+          if (errorCount > 0) {
+            pushFeedback({ message: `Failed to process ${errorCount} item(s).`, type: "error" });
+          }
+
+        } catch (e) {
+          console.error({ e });
+          pushFeedback({ message: "Could not parse the file", type: "error" });
+        }
+      };
+
+      reader.onerror = function (evt) {
+        pushFeedback({ message: evt, type: "error" });
+      };
+
+      reader.readAsText(file, "UTF-8");
+    }
   };
 
-  async function handleYamlUpdate(content: string) {
+  async function handleYamlUpdate(secret: any, method?: string) {
     try {
-      const parsed = yaml.load(content) as any;
-      const [secret, err] = await parseSecret(parsed);
-      if (err) {
-        return pushFeedback({ message: err, type: "error" });
-      }
-      const res = await request(`/api/v3/secrets/${selectedSecret?.name}`, {
-        method: "PATCH",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify(secret),
-      });
+      const name = secret.name;
+
+      const res = await request(
+        `/api/v3/secrets/${method === "PATCH" ? "/" + name : ''}`,
+        {
+          method: method,
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify(secret),
+        }
+      );
 
       if (!res.ok) {
         pushFeedback({ message: res.statusText, type: "error" });
       } else {
         pushFeedback({
-          message: `${selectedSecret?.name} Updated`,
+          message: `${name} ${method === "POST" ? "Added" : "Updated"}`,
           type: "success",
         });
         setIsOpen(false);
+        fetchSecrets();
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -266,6 +317,8 @@ function Secrets() {
               columns={columns}
               data={secrets}
               getRowKey={(row: any) => row.name}
+              uploadDropzone
+              uploadFunction={handleYamlParse}
             />
             <SlideOver
               open={isOpen}

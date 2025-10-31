@@ -5,6 +5,9 @@ import { FeedbackContext } from "../../Utils/FeedbackContext";
 import SlideOver from "../../CustomComponent/SlideOver";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
 import { useLocation, NavLink } from "react-router-dom";
+import yaml from "js-yaml";
+import { parseCatalogMicroservice } from "../../Utils/parseCatalogMicroservice";
+import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 
 function CatalogMicroservices() {
   const [fetching, setFetching] = React.useState(true);
@@ -17,6 +20,11 @@ function CatalogMicroservices() {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const catalogItemId = params.get("catalogItemid");
+  const { addYamlSession } = useTerminal();
+
+  const [loading, setLoading] = React.useState(false);
+  const [loadingMessage, setLoadingMessage] =
+    React.useState("Catalog Adding...");
 
   const handleRowClick = (row: any) => {
     if (row.id) {
@@ -86,6 +94,144 @@ function CatalogMicroservices() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [catalogItemId, catalog]);
+
+  const handleEditYaml = () => {
+    if (!selectedCatalogMicroservice) return;
+
+    const yamlObj = {
+      apiVersion: "datasance.com/v3",
+      kind: "CatalogMicroservice",
+      metadata: {
+        name: selectedCatalogMicroservice.name,
+      },
+      spec: {
+        description: selectedCatalogMicroservice.description,
+        category: selectedCatalogMicroservice.category,
+        images: selectedCatalogMicroservice.images,
+        publisher: selectedCatalogMicroservice.publisher,
+        diskRequired: selectedCatalogMicroservice.diskRequired,
+        ramRequired: selectedCatalogMicroservice.ramRequired,
+        picture: selectedCatalogMicroservice.picture,
+        isPublic: selectedCatalogMicroservice.isPublic,
+        registryId: selectedCatalogMicroservice.registryId,
+        inputType: selectedCatalogMicroservice.inputType,
+        outputType: selectedCatalogMicroservice.outputType,
+        configExample: selectedCatalogMicroservice.configExample,
+      },
+    };
+
+    const yamlString = yaml.dump(yamlObj, {
+      noRefs: true,
+      indent: 2,
+      lineWidth: -1
+    });
+
+    addYamlSession({
+      title: `YAML: ${selectedCatalogMicroservice.name}`,
+      content: yamlString,
+      isDirty: false,
+      onSave: async (content: string) => {
+        try {
+          const parsedDoc = yaml.load(content);
+          const [catalogItem, err] = await parseCatalogMicroservice(parsedDoc);
+
+          if (err) {
+            pushFeedback({ message: err, type: "error" });
+            return;
+          }
+
+          await postCatalogItem(catalogItem, "PATCH");
+        } catch (e: any) {
+          pushFeedback({ message: e.message, type: "error", uuid: "error" });
+        }
+      },
+    });
+  };
+
+
+  const handleYamlUpload = async (item: any) => {
+    const file = item;
+    if (file) {
+      const reader = new window.FileReader();
+
+      reader.onload = async function (evt: any) {
+        try {
+          const docs = yaml.loadAll(evt.target.result);
+
+          if (!Array.isArray(docs)) {
+            pushFeedback({ message: "Could not parse the file: Invalid YAML format", type: "error" });
+            return;
+          }
+
+          let successCount = 0;
+          let errorCount = 0;
+
+          for (const doc of docs) {
+            if (!doc) {
+              continue;
+            }
+
+            const [catalogItem, err] = await parseCatalogMicroservice(doc);
+
+            if (err) {
+              console.error("Error parsing a document:", err);
+              pushFeedback({ message: `Error processing item: ${err}`, type: "error" });
+              errorCount++;
+            } else {
+              await postCatalogItem(catalogItem, "POST");
+              successCount++;
+            }
+          }
+
+          if (successCount > 0) {
+            pushFeedback({ message: `Successfully processed ${successCount} item(s).`, type: "success" });
+          }
+          if (errorCount > 0) {
+            pushFeedback({ message: `Failed to process ${errorCount} item(s).`, type: "error" });
+          }
+
+        } catch (e) {
+          console.error({ e });
+          pushFeedback({ message: "Could not parse the file", type: "error" });
+        }
+      };
+
+      reader.onerror = function (evt) {
+        pushFeedback({ message: evt, type: "error" });
+      };
+
+      reader.readAsText(file, "UTF-8");
+    }
+  };
+
+  const postCatalogItem = async (item: any, method?: string) => {
+    const newItem = { ...item };
+    setLoadingMessage(method === "PATCH" ? "Catalog Updating..." : "Catalog Adding...");
+    setLoading(true);
+
+    const response = await request(
+      `/api/v3/catalog/microservices${method === "PATCH" ? "/" + newItem.name : ''}`,
+      {
+        method: method,
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newItem),
+      },
+    );
+    if (response?.ok) {
+      pushFeedback({
+        message: `Catalog ${method === "PATCH" ? "Updated" : "Added"}!`,
+        type: "success"
+      });
+      fetchCatalog();
+      setLoading(false);
+    } else {
+      pushFeedback({ message: response?.statusText || "Something went wrong", type: "error" });
+      setLoading(false);
+    }
+  };
 
   const columns = [
     {
@@ -274,6 +420,8 @@ function CatalogMicroservices() {
               columns={columns}
               data={catalog}
               getRowKey={(row: any) => row.id}
+              uploadDropzone
+              uploadFunction={handleYamlUpload}
             />
           </div>
         </>
@@ -281,6 +429,7 @@ function CatalogMicroservices() {
       <SlideOver
         open={isOpen}
         onClose={() => setIsOpen(false)}
+        onEditYaml={handleEditYaml}
         title={
           selectedCatalogMicroservice?.name ||
           "Catalog Microservice Details"
@@ -288,6 +437,13 @@ function CatalogMicroservices() {
         data={selectedCatalogMicroservice}
         fields={slideOverFields}
         customWidth={600}
+      />
+      <CustomLoadingModal
+        open={loading}
+        message={loadingMessage}
+        spinnerSize="lg"
+        spinnerColor="text-green-500"
+        overlayOpacity={60}
       />
     </>
   );

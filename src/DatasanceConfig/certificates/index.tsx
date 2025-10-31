@@ -7,6 +7,9 @@ import { format, formatDistanceToNow } from "date-fns";
 import CryptoTextBox from "../../CustomComponent/CustomCryptoTextBox";
 import { NavLink, useLocation } from "react-router-dom";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
+import { parseCertificate, parseCertificateAuthority } from "../../Utils/parseCertificateYaml";
+import yaml from "js-yaml";
+import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 
 function Certificates() {
   const [fetching, setFetching] = React.useState(true);
@@ -20,6 +23,10 @@ function Certificates() {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const certificateName = params.get("name");
+  const [loading, setLoading] = React.useState(false);
+  const [loadingMessage, setLoadingMessage] =
+    React.useState("Certificate Adding...");
+  const { addYamlSession } = useTerminal();
 
   const handleRowClick = (row: any) => {
     if (row.name) {
@@ -87,6 +94,150 @@ function Certificates() {
     fetchCertificates();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleEditYaml = () => {
+    const yamlDump = {
+      apiVersion: "datasance.com/v3",
+      kind: "Certificate",
+      metadata: {
+        name: selectedCertificate?.name,
+      },
+      spec: {
+        subject: selectedCertificate?.subject,
+        hosts: selectedCertificate?.hosts,
+        expiration: selectedCertificate?.expiration,
+        ca: selectedCertificate?.ca,
+      },
+    };
+
+    const yamlString = yaml.dump(yamlDump, { noRefs: true, indent: 2 });
+
+    addYamlSession({
+      title: `YAML: ${selectedCertificate?.name}`,
+      content: yamlString,
+      isDirty: false,
+      onSave: async (content: string) => {
+        try {
+          const parsedDoc = yaml.load(content);
+
+          const [certificateItem, err] = await parseCertificate(parsedDoc);
+
+          if (err) {
+            pushFeedback({ message: err, type: "error" });
+            return;
+          }
+
+          await postCertificateItem(certificateItem, "PATCH");
+
+        } catch (e: any) {
+          pushFeedback({ message: e.message, type: "error", uuid: "error" });
+        }
+      },
+    });
+  };
+
+  const handleYamlUpload = async (item: any) => {
+    const file = item;
+    if (file) {
+      const reader = new window.FileReader();
+
+      reader.onload = async function (evt: any) {
+        try {
+          const docs = yaml.loadAll(evt.target.result);
+
+          if (!Array.isArray(docs)) {
+            pushFeedback({ message: "Could not parse the file: Invalid YAML format", type: "error" });
+            return;
+          }
+
+          let successCount = 0;
+          let errorCount = 0;
+
+          for (const doc of docs) {
+            if (!doc) {
+              continue;
+            }
+
+            let parsedItem;
+            let err;
+
+            if ((doc as any).kind === "Certificate") {
+              [parsedItem, err] = await parseCertificate(doc);
+            } else if ((doc as any).kind === "CertificateAuthority") {
+              [parsedItem, err] = await parseCertificateAuthority(doc);
+            } else {
+              err = `Invalid kind ${(doc as any).kind}, expected Certificate or CertificateAuthority`;
+            }
+
+            if (err) {
+              console.error("Error parsing a document:", err);
+              pushFeedback({ message: `Error processing item: ${err}`, type: "error" });
+              errorCount++;
+            } else {
+              postCertificateItem(parsedItem, "POST");
+              successCount++;
+            }
+          }
+
+          if (successCount > 0) {
+            pushFeedback({ message: `Successfully processed ${successCount} item(s).`, type: "success" });
+          }
+          if (errorCount > 0) {
+            pushFeedback({ message: `Failed to process ${errorCount} item(s).`, type: "error" });
+          }
+
+
+        } catch (e) {
+          console.error({ e });
+          pushFeedback({ message: "Could not parse the file. Check YAML syntax.", type: "error" });
+        }
+      };
+
+      reader.onerror = function (evt) {
+        pushFeedback({ message: evt, type: "error" });
+      };
+
+      reader.readAsText(file, "UTF-8");
+    }
+  };
+
+  const postCertificateItem = async (item: any, method?: string) => {
+    debugger;
+
+    let newItem;
+
+    if (typeof item === 'object' && item !== null) {
+      newItem = { ...item };
+    } else {
+      console.error("Invalid data type passed to postCertificateItem:", typeof item);
+      pushFeedback({ message: "Invalid data.", type: "error" });
+      setLoading(false);
+      return;
+    }
+
+    setLoadingMessage("Certificate Adding...");
+    setLoading(true);
+
+    const response = await request(
+      `/api/v3/certificates${method === "PATCH" ? "/" + newItem.name : ''}`,
+      {
+        method: method,
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newItem),
+      },
+    );
+    if (response?.ok) {
+      pushFeedback({ message: "Certificate Added!", type: "success" });
+      fetchCertificates();
+      setLoading(false);
+    } else {
+      pushFeedback({ message: response?.statusText || "Something went wrong", type: "error" });
+      setLoading(false);
+    }
+  };
 
   const columns = [
     {
@@ -263,15 +414,25 @@ function Certificates() {
               columns={columns}
               data={certificates}
               getRowKey={(row: any) => row.name}
+              uploadDropzone
+              uploadFunction={handleYamlUpload}
             />
 
             <SlideOver
               open={isOpen}
               onClose={() => setIsOpen(false)}
+              onEditYaml={handleEditYaml}
               title={selectedCertificate?.name || "Certificate Details"}
               data={selectedCertificate}
               fields={slideOverFields}
               customWidth={600}
+            />
+            <CustomLoadingModal
+              open={loading}
+              message={loadingMessage}
+              spinnerSize="lg"
+              spinnerColor="text-green-500"
+              overlayOpacity={60}
             />
           </div>
         </>
