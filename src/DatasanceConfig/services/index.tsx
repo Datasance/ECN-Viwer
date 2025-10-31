@@ -7,6 +7,10 @@ import SlideOver from "../../CustomComponent/SlideOver";
 import FileCopyIcon from "@material-ui/icons/FileCopy";
 import CheckIcon from "@material-ui/icons/Check";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
+import { parseService } from "../../Utils/parseServiceYaml";
+import yaml from "js-yaml";
+import { useTerminal } from "../../providers/Terminal/TerminalProvider";
+
 
 function Services() {
   const [fetching, setFetching] = React.useState(true);
@@ -19,6 +23,7 @@ function Services() {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const serviceName = params.get("name");
+  const { addYamlSession } = useTerminal();
 
   const handleRowClick = (row: any) => {
     if (row.name) {
@@ -132,6 +137,142 @@ function Services() {
     fetchServices();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleEditYaml = () => {
+    if (!selectedService) return;
+
+    const yamlObj = {
+      apiVersion: "datasance.com/v3",
+      kind: "Service",
+      metadata: {
+        name: selectedService.name,
+      },
+      spec: {
+        type: selectedService.type,
+        resource: selectedService.resource,
+        defaultBridge: selectedService.defaultBridge,
+        bridgePort: selectedService.bridgePort,
+        targetPort: selectedService.targetPort,
+        tags: selectedService.tags,
+      },
+    };
+
+    const yamlString = yaml.dump(yamlObj, {
+      noRefs: true,
+      indent: 2,
+      lineWidth: -1
+    });
+
+    addYamlSession({
+      title: `YAML: ${selectedService.name}`,
+      content: yamlString,
+      isDirty: false,
+      onSave: async (content: string) => {
+        try {
+          const parsedDoc = yaml.load(content);
+          const [service, err] = await parseService(parsedDoc);
+
+          if (err) {
+            pushFeedback({ message: err, type: "error" });
+            return;
+          }
+
+          await handleYamlUpdate(service, "PATCH");
+        } catch (e: any) {
+          pushFeedback({ message: e.message, type: "error", uuid: "error" });
+        }
+      },
+    });
+  };
+
+  const handleYamlParse = async (item: any) => {
+    const file = item;
+    if (file) {
+      const reader = new window.FileReader();
+
+      reader.onload = async function (evt: any) {
+        try {
+          const docs = yaml.loadAll(evt.target.result);
+
+          if (!Array.isArray(docs)) {
+            pushFeedback({ message: "Could not parse the file: Invalid YAML format", type: "error" });
+            return;
+          }
+
+          let successCount = 0;
+          let errorCount = 0;
+
+          for (const doc of docs) {
+            if (!doc) {
+              continue;
+            }
+
+            const [service, err] = await parseService(doc);
+
+            if (err) {
+              console.error("Error parsing a document:", err);
+              pushFeedback({ message: `Error processing item: ${err}`, type: "error" });
+              errorCount++;
+            } else {
+              try {
+                await handleYamlUpdate(service, "POST");
+                successCount++;
+              } catch (e) {
+                console.error("Error updating a document:", e);
+                errorCount++;
+              }
+            }
+          }
+
+          if (successCount > 0) {
+            pushFeedback({ message: `Successfully processed ${successCount} item(s).`, type: "success" });
+          }
+          if (errorCount > 0) {
+            pushFeedback({ message: `Failed to process ${errorCount} item(s).`, type: "error" });
+          }
+
+        } catch (e) {
+          console.error({ e });
+          pushFeedback({ message: "Could not parse the file", type: "error" });
+        }
+      };
+
+      reader.onerror = function (evt) {
+        pushFeedback({ message: evt, type: "error" });
+      };
+
+      reader.readAsText(file, "UTF-8");
+    }
+  };
+
+  async function handleYamlUpdate(service: any, method?: string) {
+    try {
+      const name = service.name;
+
+      const res = await request(
+        `/api/v3/services${method === "PATCH" ? "/" + name : ''}`,
+        {
+          method: method,
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify(service),
+        }
+      );
+
+      if (!res.ok) {
+        pushFeedback({ message: res.statusText, type: "error" });
+      } else {
+        pushFeedback({
+          message: `Service ${name} ${method === "POST" ? "Added" : "Updated"}`,
+          type: "success",
+        });
+        setIsOpen(false);
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  }
 
   const columns = [
     {
@@ -277,11 +418,14 @@ function Services() {
               columns={columns}
               data={services}
               getRowKey={(row: any) => row.id}
+              uploadDropzone
+              uploadFunction={handleYamlParse}
             />
 
             <SlideOver
               open={isOpen}
               onClose={() => setIsOpen(false)}
+              onEditYaml={handleEditYaml}
               title={selectedService?.name || "Service Details"}
               data={selectedService}
               fields={slideOverFields}
