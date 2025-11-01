@@ -90,7 +90,7 @@ function SystemMicroserviceList() {
         },
       );
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+       pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({ message: "Microservice Rebuilt", type: "success" });
         setShowResetConfirmModal(false);
@@ -112,7 +112,7 @@ function SystemMicroserviceList() {
         },
       );
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+       pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({ message: "Microservice Deleted", type: "success" });
         setIsOpen(false);
@@ -135,7 +135,7 @@ function SystemMicroserviceList() {
         },
       );
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+       pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({ message: "Port Deleted", type: "success" });
         setIsOpen(false);
@@ -158,7 +158,7 @@ function SystemMicroserviceList() {
         },
       );
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+       pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({ message: "Volume Deleted", type: "success" });
         setIsOpen(false);
@@ -184,7 +184,7 @@ function SystemMicroserviceList() {
         },
       );
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+       pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({
           message: "Microservice Config Updated. ",
@@ -211,7 +211,7 @@ function SystemMicroserviceList() {
         },
       );
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+       pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({
           message: "Microservice Config Deleted. ",
@@ -333,7 +333,7 @@ function SystemMicroserviceList() {
           pushFeedback({ message: error.message, type: "error" });
           throw new Error(error.message);
         } catch (e) {
-          pushFeedback({ message: res.statusText, type: "error" });
+         pushFeedback({ message: res.message, type: "error" });
           throw new Error(res.statusText);
         }
       } else {

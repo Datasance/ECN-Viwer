@@ -139,7 +139,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
       });
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+       pushFeedback({ message: res.message, type: "error" });
         return;
       } else {
         pushFeedback({ message: "Agent Rebooted", type: "success" });
@@ -176,7 +176,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
       });
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+       pushFeedback({ message: res.message, type: "error" });
         return;
       } else {
         pushFeedback({ message: "Agent Pruned", type: "success" });
@@ -407,7 +407,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
       });
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+       pushFeedback({ message: res.message, type: "error" });
         throw new Error(res.statusText);
       } else {
         pushFeedback({ message: `Agent: ${selectedNode?.name} Config Updated`, type: "success" });

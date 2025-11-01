@@ -88,8 +88,9 @@ export const ControllerProvider = ({ children }) => {
       });
 
       if (!response.ok) {
-        console.error(`HTTP error! status: ${response.status}`);
-        return null;
+        const errorData = await response.json();
+        console.error(`HTTP error! status: ${errorData.message}`);
+        return errorData;
       }
 
       return response;

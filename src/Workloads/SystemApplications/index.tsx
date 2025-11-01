@@ -74,7 +74,7 @@ function SystemApplicationList() {
         setShowStartStopConfirmModal(false);
         setIsOpen(false);
       } else {
-        pushFeedback({ message: res.statusText, type: "error" });
+       pushFeedback({ message: res.message, type: "error" });
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error" });
@@ -97,7 +97,7 @@ function SystemApplicationList() {
         },
       );
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+       pushFeedback({ message: res.message, type: "error" });
         return;
       } else {
         pushFeedback({ message: "Microservice Deleted", type: "success" });
@@ -155,7 +155,7 @@ function SystemApplicationList() {
           const error = await res.json();
           pushFeedback({ message: error.message, type: "error" });
         } catch (e) {
-          pushFeedback({ message: res.statusText, type: "error" });
+         pushFeedback({ message: res.message, type: "error" });
         }
       } else {
         pushFeedback({
@@ -227,7 +227,7 @@ function SystemApplicationList() {
               const error = await res.json();
               pushFeedback({ message: error.message, type: "error" });
             } catch (e) {
-              pushFeedback({ message: res.statusText, type: "error" });
+             pushFeedback({ message: res.message, type: "error" });
             }
           } else {
             pushFeedback({

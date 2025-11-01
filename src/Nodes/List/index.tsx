@@ -103,7 +103,7 @@ function NodesList() {
       });
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+       pushFeedback({ message: res.message, type: "error" });
         return;
       } else {
         pushFeedback({ message: "Agent Rebooted", type: "success" });
@@ -122,7 +122,7 @@ function NodesList() {
       });
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+       pushFeedback({ message: res.message, type: "error" });
         return;
       } else {
         pushFeedback({ message: "Agent Rebooted", type: "success" });
@@ -141,7 +141,7 @@ function NodesList() {
       });
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+       pushFeedback({ message: res.message, type: "error" });
         return;
       } else {
         pushFeedback({ message: "Agent Pruned", type: "success" });
@@ -377,7 +377,7 @@ function NodesList() {
       });
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+       pushFeedback({ message: res.message, type: "error" });
         throw new Error(res.statusText);
       } else {
         pushFeedback({ message: `Agent: ${selectedNode?.name} Config Updated`, type: "success" });

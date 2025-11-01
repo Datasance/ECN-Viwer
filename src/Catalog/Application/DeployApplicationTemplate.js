@@ -90,6 +90,7 @@ export default function DeployApplicationTemplate ({ template, close, onDeploy }
         loading
       })
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [applicationName, loading, onDeploy])
 
   const handleChange = (key, value) => {
@@ -140,7 +141,7 @@ export default function DeployApplicationTemplate ({ template, close, onDeploy }
           const error = await res.json()
           pushFeedback({ message: error.message, type: 'error' })
         } catch (e) {
-          pushFeedback({ message: res.statusText, type: 'error' })
+         pushFeedback({ message: res.message, type: 'error' })
         }
         setLoading(false)
       } else {

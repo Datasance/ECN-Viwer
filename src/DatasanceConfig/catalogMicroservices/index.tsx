@@ -163,8 +163,7 @@ function CatalogMicroservices() {
             return;
           }
 
-          let successCount = 0;
-          let errorCount = 0;
+          
 
           for (const doc of docs) {
             if (!doc) {
@@ -176,19 +175,14 @@ function CatalogMicroservices() {
             if (err) {
               console.error("Error parsing a document:", err);
               pushFeedback({ message: `Error processing item: ${err}`, type: "error" });
-              errorCount++;
+              
             } else {
               await postCatalogItem(catalogItem, "POST");
-              successCount++;
+              
             }
           }
 
-          if (successCount > 0) {
-            pushFeedback({ message: `Successfully processed ${successCount} item(s).`, type: "success" });
-          }
-          if (errorCount > 0) {
-            pushFeedback({ message: `Failed to process ${errorCount} item(s).`, type: "error" });
-          }
+          
 
         } catch (e) {
           console.error({ e });

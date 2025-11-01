@@ -6,7 +6,6 @@ import SlideOver from "../../CustomComponent/SlideOver";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
 import { useLocation } from "react-router-dom";
 import yaml from "js-yaml";
-import lget from "lodash/get";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 import { parseRegistries } from "../../Utils/parseRegistriesYaml";
 
@@ -124,7 +123,7 @@ function Registries() {
       );
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+       pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({
           message: `${selectedRegistry.id || "New"} ${method === "POST" ? "Added" : "Updated"}`,
@@ -151,8 +150,7 @@ function Registries() {
             return;
           }
 
-          let successCount = 0;
-          let errorCount = 0;
+          
 
           for (const doc of docs) {
             if (!doc) {
@@ -164,24 +162,19 @@ function Registries() {
             if (err) {
               console.error("Error parsing a document:", err);
               pushFeedback({ message: `Error processing item: ${err}`, type: "error" });
-              errorCount++;
+              
             } else {
               try {
                 await handleYamlUpdate(registry, "POST");
-                successCount++;
+                
               } catch (e) {
                 console.error("Error updating a document:", e);
-                errorCount++;
+                
               }
             }
           }
 
-          if (successCount > 0) {
-            pushFeedback({ message: `Successfully processed ${successCount} item(s).`, type: "success" });
-          }
-          if (errorCount > 0) {
-            pushFeedback({ message: `Failed to process ${errorCount} item(s).`, type: "error" });
-          }
+          
 
         } catch (e) {
           console.error({ e });

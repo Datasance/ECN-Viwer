@@ -150,8 +150,7 @@ function Certificates() {
             return;
           }
 
-          let successCount = 0;
-          let errorCount = 0;
+          
 
           for (const doc of docs) {
             if (!doc) {
@@ -172,19 +171,14 @@ function Certificates() {
             if (err) {
               console.error("Error parsing a document:", err);
               pushFeedback({ message: `Error processing item: ${err}`, type: "error" });
-              errorCount++;
+              
             } else {
               postCertificateItem(parsedItem, "POST");
-              successCount++;
+              
             }
           }
 
-          if (successCount > 0) {
-            pushFeedback({ message: `Successfully processed ${successCount} item(s).`, type: "success" });
-          }
-          if (errorCount > 0) {
-            pushFeedback({ message: `Failed to process ${errorCount} item(s).`, type: "error" });
-          }
+          
 
 
         } catch (e) {
@@ -202,8 +196,6 @@ function Certificates() {
   };
 
   const postCertificateItem = async (item: any, method?: string) => {
-    debugger;
-
     let newItem;
 
     if (typeof item === 'object' && item !== null) {

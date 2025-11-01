@@ -138,8 +138,7 @@ function Secrets() {
             return;
           }
 
-          let successCount = 0;
-          let errorCount = 0;
+          
 
           for (const doc of docs) {
             if (!doc) {
@@ -151,24 +150,19 @@ function Secrets() {
             if (err) {
               console.error("Error parsing a document:", err);
               pushFeedback({ message: `Error processing item: ${err}`, type: "error" });
-              errorCount++;
+              
             } else {
               try {
                 await handleYamlUpdate(secret, "POST");
-                successCount++;
+                
               } catch (e) {
                 console.error("Error updating a document:", e);
-                errorCount++;
+                
               }
             }
           }
 
-          if (successCount > 0) {
-            pushFeedback({ message: `Successfully processed ${successCount} item(s).`, type: "success" });
-          }
-          if (errorCount > 0) {
-            pushFeedback({ message: `Failed to process ${errorCount} item(s).`, type: "error" });
-          }
+          
 
         } catch (e) {
           console.error({ e });
@@ -200,7 +194,7 @@ function Secrets() {
       );
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+       pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({
           message: `${name} ${method === "POST" ? "Added" : "Updated"}`,

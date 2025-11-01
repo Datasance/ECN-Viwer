@@ -73,7 +73,7 @@ function ApplicationList() {
         setShowStartStopConfirmModal(false);
         setIsOpen(false);
       } else {
-        pushFeedback({ message: res.statusText, type: "error" });
+       pushFeedback({ message: res.message, type: "error" });
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error" });
@@ -96,7 +96,7 @@ function ApplicationList() {
       );
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+       pushFeedback({ message: res.message, type: "error" });
         return;
       } else {
         pushFeedback({ message: "Application Deleted", type: "success" });
@@ -128,7 +128,7 @@ function ApplicationList() {
           const error = await res.json();
           pushFeedback({ message: error.message, type: "error" });
         } catch (e) {
-          pushFeedback({ message: res.statusText, type: "error" });
+         pushFeedback({ message: res.message, type: "error" });
         }
       } else {
         pushFeedback({
@@ -227,7 +227,7 @@ function ApplicationList() {
               const error = await res.json();
               pushFeedback({ message: error.message, type: "error" });
             } catch (e) {
-              pushFeedback({ message: res.statusText, type: "error" });
+             pushFeedback({ message: res.message, type: "error" });
             }
           } else {
             pushFeedback({

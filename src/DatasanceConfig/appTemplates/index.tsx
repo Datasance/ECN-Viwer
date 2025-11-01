@@ -111,7 +111,7 @@ function AppTemplates() {
         method: "DELETE",
       });
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+       pushFeedback({ message: res.message, type: "error" });
       } else {
         setCatalog(catalog.filter((i: any) => i.id !== item.id));
         pushFeedback({

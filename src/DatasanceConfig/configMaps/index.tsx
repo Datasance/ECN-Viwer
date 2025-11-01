@@ -33,10 +33,6 @@ function ConfigMaps() {
   const [editorValues, setEditorValues] = React.useState<
     Record<string, string>
   >({});
-  const [loading, setLoading] = React.useState(false);
-  const [loadingMessage, setLoadingMessage] =
-    React.useState("Config Map Adding...");
-
   const handleRowClick = (row: any) => {
     if (row.name) {
       fetchConfigMapItem(row.name);
@@ -168,38 +164,24 @@ function ConfigMaps() {
             return;
           }
 
-          let successCount = 0;
-          let errorCount = 0;
-
           for (const doc of docs) {
             if (!doc) {
               continue;
             }
-
             const [configMap, err] = await parseConfigMap(doc);
-
             if (err) {
               console.error("Error parsing a document:", err);
               pushFeedback({ message: `Error processing item: ${err}`, type: "error" });
-              errorCount++;
+              
             } else {
               try {
                 await handleYamlUpdate(configMap, "POST");
-                successCount++;
               } catch (e) {
                 console.error("Error updating a document:", e);
-                errorCount++;
+                
               }
             }
           }
-
-          if (successCount > 0) {
-            pushFeedback({ message: `Successfully processed ${successCount} item(s).`, type: "success" });
-          }
-          if (errorCount > 0) {
-            pushFeedback({ message: `Failed to process ${errorCount} item(s).`, type: "error" });
-          }
-
         } catch (e) {
           console.error({ e });
           pushFeedback({ message: "Could not parse the file", type: "error" });
@@ -230,7 +212,7 @@ function ConfigMaps() {
       );
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({
           message: `${name} ${method === "POST" ? "Added" : "Updated"}`,
@@ -323,7 +305,7 @@ function ConfigMaps() {
       );
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+       pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({
           message: `${selectedConfigMap?.name} Updated`,
@@ -389,7 +371,7 @@ function ConfigMaps() {
       );
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+       pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({
           message: `${selectedConfigMap?.name} Deleted key ${key}`,
@@ -399,31 +381,6 @@ function ConfigMaps() {
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
-    }
-  };
-
-  const postCertificateItem = async (item: any) => {
-    const newItem = { ...item };
-    setLoadingMessage("Certificate Adding...");
-    setLoading(true);
-    const response = await request(
-      `/api/v3/certificates/yaml`,
-      {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newItem),
-      },
-    );
-    if (response?.ok) {
-      pushFeedback({ message: "Certificate Added!", type: "success" });
-      fetchConfigMaps();
-      setLoading(false);
-    } else {
-      pushFeedback({ message: response?.statusText || "Something went wrong", type: "error" });
-      setLoading(false);
     }
   };
 

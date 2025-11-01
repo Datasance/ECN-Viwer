@@ -163,7 +163,7 @@ function VolumeMounts() {
       );
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+       pushFeedback({ message: res.message, type: "error" });
         return;
       } else {
         pushFeedback({ message: "Volume Mount Attached", type: "success" });
@@ -193,7 +193,7 @@ function VolumeMounts() {
       );
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+       pushFeedback({ message: res.message, type: "error" });
         return;
       } else {
         pushFeedback({ message: "Volume Mount Detached", type: "success" });
@@ -259,8 +259,7 @@ function VolumeMounts() {
             return;
           }
 
-          let successCount = 0;
-          let errorCount = 0;
+          
 
           for (const doc of docs) {
             if (!doc) {
@@ -272,24 +271,19 @@ function VolumeMounts() {
             if (err) {
               console.error("Error parsing a document:", err);
               pushFeedback({ message: `Error processing item: ${err}`, type: "error" });
-              errorCount++;
+              
             } else {
               try {
                 await handleYamlUpdate(volumeMountItem, "POST");
-                successCount++;
+                
               } catch (e) {
                 console.error("Error updating a document:", e);
-                errorCount++;
+                
               }
             }
           }
 
-          if (successCount > 0) {
-            pushFeedback({ message: `Successfully processed ${successCount} item(s).`, type: "success" });
-          }
-          if (errorCount > 0) {
-            pushFeedback({ message: `Failed to process ${errorCount} item(s).`, type: "error" });
-          }
+          
 
         } catch (e) {
           console.error({ e });
@@ -307,7 +301,6 @@ function VolumeMounts() {
 
   async function handleYamlUpdate(parsed: any, method?: string) {
     try {
-      debugger
       const res = await request(
         `/api/v3/volumeMounts/${method === "PATCH" ? selectedVolume.name : ""}`,
         {
