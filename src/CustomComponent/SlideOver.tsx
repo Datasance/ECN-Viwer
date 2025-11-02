@@ -8,6 +8,7 @@ import PlayCircleFilledOutlined from "@material-ui/icons/PlayCircleFilledOutline
 import StopOutlined from "@material-ui/icons/StopOutlined";
 import PublishOutlined from "@material-ui/icons/PublishOutlined";
 import DescriptionOutlined from "@material-ui/icons/DescriptionOutlined";
+import VpnKeyIcon from "@material-ui/icons/VpnKey";
 
 type Field<T> = {
   label: string;
@@ -34,6 +35,7 @@ type SlideOverProps<T> = {
   onTerminal?: () => void;
   onAttach?: () => void;
   onDetach?: () => void;
+  onProvisionKey?: () => void;
 };
 
 const SlideOver = <T,>({
@@ -53,6 +55,7 @@ const SlideOver = <T,>({
   onTerminal,
   onAttach,
   onDetach,
+  onProvisionKey,
   customWidth,
 }: SlideOverProps<T>) => {
   const [width, setWidth] = useState(customWidth ? customWidth : 480);
@@ -171,6 +174,15 @@ const SlideOver = <T,>({
                               d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h16q.825 0 1.413.588T22 6v12q0 .825-.587 1.413T20 20zm0-2h16V8H4zm3.5-1l-1.4-1.4L8.675 13l-2.6-2.6L7.5 9l4 4zm4.5 0v-2h6v2z"
                             />
                           </svg>
+                        </button>
+                      )}
+                      {onProvisionKey && (
+                        <button
+                          onClick={onProvisionKey}
+                          className="hover:text-white hover:bg-sky-500 rounded"
+                          title="Provision Key"
+                        >
+                          <VpnKeyIcon fontSize="small" />
                         </button>
                       )}
                       {onClean && (

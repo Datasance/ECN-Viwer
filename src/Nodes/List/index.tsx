@@ -7,6 +7,8 @@ import { formatDistanceToNow, format } from "date-fns";
 import { useController } from "../../ControllerProvider";
 import { useFeedback } from "../../Utils/FeedbackContext";
 import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
+import CustomActionModal from "../../CustomComponent/CustomActionModal";
+import CryptoTextBox from "../../CustomComponent/CustomCryptoTextBox";
 import "ace-builds/src-noconflict/ace";
 import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/mode-yaml";
@@ -17,6 +19,10 @@ import { NavLink } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 import { useAuth } from "react-oidc-context";
+import FileCopyIcon from "@material-ui/icons/FileCopy";
+import CheckIcon from "@material-ui/icons/Check";
+import VisibilityIcon from "@material-ui/icons/Visibility";
+import VisibilityOffIcon from "@material-ui/icons/VisibilityOff";
 
 const formatDuration = (milliseconds: number): string => {
   if (!milliseconds || milliseconds <= 0) return "N/A";
@@ -52,6 +58,11 @@ function NodesList() {
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [showCleanConfirmModal, setShowCleanConfirmModal] = useState(false);
+  const [showProvisionKeyModal, setShowProvisionKeyModal] = useState(false);
+  const [provisionKeyData, setProvisionKeyData] = useState<any | null>(null);
+  const [copiedItem, setCopiedItem] = useState<string | null>(null);
+  const [loadingProvisionKey, setLoadingProvisionKey] = useState(false);
+  const [commandsVisible, setCommandsVisible] = useState(false);
   const [editorDataChanged, setEditorDataChanged] = React.useState<any>();
   const { addTerminalSession, addYamlSession } = useTerminal();
   const location = useLocation();
@@ -196,6 +207,81 @@ function NodesList() {
     }
 
     return null;
+  };
+
+  const handleProvisionKey = async () => {
+    if (!selectedNode?.uuid) {
+      pushFeedback({ message: "No agent selected", type: "error" });
+      return;
+    }
+
+    setLoadingProvisionKey(true);
+    setShowProvisionKeyModal(true);
+
+    try {
+      const res = await request(
+        `/api/v3/iofog/${selectedNode.uuid}/provisioning-key`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+          },
+        },
+      );
+
+      if (!res.ok) {
+        pushFeedback({
+          message: res.message,
+          type: "error",
+        });
+        setShowProvisionKeyModal(false);
+        setLoadingProvisionKey(false);
+        return;
+      }
+
+      const data = await res.json();
+      setProvisionKeyData(data);
+      setLoadingProvisionKey(false);
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+      setShowProvisionKeyModal(false);
+      setLoadingProvisionKey(false);
+    }
+  };
+
+  const handleCopyItem = async (text: string, itemName: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedItem(itemName);
+      setTimeout(() => setCopiedItem(null), 1500);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
+
+  const getApiEndpointUrl = (): string => {
+    if (window.controllerConfig?.url) {
+      const u = new URL(window.controllerConfig.url);
+      return `${u.protocol}//${u.host}/api/v3`;
+    }
+    return `http://${window.location.hostname}:${window?.controllerConfig?.port || 51121}/api/v3`;
+  };
+
+  const generateProvisionCommands = (): string[] => {
+    const apiUrl = getApiEndpointUrl();
+    const commands: string[] = [];
+    
+    commands.push(`iofog-agent config -a ${apiUrl}`);
+
+    if (provisionKeyData?.caCert) {
+      commands.push(`iofog-agent cert ${provisionKeyData.caCert}`);
+    }
+    
+    if (provisionKeyData?.key) {
+      commands.push(`iofog-agent provision ${provisionKeyData.key}`);
+    }
+    
+    return commands;
   };
 
   const enableExecAndOpenTerminal = async (nodeUuid: string) => {
@@ -1139,6 +1225,7 @@ function NodesList() {
         onClean={() => setShowCleanConfirmModal(true)}
         onEditYaml={handleEditYaml}
         onTerminal={() => enableExecAndOpenTerminal(selectedNode?.uuid!)}
+        onProvisionKey={handleProvisionKey}
         customWidth={750}
       />
 
@@ -1171,6 +1258,119 @@ function NodesList() {
         }
         cancelLabel={"Cancel"}
         confirmLabel={"Prune"}
+      />
+
+      <CustomActionModal
+        open={showProvisionKeyModal}
+        onCancel={() => {
+          setShowProvisionKeyModal(false);
+          setProvisionKeyData(null);
+          setCommandsVisible(false);
+        }}
+        title={`Provision Key - ${selectedNode?.name}`}
+        cancelLabel={"Close"}
+        child={
+          loadingProvisionKey ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-3 text-gray-700">Loading provision key...</span>
+            </div>
+          ) : provisionKeyData ? (
+            <div className="space-y-6">
+              {/* Expiration Time */}
+              {provisionKeyData.expirationTime && (
+                <div>
+                  <div className="text-sm font-medium text-gray-700 mb-2">
+                    Expiration Time
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {new Date(provisionKeyData.expirationTime).toLocaleString()}
+                  </div>
+                </div>
+              )}
+
+              {/* Provision Key */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm font-medium text-gray-700">
+                    Provision Key
+                  </div>
+                  <button
+                    onClick={() => handleCopyItem(provisionKeyData.key, "key")}
+                    className="text-gray-400 hover:text-gray-600"
+                    title={copiedItem === "key" ? "Copied!" : "Copy to clipboard"}
+                  >
+                    {copiedItem === "key" ? <CheckIcon fontSize="small" /> : <FileCopyIcon fontSize="small" />}
+                  </button>
+                </div>
+                <div className="bg-gray-800 rounded px-2 py-1">
+                  <CryptoTextBox data={provisionKeyData.key || ""} mode="plain" />
+                </div>
+              </div>
+
+              {/* CA Certificate */}
+              {provisionKeyData.caCert && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-medium text-gray-700">
+                      CA Certificate (Base64)
+                    </div>
+                    <button
+                      onClick={() => handleCopyItem(provisionKeyData.caCert, "caCert")}
+                      className="text-gray-400 hover:text-gray-600"
+                      title={copiedItem === "caCert" ? "Copied!" : "Copy to clipboard"}
+                    >
+                      {copiedItem === "caCert" ? <CheckIcon fontSize="small" /> : <FileCopyIcon fontSize="small" />}
+                    </button>
+                  </div>
+                  <div className="bg-gray-800 rounded px-2 py-1">
+                    <CryptoTextBox data={provisionKeyData.caCert} mode="encrypted" />
+                  </div>
+                </div>
+              )}
+
+              {/* Provision Commands */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm font-medium text-gray-700">
+                    Provision Commands
+                  </div>
+                  <button
+                    onClick={() => setCommandsVisible(!commandsVisible)}
+                    className="text-gray-400 hover:text-gray-600"
+                    title={commandsVisible ? "Hide commands" : "Show commands"}
+                  >
+                    {commandsVisible ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                  </button>
+                </div>
+                <div className="bg-gray-100 rounded p-3 space-y-2">
+                  {commandsVisible ? (
+                    generateProvisionCommands().map((cmd, index) => (
+                      <div key={index} className="flex items-center justify-between bg-white rounded px-3 py-2">
+                        <code className="text-sm text-gray-800 font-mono flex-1 break-all">{cmd}</code>
+                        <button
+                          onClick={() => handleCopyItem(cmd, `cmd-${index}`)}
+                          className="ml-2 text-gray-400 hover:text-gray-600 flex-shrink-0"
+                          title={copiedItem === `cmd-${index}` ? "Copied!" : "Copy to clipboard"}
+                        >
+                          {copiedItem === `cmd-${index}` ? <CheckIcon fontSize="small" /> : <FileCopyIcon fontSize="small" />}
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="bg-white rounded px-3 py-2">
+                      <code className="text-sm text-gray-400 font-mono">Click to view commands</code>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-600">
+              No provision key data available
+            </div>
+          )
+        }
       />
     </div>
   );
