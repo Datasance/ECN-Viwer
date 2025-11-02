@@ -30,7 +30,7 @@ export const parseService = async (doc) => {
     resource: lget(spec, "resource", null),
     defaultBridge: lget(spec, "defaultBridge", 'default-router'),
     targetPort: lget(spec, "targetPort", 0),
-    tags: lget(spec, "tags", []),
+    tags: Array.isArray(lget(doc, "metadata.tags", [])) ? lget(doc, "metadata.tags", []) : [lget(doc, "metadata.tags", "")],
   };
 
   // Only include k8sType and servicePort if they are present in the YAML
