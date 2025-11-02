@@ -393,12 +393,13 @@ export default function MicroserviceDetails({
           },
           {
             registry: app.registryId,
-            catalogItemId: app.catalogItemId,
+            catalogId: app.catalogItemId,
           },
         ),
         container: {
           annotations: JSON.parse(app?.annotations),
-          rootHostAccess: app.rootHostAccess,
+          hostNetworkMode: app.hostNetworkMode,
+          isPrivileged: app.isPrivileged,
           runAsUser: app?.runAsUser,
           platform: app?.platform,
           runtime: app?.runtime,

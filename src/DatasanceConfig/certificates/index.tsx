@@ -7,9 +7,9 @@ import { format, formatDistanceToNow } from "date-fns";
 import CryptoTextBox from "../../CustomComponent/CustomCryptoTextBox";
 import { NavLink, useLocation } from "react-router-dom";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
+import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import { parseCertificate, parseCertificateAuthority } from "../../Utils/parseCertificateYaml";
 import yaml from "js-yaml";
-import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 
 function Certificates() {
   const [fetching, setFetching] = React.useState(true);
@@ -26,7 +26,7 @@ function Certificates() {
   const [loading, setLoading] = React.useState(false);
   const [loadingMessage, setLoadingMessage] =
     React.useState("Certificate Adding...");
-  const { addYamlSession } = useTerminal();
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
 
   const handleRowClick = (row: any) => {
     if (row.name) {
@@ -95,47 +95,6 @@ function Certificates() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleEditYaml = () => {
-    const yamlDump = {
-      apiVersion: "datasance.com/v3",
-      kind: "Certificate",
-      metadata: {
-        name: selectedCertificate?.name,
-      },
-      spec: {
-        subject: selectedCertificate?.subject,
-        hosts: selectedCertificate?.hosts,
-        expiration: selectedCertificate?.expiration,
-        ca: selectedCertificate?.ca,
-      },
-    };
-
-    const yamlString = yaml.dump(yamlDump, { noRefs: true, indent: 2 });
-
-    addYamlSession({
-      title: `YAML: ${selectedCertificate?.name}`,
-      content: yamlString,
-      isDirty: false,
-      onSave: async (content: string) => {
-        try {
-          const parsedDoc = yaml.load(content);
-
-          const [certificateItem, err] = await parseCertificate(parsedDoc);
-
-          if (err) {
-            pushFeedback({ message: err, type: "error" });
-            return;
-          }
-
-          await postCertificateItem(certificateItem, "PATCH");
-
-        } catch (e: any) {
-          pushFeedback({ message: e.message, type: "error", uuid: "error" });
-        }
-      },
-    });
-  };
-
   const handleYamlUpload = async (item: any) => {
     const file = item;
     if (file) {
@@ -150,22 +109,35 @@ function Certificates() {
             return;
           }
 
-          
-
-          for (const doc of docs) {
-            if (!doc) {
-              continue;
+          // Sort documents: CertificateAuthority first, then Certificate
+          // This ensures CAs are deployed before certificates that depend on them
+          const sortedDocs = docs.filter((doc) => doc !== null && doc !== undefined).sort((a, b) => {
+            const kindA = (a as any).kind;
+            const kindB = (b as any).kind;
+            
+            // CertificateAuthority should come before Certificate
+            if (kindA === "CertificateAuthority" && kindB === "Certificate") {
+              return -1;
             }
+            if (kindA === "Certificate" && kindB === "CertificateAuthority") {
+              return 1;
+            }
+            // If same kind or unknown, maintain original order
+            return 0;
+          });
 
+          // Process documents sequentially to ensure CAs are created before certificates
+          for (const doc of sortedDocs) {
             let parsedItem;
             let err;
+            const docKind = (doc as any).kind;
 
-            if ((doc as any).kind === "Certificate") {
+            if (docKind === "Certificate") {
               [parsedItem, err] = await parseCertificate(doc);
-            } else if ((doc as any).kind === "CertificateAuthority") {
+            } else if (docKind === "CertificateAuthority") {
               [parsedItem, err] = await parseCertificateAuthority(doc);
             } else {
-              err = `Invalid kind ${(doc as any).kind}, expected Certificate or CertificateAuthority`;
+              err = `Invalid kind ${docKind}, expected Certificate or CertificateAuthority`;
             }
 
             if (err) {
@@ -173,7 +145,8 @@ function Certificates() {
               pushFeedback({ message: `Error processing item: ${err}`, type: "error" });
               
             } else {
-              postCertificateItem(parsedItem, "POST");
+              // Await to ensure sequential processing
+              await postCertificateItem(parsedItem, "POST", docKind);
               
             }
           }
@@ -195,7 +168,7 @@ function Certificates() {
     }
   };
 
-  const postCertificateItem = async (item: any, method?: string) => {
+  const postCertificateItem = async (item: any, method?: string, kind?: string) => {
     let newItem;
 
     if (typeof item === 'object' && item !== null) {
@@ -207,11 +180,26 @@ function Certificates() {
       return;
     }
 
-    setLoadingMessage("Certificate Adding...");
+    setLoadingMessage(kind === "CertificateAuthority" ? "Certificate Authority Adding..." : "Certificate Adding...");
     setLoading(true);
 
+    // Determine the endpoint based on kind
+    let endpoint = "/api/v3/certificates";
+    if (kind === "CertificateAuthority") {
+      endpoint = "/api/v3/certificates/ca";
+      // For PATCH, append the name to the CA endpoint
+      if (method === "PATCH" && newItem.name) {
+        endpoint = `/api/v3/certificates/ca/${newItem.name}`;
+      }
+    } else {
+      // For regular Certificate, append name for PATCH
+      if (method === "PATCH" && newItem.name) {
+        endpoint = `/api/v3/certificates/${newItem.name}`;
+      }
+    }
+
     const response = await request(
-      `/api/v3/certificates${method === "PATCH" ? "/" + newItem.name : ''}`,
+      endpoint,
       {
         method: method,
         headers: {
@@ -222,12 +210,50 @@ function Certificates() {
       },
     );
     if (response?.ok) {
-      pushFeedback({ message: "Certificate Added!", type: "success" });
+      const itemType = kind === "CertificateAuthority" ? "Certificate Authority" : "Certificate";
+      pushFeedback({ message: `${itemType} ${method === "POST" ? "Added" : "Updated"}!`, type: "success" });
       fetchCertificates();
       setLoading(false);
     } else {
-      pushFeedback({ message: response?.statusText || "Something went wrong", type: "error" });
+      pushFeedback({ message: response?.message, type: "error" });
       setLoading(false);
+    }
+  };
+
+  const handleDeleteCertificate = async () => {
+    try {
+      if (!selectedCertificate?.name) {
+        pushFeedback({ message: "No certificate selected", type: "error" });
+        return;
+      }
+
+      // Determine endpoint based on isCA
+      const endpoint = selectedCertificate.isCA
+        ? `/api/v3/certificates/ca/${selectedCertificate.name}`
+        : `/api/v3/certificates/${selectedCertificate.name}`;
+
+      const res = await request(endpoint, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        pushFeedback({
+          message: res.message,
+          type: "error",
+        });
+      } else {
+        const itemType = selectedCertificate.isCA ? "Certificate Authority" : "Certificate";
+        pushFeedback({
+          message: `${itemType} ${selectedCertificate.name} deleted`,
+          type: "success",
+        });
+        setShowDeleteConfirmModal(false);
+        setIsOpen(false);
+        setSelectedCertificate(null);
+        fetchCertificates();
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
     }
   };
 
@@ -413,7 +439,7 @@ function Certificates() {
             <SlideOver
               open={isOpen}
               onClose={() => setIsOpen(false)}
-              onEditYaml={handleEditYaml}
+              onDelete={() => setShowDeleteConfirmModal(true)}
               title={selectedCertificate?.name || "Certificate Details"}
               data={selectedCertificate}
               fields={slideOverFields}
@@ -425,6 +451,16 @@ function Certificates() {
               spinnerSize="lg"
               spinnerColor="text-green-500"
               overlayOpacity={60}
+            />
+
+            <UnsavedChangesModal
+              open={showDeleteConfirmModal}
+              onCancel={() => setShowDeleteConfirmModal(false)}
+              onConfirm={handleDeleteCertificate}
+              title={`Deleting Certificate ${selectedCertificate?.name}`}
+              message={"This action will remove the certificate and tls secret from the system. If any Volume Mounts are using this certificate, they will be deleted and If any microservices are using this certificate, they will need to be updated to use a different certificate. This is not reversible."}
+              cancelLabel={"Cancel"}
+              confirmLabel={"Delete"}
             />
           </div>
         </>

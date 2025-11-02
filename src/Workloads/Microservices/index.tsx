@@ -293,11 +293,13 @@ function MicroservicesList() {
     return [microserviceData];
   };
 
-  const deployMicroservice = async (microservice: any) => {
-    const url = `/api/v3/microservices/${`${selectedMs.uuid}`}`;
+  const deployMicroservice = async (microservice: any, method?: string) => {
+    const url = method === "POST" 
+      ? `/api/v3/microservices`
+      : `/api/v3/microservices/${selectedMs?.uuid}`;
     try {
       const res = await request(url, {
-        method: "PATCH",
+        method: method || "PATCH",
         headers: {
           "content-type": "application/json",
         },
@@ -309,7 +311,7 @@ function MicroservicesList() {
     }
   };
 
-  const handleYamlUpdate = async (content?: string) => {
+  const handleYamlUpdate = async (content?: string, method?: string) => {
     try {
       const yamlContent = content || editorDataChanged;
       const doc = yaml.load(yamlContent);
@@ -319,23 +321,76 @@ function MicroservicesList() {
         throw new Error(err);
       }
       const newMicroservice = microserviceData;
-      const res = await deployMicroservice(newMicroservice);
-      if (!res.ok) {
+      const res = await deployMicroservice(newMicroservice, method);
+      if (!res || !res.ok) {
         try {
           const error = await res.json();
           pushFeedback({ message: error.message, type: "error" });
           throw new Error(error.message);
         } catch (e) {
-         pushFeedback({ message: res.message, type: "error" });
-          throw new Error(res.statusText);
+         pushFeedback({ message: res?.message || "Something went wrong", type: "error" });
+          throw new Error(res?.message || "Something went wrong");
         }
       } else {
-        pushFeedback({ message: "Microservice updated!", type: "success" });
+        pushFeedback({ 
+          message: `Microservice ${method === "POST" ? "Added" : "Updated"}!`, 
+          type: "success" 
+        });
         setEditorDataChanged(null);
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error" });
       throw e;
+    }
+  };
+
+  const handleYamlParse = async (item: any) => {
+    const file = item;
+    if (file) {
+      const reader = new window.FileReader();
+
+      reader.onload = async function (evt: any) {
+        try {
+          const docs = yaml.loadAll(evt.target.result);
+
+          if (!Array.isArray(docs)) {
+            pushFeedback({ message: "Could not parse the file: Invalid YAML format", type: "error" });
+            return;
+          }
+
+          for (const doc of docs) {
+            if (!doc) {
+              continue;
+            }
+
+            const [microserviceData, err] = await parseMicroserviceFile(doc);
+
+            if (err) {
+              console.error("Error parsing a document:", err);
+              pushFeedback({ message: `Error processing item: ${err}`, type: "error" });
+              
+            } else {
+              try {
+                await handleYamlUpdate(yaml.dump(doc), "POST");
+                
+              } catch (e) {
+                console.error("Error updating a document:", e);
+                
+              }
+            }
+          }
+
+        } catch (e) {
+          console.error({ e });
+          pushFeedback({ message: "Could not parse the file. Check YAML syntax.", type: "error" });
+        }
+      };
+
+      reader.onerror = function (evt) {
+        pushFeedback({ message: evt, type: "error" });
+      };
+
+      reader.readAsText(file, "UTF-8");
     }
   };
 
@@ -366,7 +421,7 @@ function MicroservicesList() {
         );
 
         if (!res.ok) {
-          pushFeedback?.({ message: res.statusText, type: "error" });
+          pushFeedback?.({ message: res.message, type: "error" });
           return;
         }
 
@@ -1153,6 +1208,8 @@ function MicroservicesList() {
         columns={columns}
         data={flattenedMicroservices || []}
         getRowKey={(row: any) => row.uuid}
+        uploadDropzone
+        uploadFunction={handleYamlParse}
       />
       <SlideOver
         open={isOpen}

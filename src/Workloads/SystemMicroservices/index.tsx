@@ -333,8 +333,8 @@ function SystemMicroserviceList() {
           pushFeedback({ message: error.message, type: "error" });
           throw new Error(error.message);
         } catch (e) {
-         pushFeedback({ message: res.message, type: "error" });
-          throw new Error(res.statusText);
+         pushFeedback({ message: res.message || "Something went wrong", type: "error" });
+          throw new Error(res.message || "Something went wrong");
         }
       } else {
         pushFeedback({ message: "Microservice updated!", type: "success" });
@@ -405,7 +405,7 @@ function SystemMicroserviceList() {
         );
 
         if (!res.ok) {
-          pushFeedback?.({ message: res.statusText, type: "error" });
+          pushFeedback?.({ message: res.message, type: "error" });
           return;
         }
 

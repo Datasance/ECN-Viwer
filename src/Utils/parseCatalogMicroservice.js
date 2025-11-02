@@ -9,7 +9,7 @@ export const parseCatalogMicroservice = async (doc) => {
     return [null, `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v3`];
   }
 
-  if (doc.kind !== "CatalogMicroservice") {
+  if (doc.kind !== "CatalogItem") {
     return [null, `Invalid kind ${doc.kind}, expected CatalogMicroservice`];
   }
 
@@ -24,19 +24,38 @@ export const parseCatalogMicroservice = async (doc) => {
 
   const spec = lget(doc, "spec", {});
 
+  // Parse images: YAML has x86 and arm keys, convert to array format with fogTypeId
+  const images = [];
+  const x86Image = lget(spec, "x86");
+  const armImage = lget(spec, "arm");
+
+  if (x86Image) {
+    images.push({
+      fogTypeId: 1,
+      containerImage: x86Image,
+    });
+  }
+
+  if (armImage) {
+    images.push({
+      fogTypeId: 2,
+      containerImage: armImage,
+    });
+  }
+
   const apiObject = {
     name: name,
     description: lget(spec, "description", ""),
     category: lget(spec, "category", ""),
-    images: lget(spec, "images", []),
-    publisher: lget(spec, "publisher", ""),
-    diskRequired: lget(spec, "diskRequired", 0),
-    ramRequired: lget(spec, "ramRequired", 0),
-    picture: lget(spec, "picture", ""),
-    isPublic: lget(spec, "isPublic", false),
-    registryId: lget(spec, "registryId", 0),
-    inputType: lget(spec, "inputType", {}),
-    outputType: lget(spec, "outputType", {}),
+    images: images,
+    // publisher: lget(spec, "publisher", ""),
+    // diskRequired: lget(spec, "diskRequired", 0),
+    // ramRequired: lget(spec, "ramRequired", 0),
+    // picture: lget(spec, "picture", ""),
+    // isPublic: lget(spec, "isPublic", false),
+    registryId: lget(spec, "registry", 0),
+    // inputType: lget(spec, "inputType", {}),
+    // outputType: lget(spec, "outputType", {}),
     configExample: lget(spec, "configExample", ""),
   };
 

@@ -10,6 +10,7 @@ import { StatusColor, StatusType } from "../../Utils/Enums/StatusColor";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
 import CustomActionModal from "../../CustomComponent/CustomActionModal";
 import CustomSelect from "../../CustomComponent/CustomSelect";
+import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import yaml from "js-yaml";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 import { parseVolumeMount } from "../../Utils/parseVolumeMountsYaml";
@@ -27,6 +28,7 @@ function VolumeMounts() {
   const volumeMountName = params.get("volumeMountName");
   const [showAttachModal, setShowAttachModal] = useState(false);
   const [showDetachModal, setShowDetachModal] = useState(false);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const { addYamlSession } = useTerminal();
 
   const [allAgentOptions, setAllAgentOptions] = useState<any[]>([]);
@@ -206,6 +208,40 @@ function VolumeMounts() {
     }
   };
 
+  const handleDeleteVolumeMount = async () => {
+    try {
+      if (!selectedVolume?.name) {
+        pushFeedback({ message: "No volume mount selected", type: "error" });
+        return;
+      }
+
+      const res = await request(
+        `/api/v3/volumeMounts/${selectedVolume.name}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (!res.ok) {
+        pushFeedback({
+          message: res.statusText || "Failed to delete volume mount",
+          type: "error",
+        });
+      } else {
+        pushFeedback({
+          message: `VolumeMount ${selectedVolume.name} deleted`,
+          type: "success",
+        });
+        setShowDeleteConfirmModal(false);
+        setIsOpen(false);
+        setselectedVolume(null);
+        fetchVolumeMounts();
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  };
+
   const handleEditYaml = () => {
     const yamlDump = {
       apiVersion: "datasance.com/v3",
@@ -301,14 +337,23 @@ function VolumeMounts() {
 
   async function handleYamlUpdate(parsed: any, method?: string) {
     try {
+      // Remove null values from the payload
+      const cleanedPayload: any = { ...parsed };
+      if (cleanedPayload.secretName === null || cleanedPayload.secretName === undefined) {
+        delete cleanedPayload.secretName;
+      }
+      if (cleanedPayload.configMapName === null || cleanedPayload.configMapName === undefined) {
+        delete cleanedPayload.configMapName;
+      }
+
       const res = await request(
-        `/api/v3/volumeMounts/${method === "PATCH" ? selectedVolume.name : ""}`,
+        `/api/v3/volumeMounts${method === "PATCH" && selectedVolume?.name ? `/${selectedVolume.name}` : ""}`,
         {
           method: method,
           headers: {
             "content-type": "application/json",
           },
-          body: JSON.stringify(parsed),
+          body: JSON.stringify(cleanedPayload),
         },
       );
 
@@ -318,11 +363,16 @@ function VolumeMounts() {
           type: "error",
         });
       } else {
+        const volumeMountName = parsed.name || selectedVolume?.name || "VolumeMount";
         pushFeedback({
-          message: `VolumeMount: ${selectedVolume.name} ${method === "POST" ? "Added" : "Updated"}`,
+          message: `VolumeMount: ${volumeMountName} ${method === "POST" ? "Added" : "Updated"}`,
           type: "success",
         });
-        setIsOpen(false);
+        if (method === "PATCH") {
+          setIsOpen(false);
+        }
+        // Refresh the list after successful POST or PATCH
+        fetchVolumeMounts();
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -562,6 +612,7 @@ function VolumeMounts() {
                 setAgentsToDetach([]);
                 setShowDetachModal(true);
               }}
+              onDelete={() => setShowDeleteConfirmModal(true)}
               onEditYaml={handleEditYaml}
               title={selectedVolume?.name || "Secret Details"}
               data={selectedVolume}
@@ -618,6 +669,16 @@ function VolumeMounts() {
               </div>
             }
             title={`Detach from ${selectedVolume?.name}`}
+          />
+
+          <UnsavedChangesModal
+            open={showDeleteConfirmModal}
+            onCancel={() => setShowDeleteConfirmModal(false)}
+            onConfirm={handleDeleteVolumeMount}
+            title={`Deleting Volume Mount ${selectedVolume?.name}`}
+            message={"This action will remove the volume mount from all linked fog nodes. If any microservices are using this volume mount, they will need to be updated to use a different volume mount. This is not reversible."}
+            cancelLabel={"Cancel"}
+            confirmLabel={"Delete"}
           />
         </>
       )}

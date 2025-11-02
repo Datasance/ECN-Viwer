@@ -4,6 +4,7 @@ import { ControllerContext } from "../../ControllerProvider";
 import { FeedbackContext } from "../../Utils/FeedbackContext";
 import SlideOver from "../../CustomComponent/SlideOver";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
+import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import { useLocation } from "react-router-dom";
 import yaml from "js-yaml";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
@@ -17,6 +18,7 @@ function Registries() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedRegistry, setSelectedRegistry] =
     useState<any | null>(null);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const registryId = params.get("registryId");
@@ -35,7 +37,7 @@ function Registries() {
       );
       if (!registriesResponse.ok) {
         pushFeedback({
-          message: registriesResponse.statusText,
+          message: registriesResponse.message,
           type: "error",
         });
         setFetching(false);
@@ -71,14 +73,17 @@ function Registries() {
 
     const yamlObj = {
       apiVersion: "datasance.com/v3",
-      kind: "Registries",
+      kind: "Registry",
       metadata: {
         name: name,
       },
       spec: {
-        immutable: selectedRegistry?.immutable || false,
+        url: selectedRegistry?.url,
+        private: !selectedRegistry?.isPublic,
+        username: selectedRegistry?.username,
+        email: selectedRegistry?.userEmail,
+        password: selectedRegistry?.password,
       },
-      data: selectedRegistry,
     };
 
     const yamlString = yaml.dump(yamlObj, {
@@ -112,7 +117,7 @@ function Registries() {
   async function handleYamlUpdate(registries: any, method?: string) {
     try {
       const res = await request(
-        `/api/v3/registries/${method === "PATCH" ? "/" + selectedRegistry.id : ''}`,
+        `/api/v3/registries${method === "PATCH" && selectedRegistry?.id ? `/${selectedRegistry.id}` : ''}`,
         {
           method: method,
           headers: {
@@ -125,16 +130,55 @@ function Registries() {
       if (!res.ok) {
        pushFeedback({ message: res.message, type: "error" });
       } else {
+        const registryName = method === "POST" ? registries.url : (selectedRegistry.id || "New");
         pushFeedback({
-          message: `${selectedRegistry.id || "New"} ${method === "POST" ? "Added" : "Updated"}`,
+          message: `Registry ${registryName} ${method === "POST" ? "Added" : "Updated"}`,
           type: "success",
         });
-        setIsOpen(false);
+        if (method === "PATCH") {
+          setIsOpen(false);
+        }
+        // Refresh the list after successful POST or PATCH
+        fetchRegistries();
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
     }
   }
+
+  const handleDeleteRegistry = async () => {
+    try {
+      if (!selectedRegistry?.id) {
+        pushFeedback({ message: "No registry selected", type: "error" });
+        return;
+      }
+
+      const res = await request(
+        `/api/v3/registries/${selectedRegistry.id}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (!res.ok) {
+        pushFeedback({
+          message: res.message,
+          type: "error",
+        });
+      } else {
+        pushFeedback({
+          message: `Registry ${selectedRegistry.url || selectedRegistry.id} deleted`,
+          type: "success",
+        });
+        setShowDeleteConfirmModal(false);
+        setIsOpen(false);
+        setSelectedRegistry(null);
+        fetchRegistries();
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  };
 
   const handleYamlParse = async (item: any) => {
     const file = item;
@@ -270,6 +314,7 @@ function Registries() {
       <SlideOver
         open={isOpen}
         onClose={() => setIsOpen(false)}
+        onDelete={() => setShowDeleteConfirmModal(true)}
         title={
           selectedRegistry?.url ||
           "Registry Details"
@@ -278,6 +323,16 @@ function Registries() {
         fields={slideOverFields}
         customWidth={600}
         onEditYaml={handleEditYaml}
+      />
+
+      <UnsavedChangesModal
+        open={showDeleteConfirmModal}
+        onCancel={() => setShowDeleteConfirmModal(false)}
+        onConfirm={handleDeleteRegistry}
+        title={`Deleting Registry ${selectedRegistry?.url || selectedRegistry?.id}`}
+        message={"This action will remove the registry from the system If no microservice is using this registry. This is not reversible."}
+        cancelLabel={"Cancel"}
+        confirmLabel={"Delete"}
       />
     </>
   );

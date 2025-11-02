@@ -4,6 +4,7 @@ import { ControllerContext } from "../../ControllerProvider";
 import { FeedbackContext } from "../../Utils/FeedbackContext";
 import SlideOver from "../../CustomComponent/SlideOver";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
+import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import { useLocation, NavLink } from "react-router-dom";
 import yaml from "js-yaml";
 import { parseCatalogMicroservice } from "../../Utils/parseCatalogMicroservice";
@@ -25,6 +26,7 @@ function CatalogMicroservices() {
   const [loading, setLoading] = React.useState(false);
   const [loadingMessage, setLoadingMessage] =
     React.useState("Catalog Adding...");
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
 
   const handleRowClick = (row: any) => {
     if (row.id) {
@@ -40,7 +42,7 @@ function CatalogMicroservices() {
       );
       if (!catalogItemsResponse.ok) {
         pushFeedback({
-          message: catalogItemsResponse.statusText,
+          message: catalogItemsResponse.message,
           type: "error",
         });
         setFetching(false);
@@ -63,7 +65,7 @@ function CatalogMicroservices() {
       );
       if (!catalogItemResponse.ok) {
         pushFeedback({
-          message: catalogItemResponse.statusText,
+          message: catalogItemResponse.message,
           type: "error",
         });
         setFetching(false);
@@ -100,22 +102,16 @@ function CatalogMicroservices() {
 
     const yamlObj = {
       apiVersion: "datasance.com/v3",
-      kind: "CatalogMicroservice",
+      kind: "CatalogItem",
       metadata: {
         name: selectedCatalogMicroservice.name,
       },
       spec: {
         description: selectedCatalogMicroservice.description,
         category: selectedCatalogMicroservice.category,
-        images: selectedCatalogMicroservice.images,
-        publisher: selectedCatalogMicroservice.publisher,
-        diskRequired: selectedCatalogMicroservice.diskRequired,
-        ramRequired: selectedCatalogMicroservice.ramRequired,
-        picture: selectedCatalogMicroservice.picture,
-        isPublic: selectedCatalogMicroservice.isPublic,
-        registryId: selectedCatalogMicroservice.registryId,
-        inputType: selectedCatalogMicroservice.inputType,
-        outputType: selectedCatalogMicroservice.outputType,
+        x86: selectedCatalogMicroservice.images.find((x: any) => x.fogTypeId === 1)?.containerImage,
+        arm: selectedCatalogMicroservice.images.find((x: any) => x.fogTypeId === 2)?.containerImage,
+        registry: selectedCatalogMicroservice.registryId,
         configExample: selectedCatalogMicroservice.configExample,
       },
     };
@@ -203,8 +199,11 @@ function CatalogMicroservices() {
     setLoadingMessage(method === "PATCH" ? "Catalog Updating..." : "Catalog Adding...");
     setLoading(true);
 
+    // For PATCH, use the ID from selectedCatalogMicroservice since the parsed item doesn't have id
+    const catalogId = method === "PATCH" ? selectedCatalogMicroservice?.id : null;
+
     const response = await request(
-      `/api/v3/catalog/microservices${method === "PATCH" ? "/" + newItem.name : ''}`,
+      `/api/v3/catalog/microservices${method === "PATCH" && catalogId ? "/" + catalogId : ''}`,
       {
         method: method,
         headers: {
@@ -222,8 +221,42 @@ function CatalogMicroservices() {
       fetchCatalog();
       setLoading(false);
     } else {
-      pushFeedback({ message: response?.statusText || "Something went wrong", type: "error" });
+      pushFeedback({ message: response?.message, type: "error" });
       setLoading(false);
+    }
+  };
+
+  const handleDeleteCatalogMicroservice = async () => {
+    try {
+      if (!selectedCatalogMicroservice?.id) {
+        pushFeedback({ message: "No catalog microservice selected", type: "error" });
+        return;
+      }
+
+      const res = await request(
+        `/api/v3/catalog/microservices/${selectedCatalogMicroservice.id}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (!res.ok) {
+        pushFeedback({
+          message: res.message,
+          type: "error",
+        });
+      } else {
+        pushFeedback({
+          message: `Catalog Microservice ${selectedCatalogMicroservice.name} deleted`,
+          type: "success",
+        });
+        setShowDeleteConfirmModal(false);
+        setIsOpen(false);
+        setselectedCatalogMicroservice(null);
+        fetchCatalog();
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
     }
   };
 
@@ -252,10 +285,18 @@ function CatalogMicroservices() {
     },
     {
       key: "registryId",
-      header: "Registry",
-      render: (row: any) => (
-        <span>{row.registryId === 1 ? "Remote" : "-"}</span>
-      ),
+      header: "Registry Id",
+      render: (row: any) => {
+        if (!row?.registryId) return <span className="text-gray-400">N/A</span>;
+        return (
+          <NavLink
+            to={`/config/registries?registryId=${encodeURIComponent(row.registryId)}`}
+            className="text-blue-400 underline cursor-pointer"
+          >
+            {row.registryId}
+          </NavLink>
+        );
+      },
     },
     {
       key: "images",
@@ -299,34 +340,42 @@ function CatalogMicroservices() {
       label: "Description",
       render: (row: any) => row.description || "N/A",
     },
-    {
-      label: "Disk Required",
-      render: (row: any) => (row.diskRequired === 0 ? "false" : "true"),
-    },
-    {
-      label: "Input Type",
-      render: (row: any) => row.inputType || "N/A",
-    },
-    {
-      label: "Is Public",
-      render: (row: any) => row.isPublic.toString() || "N/A",
-    },
-    {
-      label: "Output Type",
-      render: (row: any) => row.outputType || "N/A",
-    },
-    {
-      label: "Picture",
-      render: (row: any) => row.picture || "N/A",
-    },
-    {
-      label: "publisher",
-      render: (row: any) => row.publisher || "N/A",
-    },
-    {
-      label: "Ram Required",
-      render: (row: any) => row.ramRequired.toString() || "N/A",
-    },
+    // {
+    //   label: "Disk Required",
+    //   render: (row: any) => (row.diskRequired === 0 ? "false" : "true"),
+    // },
+    // {
+    //   label: "Input Type",
+    //   render: (row: any) => {
+    //     if (!row.inputType) return "N/A";
+    //     if (typeof row.inputType === "object") {
+    //       return JSON.stringify(row.inputType);
+    //     }
+    //     return row.inputType;
+    //   },
+    // },
+    // {
+    //   label: "Is Public",
+    //   render: (row: any) => row.isPublic.toString() || "N/A",
+    // },
+    // {
+    //   label: "Output Type",
+    //   render: (row: any) => {
+    //     if (!row.outputType) return "N/A";
+    //     if (typeof row.outputType === "object") {
+    //       return JSON.stringify(row.outputType);
+    //     }
+    //     return row.outputType;
+    //   },
+    // },
+    // {
+    //   label: "publisher",
+    //   render: (row: any) => row.publisher || "N/A",
+    // },
+    // {
+    //   label: "Ram Required",
+    //   render: (row: any) => row.ramRequired.toString() || "N/A",
+    // },
     {
       label: "Registry Id",
       render: (row: any) => {
@@ -423,6 +472,7 @@ function CatalogMicroservices() {
       <SlideOver
         open={isOpen}
         onClose={() => setIsOpen(false)}
+        onDelete={() => setShowDeleteConfirmModal(true)}
         onEditYaml={handleEditYaml}
         title={
           selectedCatalogMicroservice?.name ||
@@ -438,6 +488,16 @@ function CatalogMicroservices() {
         spinnerSize="lg"
         spinnerColor="text-green-500"
         overlayOpacity={60}
+      />
+
+      <UnsavedChangesModal
+        open={showDeleteConfirmModal}
+        onCancel={() => setShowDeleteConfirmModal(false)}
+        onConfirm={handleDeleteCatalogMicroservice}
+        title={`Deleting Catalog Microservice ${selectedCatalogMicroservice?.name}`}
+        message={"This action will remove the catalog microservice from the system if item's category is not 'SYSTEM' or not in use by any microservices. This is not reversible."}
+        cancelLabel={"Cancel"}
+        confirmLabel={"Delete"}
       />
     </>
   );

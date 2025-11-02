@@ -62,12 +62,13 @@ export const getApplicationYAMLFromJSON = ({
         },
         {
           registry: ms.registryId ?? null,
-          catalogItemId: ms.catalogItemId ?? null,
+          catalogId: ms.catalogItemId ?? null,
         },
       ),
       container: {
         annotations: JSON.parse(ms.annotations || "{}"),
-        rootHostAccess: ms.rootHostAccess ?? false,
+        hostNetworkMode: ms.hostNetworkMode ?? false,
+        isPrivileged: ms.isPrivileged ?? false,
         runAsUser: ms.runAsUser ?? null,
         ipcMode: ms?.ipcMode ?? "",
         pidMode: ms?.pidMode ?? "",

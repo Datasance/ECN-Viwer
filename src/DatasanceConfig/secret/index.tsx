@@ -10,6 +10,7 @@ import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/mode-yaml";
 import yaml from "js-yaml";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
+import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 import { parseSecret } from "../../Utils/parseSecretYaml";
 
@@ -20,6 +21,7 @@ function Secrets() {
   const { pushFeedback } = React.useContext(FeedbackContext);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedSecret, setselectedSecret] = useState<any | null>(null);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const { addYamlSession } = useTerminal();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
@@ -48,7 +50,7 @@ function Secrets() {
       const secretsItemsResponse = await request("/api/v3/secrets");
       if (!secretsItemsResponse.ok) {
         pushFeedback({
-          message: secretsItemsResponse.statusText,
+          message: secretsItemsResponse.message,
           type: "error",
         });
         setFetching(false);
@@ -68,7 +70,7 @@ function Secrets() {
       setFetching(true);
       const itemResponse = await request(`/api/v3/secrets/${secretName}`);
       if (!itemResponse.ok) {
-        pushFeedback({ message: itemResponse.statusText, type: "error" });
+        pushFeedback({ message: itemResponse.message, type: "error" });
         setFetching(false);
         return;
       }
@@ -183,7 +185,7 @@ function Secrets() {
       const name = secret.name;
 
       const res = await request(
-        `/api/v3/secrets/${method === "PATCH" ? "/" + name : ''}`,
+        `/api/v3/secrets${method === "PATCH" ? `/${name}` : ''}`,
         {
           method: method,
           headers: {
@@ -207,6 +209,40 @@ function Secrets() {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
     }
   }
+
+  const handleDeleteSecret = async () => {
+    try {
+      if (!selectedSecret?.name) {
+        pushFeedback({ message: "No secret selected", type: "error" });
+        return;
+      }
+
+      const res = await request(
+        `/api/v3/secrets/${selectedSecret.name}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (!res.ok) {
+        pushFeedback({
+          message: res.message,
+          type: "error",
+        });
+      } else {
+        pushFeedback({
+          message: `Secret ${selectedSecret.name} deleted`,
+          type: "success",
+        });
+        setShowDeleteConfirmModal(false);
+        setIsOpen(false);
+        setselectedSecret(null);
+        fetchSecrets();
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  };
 
   const columns = [
     {
@@ -317,11 +353,22 @@ function Secrets() {
             <SlideOver
               open={isOpen}
               onClose={() => setIsOpen(false)}
+              onDelete={() => setShowDeleteConfirmModal(true)}
               onEditYaml={handleEditYaml}
               title={selectedSecret?.name || "Secret Details"}
               data={selectedSecret}
               fields={slideOverFields}
               customWidth={600}
+            />
+
+            <UnsavedChangesModal
+              open={showDeleteConfirmModal}
+              onCancel={() => setShowDeleteConfirmModal(false)}
+              onConfirm={handleDeleteSecret}
+              title={`Deleting Secret ${selectedSecret?.name}`}
+              message={"This action will remove the secret from the system. If any Volume Mounts/Certificates are using this secret, they will be deleted and If any microservices are using this secret, they will need to be updated to use a different secret. This is not reversible."}
+              cancelLabel={"Cancel"}
+              confirmLabel={"Delete"}
             />
           </div>
         </>

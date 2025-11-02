@@ -292,7 +292,7 @@ function AppTemplates() {
           },
           {
             registry: ms.registryId ?? null,
-            catalogItemId: ms.catalogItemId ?? null,
+            catalogId: ms.catalogItemId ?? null,
           },
         ),
         container: {

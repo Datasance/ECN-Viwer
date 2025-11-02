@@ -9,29 +9,27 @@ export const parseRegistries = async (doc) => {
     return [null, `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v3`];
   }
 
-  if (doc.kind !== "Registries") {
-    return [null, `Invalid kind ${doc.kind}, expected Registries`];
+  if (doc.kind !== "Registry") {
+    return [null, `Invalid kind ${doc.kind}, expected Registry`];
   }
 
-  if (!doc.metadata || !doc.data) {
-    return [null, "Invalid YAML format (missing metadata or data)"];
+  if (!doc.metadata || !doc.spec) {
+    return [null, "Invalid YAML format (missing metadata or spec)"];
   }
 
-  const data = lget(doc, "data", {});
-  const url = lget(data, "url");
+  const spec = lget(doc, "spec", {});
+  const url = lget(spec, "url");
 
   if (!url) {
-    return [null, "Invalid YAML format (missing data.url)"];
+    return [null, "Invalid YAML format (missing spec.url)"];
   }
 
   const apiObject = {
     url: url,
-    isPublic: lget(data, "isPublic", false),
-    username: lget(data, "username", null),
-    password: lget(data, "password", null),
-    email: lget(data, "email", null),
-    requiresCert: lget(data, "requiresCert", false),
-    certificate: lget(data, "certificate", null),
+    isPublic: !lget(spec, "private", false),
+    username: lget(spec, "username", null),
+    password: lget(spec, "password", null),
+    email: lget(spec, "email", null),
   };
 
   return [apiObject, null];

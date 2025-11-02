@@ -22,10 +22,12 @@ export const parseConfigMap = async (doc) => {
     return [null, "Invalid YAML format (missing metadata.name)"];
   }
 
-  const data = lget(doc, "data", {});
+  const spec = lget(doc, "spec", {});
+  const data = lget(spec, "data", {});
 
   const apiObject = {
     name: name,
+    spec: spec,
     data: data,
   };
 

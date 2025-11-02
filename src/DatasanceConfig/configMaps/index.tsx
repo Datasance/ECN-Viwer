@@ -14,6 +14,7 @@ import lget from "lodash/get";
 import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
 import EditOutlinedIcon from "@material-ui/icons/EditOutlined";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
+import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 
 function ConfigMaps() {
@@ -23,6 +24,7 @@ function ConfigMaps() {
   const { pushFeedback } = React.useContext(FeedbackContext);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedConfigMap, setSelectedConfigMap] = useState<any | null>(null);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const { addYamlSession } = useTerminal();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
@@ -58,7 +60,7 @@ function ConfigMaps() {
       const configMapsItemsResponse = await request("/api/v3/configmaps");
       if (!configMapsItemsResponse.ok) {
         pushFeedback({
-          message: configMapsItemsResponse.statusText,
+          message: configMapsItemsResponse.message,
           type: "error",
         });
         setFetching(false);
@@ -78,7 +80,7 @@ function ConfigMaps() {
       setFetching(true);
       const itemResponse = await request(`/api/v3/configmaps/${configMapName}`);
       if (!itemResponse.ok) {
-        pushFeedback({ message: itemResponse.statusText, type: "error" });
+        pushFeedback({ message: itemResponse.message, type: "error" });
         setFetching(false);
         return;
       }
@@ -201,7 +203,7 @@ function ConfigMaps() {
       const name = configMap.name;
 
       const res = await request(
-        `/api/v3/configmaps/${method === "PATCH" ? "/" + name : ''}`,
+        `/api/v3/configmaps${method === "PATCH" && name ? `/${name}` : ''}`,
         {
           method: method,
           headers: {
@@ -293,8 +295,12 @@ function ConfigMaps() {
         return pushFeedback({ message: err, type: "error" });
       }
 
+      if (!selectedConfigMap?.name) {
+        return pushFeedback({ message: "ConfigMap name is required", type: "error" });
+      }
+
       const res = await request(
-        `/api/v3/configmaps/${selectedConfigMap?.name}`,
+        `/api/v3/configmaps/${selectedConfigMap.name}`,
         {
           method: "PATCH",
           headers: {
@@ -308,7 +314,7 @@ function ConfigMaps() {
        pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({
-          message: `${selectedConfigMap?.name} Updated`,
+          message: `${selectedConfigMap.name} Updated`,
           type: "success",
         });
         setIsOpen(false);
@@ -359,8 +365,12 @@ function ConfigMaps() {
         return pushFeedback({ message: err, type: "error" });
       }
 
+      if (!selectedConfigMap?.name) {
+        return pushFeedback({ message: "ConfigMap name is required", type: "error" });
+      }
+
       const res = await request(
-        `/api/v3/configmaps/${selectedConfigMap?.name}`,
+        `/api/v3/configmaps/${selectedConfigMap.name}`,
         {
           method: "PATCH",
           headers: {
@@ -374,10 +384,44 @@ function ConfigMaps() {
        pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({
-          message: `${selectedConfigMap?.name} Deleted key ${key}`,
+          message: `${selectedConfigMap.name} Deleted key ${key}`,
           type: "success",
         });
         setIsOpen(false);
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  };
+
+  const handleDeleteConfigMap = async () => {
+    try {
+      if (!selectedConfigMap?.name) {
+        pushFeedback({ message: "No config map selected", type: "error" });
+        return;
+      }
+
+      const res = await request(
+        `/api/v3/configmaps/${selectedConfigMap.name}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (!res.ok) {
+        pushFeedback({
+          message: res.message,
+          type: "error",
+        });
+      } else {
+        pushFeedback({
+          message: `ConfigMap ${selectedConfigMap.name} deleted`,
+          type: "success",
+        });
+        setShowDeleteConfirmModal(false);
+        setIsOpen(false);
+        setSelectedConfigMap(null);
+        fetchConfigMaps();
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -569,11 +613,22 @@ function ConfigMaps() {
             <SlideOver
               open={isOpen}
               onClose={() => setIsOpen(false)}
+              onDelete={() => setShowDeleteConfirmModal(true)}
               onEditYaml={handleEditYaml}
               title={selectedConfigMap?.name || "Config Map Details"}
               data={selectedConfigMap}
               fields={slideOverFields}
               customWidth={600}
+            />
+
+            <UnsavedChangesModal
+              open={showDeleteConfirmModal}
+              onCancel={() => setShowDeleteConfirmModal(false)}
+              onConfirm={handleDeleteConfigMap}
+              title={`Deleting Config Map ${selectedConfigMap?.name}`}
+              message={"This action will remove the config map from the system. If any Volume Mounts are using this config map, they will be deleted and If any microservices are using this config map, they will need to be updated to use a different config map. This is not reversible."}
+              cancelLabel={"Cancel"}
+              confirmLabel={"Delete"}
             />
           </div>
         </>

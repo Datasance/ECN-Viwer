@@ -22,7 +22,19 @@ export const parseSecret = async (doc) => {
     return [null, "Invalid YAML format (missing metadata.name)"];
   }
 
-  const type = lget(doc, "spec.type", "Opaque");
+  const rawType = lget(doc, "spec.type", "Opaque");
+  // Normalize type: API expects "Opaque" (capitalized) or "tls" (lowercase)
+  let type = rawType;
+  if (typeof rawType === "string") {
+    const normalized = rawType.toLowerCase();
+    if (normalized === "opaque") {
+      type = "Opaque";
+    } else if (normalized === "tls") {
+      type = "tls";
+    } else {
+      return [null, `Invalid type "${rawType}". Allowed values are: Opaque, tls`];
+    }
+  }
   const data = lget(doc, "data", {});
 
   const apiObject = {

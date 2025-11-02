@@ -62,12 +62,13 @@ export const getMicroserviceYAMLFromJSON = ({
         },
         {
           registry: microservice.registryId,
-          catalogItemId: microservice.catalogItemId,
+          catalogId: microservice.catalogItemId,
         },
       ),
       container: {
         annotations: JSON.parse(microservice.annotations || "{}"),
-        rootHostAccess: microservice.rootHostAccess,
+        hostNetworkMode: microservice.hostNetworkMode,
+        isPrivileged: microservice.isPrivileged,
         runAsUser: microservice?.runAsUser ?? "",
         ipcMode: microservice?.ipcMode ?? "",
         pidMode: microservice?.pidMode ?? "",

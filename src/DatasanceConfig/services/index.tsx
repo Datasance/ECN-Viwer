@@ -7,6 +7,7 @@ import SlideOver from "../../CustomComponent/SlideOver";
 import FileCopyIcon from "@material-ui/icons/FileCopy";
 import CheckIcon from "@material-ui/icons/Check";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
+import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import { parseService } from "../../Utils/parseServiceYaml";
 import yaml from "js-yaml";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
@@ -20,6 +21,7 @@ function Services() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<any | null>(null);
   const [copiedEndpoint, setCopiedEndpoint] = useState<string | null>(null);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const serviceName = params.get("name");
@@ -99,7 +101,7 @@ function Services() {
       const servicesItemsResponse = await request("/api/v3/services");
       if (!servicesItemsResponse.ok) {
         pushFeedback({
-          message: servicesItemsResponse.statusText,
+          message: servicesItemsResponse.message,
           type: "error",
         });
         setFetching(false);
@@ -119,7 +121,7 @@ function Services() {
       setFetching(true);
       const itemResponse = await request(`/api/v3/services/${serviceName}`);
       if (!itemResponse.ok) {
-        pushFeedback({ message: itemResponse.statusText, type: "error" });
+        pushFeedback({ message: itemResponse.message, type: "error" });
         setFetching(false);
         return;
       }
@@ -141,20 +143,29 @@ function Services() {
   const handleEditYaml = () => {
     if (!selectedService) return;
 
+    const spec: any = {
+      type: selectedService.type,
+      resource: selectedService.resource,
+      defaultBridge: selectedService.defaultBridge,
+      targetPort: selectedService.targetPort,
+    };
+
+    // Only include k8sType and servicePort if they are not null
+    if (selectedService.k8sType !== null && selectedService.k8sType !== undefined) {
+      spec.k8sType = selectedService.k8sType;
+    }
+    if (selectedService.servicePort !== null && selectedService.servicePort !== undefined) {
+      spec.servicePort = selectedService.servicePort;
+    }
+
     const yamlObj = {
       apiVersion: "datasance.com/v3",
       kind: "Service",
       metadata: {
         name: selectedService.name,
+        tags: Array.isArray(selectedService.tags) ? selectedService.tags : [selectedService.tags],
       },
-      spec: {
-        type: selectedService.type,
-        resource: selectedService.resource,
-        defaultBridge: selectedService.defaultBridge,
-        bridgePort: selectedService.bridgePort,
-        targetPort: selectedService.targetPort,
-        tags: selectedService.tags,
-      },
+      spec,
     };
 
     const yamlString = yaml.dump(yamlObj, {
@@ -261,12 +272,50 @@ function Services() {
           message: `Service ${name} ${method === "POST" ? "Added" : "Updated"}`,
           type: "success",
         });
-        setIsOpen(false);
+        if (method === "PATCH") {
+          setIsOpen(false);
+        }
+        // Refresh the list after successful POST or PATCH
+        fetchServices();
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
     }
   }
+
+  const handleDeleteService = async () => {
+    try {
+      if (!selectedService?.name) {
+        pushFeedback({ message: "No service selected", type: "error" });
+        return;
+      }
+
+      const res = await request(
+        `/api/v3/services/${selectedService.name}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (!res.ok) {
+        pushFeedback({
+          message: res.message,
+          type: "error",
+        });
+      } else {
+        pushFeedback({
+          message: `Service ${selectedService.name} deleted`,
+          type: "success",
+        });
+        setShowDeleteConfirmModal(false);
+        setIsOpen(false);
+        setSelectedService(null);
+        fetchServices();
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  };
 
   const columns = [
     {
@@ -419,11 +468,22 @@ function Services() {
             <SlideOver
               open={isOpen}
               onClose={() => setIsOpen(false)}
+              onDelete={() => setShowDeleteConfirmModal(true)}
               onEditYaml={handleEditYaml}
               title={selectedService?.name || "Service Details"}
               data={selectedService}
               fields={slideOverFields}
               customWidth={600}
+            />
+
+            <UnsavedChangesModal
+              open={showDeleteConfirmModal}
+              onCancel={() => setShowDeleteConfirmModal(false)}
+              onConfirm={handleDeleteService}
+              title={`Deleting Service ${selectedService?.name}`}
+              message={"This action will remove the network service from the system. This is not reversible."}
+              cancelLabel={"Cancel"}
+              confirmLabel={"Delete"}
             />
           </div>
         </>

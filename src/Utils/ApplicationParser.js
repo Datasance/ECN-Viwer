@@ -18,11 +18,13 @@ const mapImages = (images) => {
 };
 
 const parseMicroserviceImages = async (fileImages) => {
-  if (fileImages.catalogItemId) {
+  // Support both catalogId and catalogItemId (YAML uses catalogId, but API uses catalogItemId)
+  const catalogId = fileImages.catalogId || fileImages.catalogItemId;
+  if (catalogId) {
     return {
       registryId: undefined,
       images: undefined,
-      catalogItemId: fileImages.catalogItemId,
+      catalogItemId: catalogId, // API expects catalogItemId
     };
   }
   const registryByName = {
@@ -97,6 +99,7 @@ export const parseMicroservice = async (microservice) => {
     images,
     extraHosts: lget(microservice, "container.extraHosts", []),
     rebuild: microservice.rebuild,
+    application: microservice.application,
     runAsUser:
       microservice.runAsUser !== null ||
       microservice?.container?.runAsUser !== null

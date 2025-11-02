@@ -28,11 +28,22 @@ export const parseService = async (doc) => {
     name: name,
     type: lget(spec, "type", null),
     resource: lget(spec, "resource", null),
-    defaultBridge: lget(spec, "defaultBridge", null),
-    bridgePort: lget(spec, "bridgePort", 0),
+    defaultBridge: lget(spec, "defaultBridge", 'default-router'),
     targetPort: lget(spec, "targetPort", 0),
     tags: lget(spec, "tags", []),
   };
+
+  // Only include k8sType and servicePort if they are present in the YAML
+  // (they won't be present when controller is not running on Kubernetes)
+  const k8sType = lget(spec, "k8sType");
+  if (k8sType !== null && k8sType !== undefined) {
+    apiObject.k8sType = k8sType;
+  }
+
+  const servicePort = lget(spec, "servicePort");
+  if (servicePort !== null && servicePort !== undefined) {
+    apiObject.servicePort = servicePort;
+  }
 
   return [apiObject, null];
 };
