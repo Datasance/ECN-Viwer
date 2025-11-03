@@ -551,8 +551,8 @@ function ApplicationList() {
         open={showResetConfirmModal}
         onCancel={() => setShowResetConfirmModal(false)}
         onConfirm={handleRestart}
-        title={`Restart ${selectedApplication?.name}`}
-        message={"This is not reversible."}
+        title={`Restarting Application ${selectedApplication?.name}`}
+        message={"This action will restart the application. This is not reversible."}
         cancelLabel={"Cancel"}
         confirmLabel={"Restart"}
         confirmColor="bg-blue"
@@ -561,8 +561,8 @@ function ApplicationList() {
         open={showDeleteConfirmModal}
         onCancel={() => setShowDeleteConfirmModal(false)}
         onConfirm={handleDelete}
-        title={`Delete ${selectedApplication?.name}`}
-        message={"This is not reversible."}
+        title={`Deleting Application ${selectedApplication?.name}`}
+        message={"This action will remove the application from the system. All microservices running on this application will be deleted. This is not reversible."}
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
       />
@@ -571,7 +571,7 @@ function ApplicationList() {
         onCancel={() => setShowStartStopConfirmModal(false)}
         onConfirm={handleStartStop}
         title={`${!selectedApplication?.isActivated ? "ACTIVE" : "INACTIVE"} ${selectedApplication?.name}`}
-        message={"This is not reversible."}
+        message={`Are you sure you want to ${!selectedApplication?.isActivated ? "start" : "stop"} this application?`}
         cancelLabel={"Cancel"}
         confirmLabel={`${!selectedApplication?.isActivated ? "ACTIVE" : "INACTIVE"}`}
       />

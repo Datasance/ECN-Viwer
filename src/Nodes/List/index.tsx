@@ -127,8 +127,8 @@ function NodesList() {
 
   const handleDelete = async () => {
     try {
-      const res = await request(`/api/v3/iofog/${selectedNode.uuid}/reboot`, {
-        method: "POST",
+      const res = await request(`/api/v3/iofog/${selectedNode.uuid}`, {
+        method: "DELETE",
         headers: { "Content-Type": "application/json" },
       });
 
@@ -136,8 +136,8 @@ function NodesList() {
        pushFeedback({ message: res.message, type: "error" });
         return;
       } else {
-        pushFeedback({ message: "Agent Rebooted", type: "success" });
-        setShowResetConfirmModal(false);
+        pushFeedback({ message: "Agent Deleted", type: "success" });
+        setShowDeleteConfirmModal(false);
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -156,7 +156,7 @@ function NodesList() {
         return;
       } else {
         pushFeedback({ message: "Agent Pruned", type: "success" });
-        setShowResetConfirmModal(false);
+        setShowCleanConfirmModal(false);
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -425,6 +425,132 @@ function NodesList() {
     });
   };
 
+  const parseAgentYaml = async (doc: any) => {
+    if (doc.apiVersion !== "datasance.com/v3") {
+      return [
+        null,
+        `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v3`,
+      ];
+    }
+    if (doc.kind !== "Agent") {
+      return [null, `Invalid kind ${doc.kind}, expected Agent`];
+    }
+    if (!doc.metadata || !doc.spec) {
+      return [null, "Invalid YAML format (missing metadata or spec)"];
+    }
+
+    const spec = doc.spec ?? {};
+    const metadata = doc.metadata ?? {};
+    const config = spec.config ?? {};
+
+    // For Agent YAML, config fields are nested under spec.config
+    // If spec.config exists, merge its fields with top-level spec fields
+    const agentData: any = {
+      name: spec.name || metadata.name,
+      host: spec.host,
+      ...config, // All config fields go here
+    };
+
+    agentData.tags = metadata.tags;
+
+    // Handle routerConfig if it exists in config
+    if (config.routerConfig) {
+      agentData.routerMode = config.routerConfig.routerMode;
+      agentData.messagingPort = config.routerConfig.messagingPort;
+
+      if (config.routerConfig.edgeRouterPort !== undefined) {
+        agentData.edgeRouterPort = config.routerConfig.edgeRouterPort;
+      }
+      if (config.routerConfig.interRouterPort !== undefined) {
+        agentData.interRouterPort = config.routerConfig.interRouterPort;
+      }
+    }
+
+    // Handle fogType/agentType conversion
+    if (config.agentType !== undefined) {
+      agentData.fogType = config.agentType;
+    } else if (config.fogType !== undefined) {
+      const fogType =
+        config.fogType === "Auto" ? 0 : config.fogType === "x86" ? 1 : 2;
+      agentData.fogType = fogType;
+    }
+
+    return [agentData, null];
+  };
+
+  const handleYamlParse = async (item: any) => {
+    const file = item;
+    if (file) {
+      const reader = new window.FileReader();
+
+      reader.onload = async function (evt: any) {
+        try {
+          const docs = yaml.loadAll(evt.target.result);
+
+          if (!Array.isArray(docs)) {
+            pushFeedback({ message: "Could not parse the file: Invalid YAML format", type: "error" });
+            return;
+          }
+
+          for (const doc of docs) {
+            if (!doc) {
+              continue;
+            }
+
+            const [agentData, err] = await parseAgentYaml(doc);
+
+            if (err) {
+              console.error("Error parsing a document:", err);
+              pushFeedback({ message: `Error processing item: ${err}`, type: "error" });
+              
+            } else {
+              try {
+                await handleYamlPost(agentData);
+                
+              } catch (e) {
+                console.error("Error posting a document:", e);
+                
+              }
+            }
+          }
+
+        } catch (e) {
+          console.error({ e });
+          pushFeedback({ message: "Could not parse the file. Check YAML syntax.", type: "error" });
+        }
+      };
+
+      reader.onerror = function (evt) {
+        pushFeedback({ message: evt, type: "error" });
+      };
+
+      reader.readAsText(file, "UTF-8");
+    }
+  };
+
+  const handleYamlPost = async (agentData: any) => {
+    try {
+      const res = await request(`/api/v3/iofog`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(agentData),
+      });
+
+      if (!res.ok) {
+        pushFeedback({ message: res.message, type: "error" });
+      } else {
+        pushFeedback({
+          message: `Agent ${agentData.name || "Added"} Added`,
+          type: "success",
+        });
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  };
+
   async function handleYamlUpdate(content?: string) {
     try {
       const yamlContent = content || editorDataChanged;
@@ -464,7 +590,7 @@ function NodesList() {
 
       if (!res.ok) {
        pushFeedback({ message: res.message, type: "error" });
-        throw new Error(res.statusText);
+        throw new Error(res.message || "Something went wrong");
       } else {
         pushFeedback({ message: `Agent: ${selectedNode?.name} Config Updated`, type: "success" });
         setEditorDataChanged(null);
@@ -1212,6 +1338,8 @@ function NodesList() {
         columns={columns}
         data={Object.values(data?.reducedAgents?.byName || [])}
         getRowKey={(row: any) => row.uuid}
+        uploadDropzone
+        uploadFunction={handleYamlParse}
       />
 
       <SlideOver
@@ -1243,8 +1371,8 @@ function NodesList() {
         open={showDeleteConfirmModal}
         onCancel={() => setShowDeleteConfirmModal(false)}
         onConfirm={handleDelete}
-        title={`Delete ${selectedNode?.name}`}
-        message={"This is not reversible."}
+        title={`Deleting Agent ${selectedNode?.name}`}
+        message={"This action will remove the agent from the system. All microservices and applications running on this agent will be deleted. This is not reversible."}
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
       />
@@ -1252,7 +1380,7 @@ function NodesList() {
         open={showCleanConfirmModal}
         onCancel={() => setShowCleanConfirmModal(false)}
         onConfirm={handleClean}
-        title={`Prune ${selectedNode?.name}`}
+        title={`Pruning Agent ${selectedNode?.name}`}
         message={
           "This action will remove all unused container images from the selected agent. Images not associated with a running microservice will be permanently deleted. Make sure all necessary images are in use before proceeding.\n \nThis is not reversible!"
         }

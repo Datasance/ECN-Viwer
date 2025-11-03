@@ -191,7 +191,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
         return;
       } else {
         pushFeedback({ message: "Agent Pruned", type: "success" });
-        setShowResetConfirmModal(false);
+        setShowCleanConfirmModal(false);
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -1205,8 +1205,8 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
         open={showDeleteConfirmModal}
         onCancel={() => setShowDeleteConfirmModal(false)}
         onConfirm={handleDelete}
-        title={`Delete ${selectedNode?.name}`}
-        message={"This is not reversible."}
+        title={`Deleting Agent ${selectedNode?.name}`}
+        message={"This action will remove the agent from the system. All microservices and applications running on this agent will be deleted. This is not reversible."}
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
       />
@@ -1214,7 +1214,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
         open={showCleanConfirmModal}
         onCancel={() => setShowCleanConfirmModal(false)}
         onConfirm={handleClean}
-        title={`Prune ${selectedNode?.name}`}
+        title={`Pruning Agent ${selectedNode?.name}`}
         message={
           "This action will remove all unused container images from the selected agent. Images not associated with a running microservice will be permanently deleted. Make sure all necessary images are in use before proceeding.\n \nThis is not reversible!"
         }
