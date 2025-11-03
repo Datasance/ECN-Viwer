@@ -136,11 +136,12 @@ function Secrets() {
           const docs = yaml.loadAll(evt.target.result);
 
           if (!Array.isArray(docs)) {
-            pushFeedback({ message: "Could not parse the file: Invalid YAML format", type: "error" });
+            pushFeedback({
+              message: "Could not parse the file: Invalid YAML format",
+              type: "error",
+            });
             return;
           }
-
-          
 
           for (const doc of docs) {
             if (!doc) {
@@ -151,21 +152,18 @@ function Secrets() {
 
             if (err) {
               console.error("Error parsing a document:", err);
-              pushFeedback({ message: `Error processing item: ${err}`, type: "error" });
-              
+              pushFeedback({
+                message: `Error processing item: ${err}`,
+                type: "error",
+              });
             } else {
               try {
                 await handleYamlUpdate(secret, "POST");
-                
               } catch (e) {
                 console.error("Error updating a document:", e);
-                
               }
             }
           }
-
-          
-
         } catch (e) {
           console.error({ e });
           pushFeedback({ message: "Could not parse the file", type: "error" });
@@ -185,18 +183,18 @@ function Secrets() {
       const name = secret.name;
 
       const res = await request(
-        `/api/v3/secrets${method === "PATCH" ? `/${name}` : ''}`,
+        `/api/v3/secrets${method === "PATCH" ? `/${name}` : ""}`,
         {
           method: method,
           headers: {
             "content-type": "application/json",
           },
           body: JSON.stringify(secret),
-        }
+        },
       );
 
       if (!res.ok) {
-       pushFeedback({ message: res.message, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({
           message: `${name} ${method === "POST" ? "Added" : "Updated"}`,
@@ -217,12 +215,9 @@ function Secrets() {
         return;
       }
 
-      const res = await request(
-        `/api/v3/secrets/${selectedSecret.name}`,
-        {
-          method: "DELETE",
-        },
-      );
+      const res = await request(`/api/v3/secrets/${selectedSecret.name}`, {
+        method: "DELETE",
+      });
 
       if (!res.ok) {
         pushFeedback({
@@ -366,7 +361,9 @@ function Secrets() {
               onCancel={() => setShowDeleteConfirmModal(false)}
               onConfirm={handleDeleteSecret}
               title={`Deleting Secret ${selectedSecret?.name}`}
-              message={"This action will remove the secret from the system. If any Volume Mounts/Certificates are using this secret, they will be deleted and If any microservices are using this secret, they will need to be updated to use a different secret. This is not reversible."}
+              message={
+                "This action will remove the secret from the system. If any Volume Mounts/Certificates are using this secret, they will be deleted and If any microservices are using this secret, they will need to be updated to use a different secret. This is not reversible."
+              }
               cancelLabel={"Cancel"}
               confirmLabel={"Delete"}
             />

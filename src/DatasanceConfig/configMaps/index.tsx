@@ -162,7 +162,10 @@ function ConfigMaps() {
           const docs = yaml.loadAll(evt.target.result);
 
           if (!Array.isArray(docs)) {
-            pushFeedback({ message: "Could not parse the file: Invalid YAML format", type: "error" });
+            pushFeedback({
+              message: "Could not parse the file: Invalid YAML format",
+              type: "error",
+            });
             return;
           }
 
@@ -173,14 +176,15 @@ function ConfigMaps() {
             const [configMap, err] = await parseConfigMap(doc);
             if (err) {
               console.error("Error parsing a document:", err);
-              pushFeedback({ message: `Error processing item: ${err}`, type: "error" });
-              
+              pushFeedback({
+                message: `Error processing item: ${err}`,
+                type: "error",
+              });
             } else {
               try {
                 await handleYamlUpdate(configMap, "POST");
               } catch (e) {
                 console.error("Error updating a document:", e);
-                
               }
             }
           }
@@ -203,14 +207,14 @@ function ConfigMaps() {
       const name = configMap.name;
 
       const res = await request(
-        `/api/v3/configmaps${method === "PATCH" && name ? `/${name}` : ''}`,
+        `/api/v3/configmaps${method === "PATCH" && name ? `/${name}` : ""}`,
         {
           method: method,
           headers: {
             "content-type": "application/json",
           },
           body: JSON.stringify(configMap),
-        }
+        },
       );
 
       if (!res.ok) {
@@ -296,7 +300,10 @@ function ConfigMaps() {
       }
 
       if (!selectedConfigMap?.name) {
-        return pushFeedback({ message: "ConfigMap name is required", type: "error" });
+        return pushFeedback({
+          message: "ConfigMap name is required",
+          type: "error",
+        });
       }
 
       const res = await request(
@@ -311,7 +318,7 @@ function ConfigMaps() {
       );
 
       if (!res.ok) {
-       pushFeedback({ message: res.message, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({
           message: `${selectedConfigMap.name} Updated`,
@@ -366,7 +373,10 @@ function ConfigMaps() {
       }
 
       if (!selectedConfigMap?.name) {
-        return pushFeedback({ message: "ConfigMap name is required", type: "error" });
+        return pushFeedback({
+          message: "ConfigMap name is required",
+          type: "error",
+        });
       }
 
       const res = await request(
@@ -381,7 +391,7 @@ function ConfigMaps() {
       );
 
       if (!res.ok) {
-       pushFeedback({ message: res.message, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({
           message: `${selectedConfigMap.name} Deleted key ${key}`,
@@ -626,7 +636,9 @@ function ConfigMaps() {
               onCancel={() => setShowDeleteConfirmModal(false)}
               onConfirm={handleDeleteConfigMap}
               title={`Deleting Config Map ${selectedConfigMap?.name}`}
-              message={"This action will remove the config map from the system. If any Volume Mounts are using this config map, they will be deleted and If any microservices are using this config map, they will need to be updated to use a different config map. This is not reversible."}
+              message={
+                "This action will remove the config map from the system. If any Volume Mounts are using this config map, they will be deleted and If any microservices are using this config map, they will need to be updated to use a different config map. This is not reversible."
+              }
               cancelLabel={"Cancel"}
               confirmLabel={"Delete"}
             />

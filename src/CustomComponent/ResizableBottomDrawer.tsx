@@ -192,7 +192,7 @@ const ResizableBottomDrawer = ({
                       {customActions}
                     </div>
                   )}
-                  
+
                   <button
                     onClick={toggleMinimize}
                     className="flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 rounded p-1 w-6 h-6"

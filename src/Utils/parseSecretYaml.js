@@ -6,7 +6,10 @@ export const parseSecret = async (doc) => {
   }
 
   if (doc.apiVersion !== "datasance.com/v3") {
-    return [null, `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v3`];
+    return [
+      null,
+      `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v3`,
+    ];
   }
 
   if (doc.kind !== "Secret") {
@@ -32,7 +35,10 @@ export const parseSecret = async (doc) => {
     } else if (normalized === "tls") {
       type = "tls";
     } else {
-      return [null, `Invalid type "${rawType}". Allowed values are: Opaque, tls`];
+      return [
+        null,
+        `Invalid type "${rawType}". Allowed values are: Opaque, tls`,
+      ];
     }
   }
   const data = lget(doc, "data", {});

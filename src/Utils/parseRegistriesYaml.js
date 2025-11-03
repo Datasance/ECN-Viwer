@@ -6,7 +6,10 @@ export const parseRegistries = async (doc) => {
   }
 
   if (doc.apiVersion !== "datasance.com/v3") {
-    return [null, `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v3`];
+    return [
+      null,
+      `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v3`,
+    ];
   }
 
   if (doc.kind !== "Registry") {

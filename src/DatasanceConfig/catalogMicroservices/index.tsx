@@ -88,7 +88,9 @@ function CatalogMicroservices() {
 
   useEffect(() => {
     if (catalogItemId && catalog) {
-      const found = catalog.find((item: any) => item.id.toString() === catalogItemId);
+      const found = catalog.find(
+        (item: any) => item.id.toString() === catalogItemId,
+      );
       if (found) {
         handleRowClick(found);
         setIsOpen(true);
@@ -109,8 +111,12 @@ function CatalogMicroservices() {
       spec: {
         description: selectedCatalogMicroservice.description,
         category: selectedCatalogMicroservice.category,
-        x86: selectedCatalogMicroservice.images.find((x: any) => x.fogTypeId === 1)?.containerImage,
-        arm: selectedCatalogMicroservice.images.find((x: any) => x.fogTypeId === 2)?.containerImage,
+        x86: selectedCatalogMicroservice.images.find(
+          (x: any) => x.fogTypeId === 1,
+        )?.containerImage,
+        arm: selectedCatalogMicroservice.images.find(
+          (x: any) => x.fogTypeId === 2,
+        )?.containerImage,
         registry: selectedCatalogMicroservice.registryId,
         configExample: selectedCatalogMicroservice.configExample,
       },
@@ -119,7 +125,7 @@ function CatalogMicroservices() {
     const yamlString = yaml.dump(yamlObj, {
       noRefs: true,
       indent: 2,
-      lineWidth: -1
+      lineWidth: -1,
     });
 
     addYamlSession({
@@ -144,7 +150,6 @@ function CatalogMicroservices() {
     });
   };
 
-
   const handleYamlUpload = async (item: any) => {
     const file = item;
     if (file) {
@@ -155,11 +160,12 @@ function CatalogMicroservices() {
           const docs = yaml.loadAll(evt.target.result);
 
           if (!Array.isArray(docs)) {
-            pushFeedback({ message: "Could not parse the file: Invalid YAML format", type: "error" });
+            pushFeedback({
+              message: "Could not parse the file: Invalid YAML format",
+              type: "error",
+            });
             return;
           }
-
-          
 
           for (const doc of docs) {
             if (!doc) {
@@ -170,16 +176,14 @@ function CatalogMicroservices() {
 
             if (err) {
               console.error("Error parsing a document:", err);
-              pushFeedback({ message: `Error processing item: ${err}`, type: "error" });
-              
+              pushFeedback({
+                message: `Error processing item: ${err}`,
+                type: "error",
+              });
             } else {
               await postCatalogItem(catalogItem, "POST");
-              
             }
           }
-
-          
-
         } catch (e) {
           console.error({ e });
           pushFeedback({ message: "Could not parse the file", type: "error" });
@@ -196,14 +200,17 @@ function CatalogMicroservices() {
 
   const postCatalogItem = async (item: any, method?: string) => {
     const newItem = { ...item };
-    setLoadingMessage(method === "PATCH" ? "Catalog Updating..." : "Catalog Adding...");
+    setLoadingMessage(
+      method === "PATCH" ? "Catalog Updating..." : "Catalog Adding...",
+    );
     setLoading(true);
 
     // For PATCH, use the ID from selectedCatalogMicroservice since the parsed item doesn't have id
-    const catalogId = method === "PATCH" ? selectedCatalogMicroservice?.id : null;
+    const catalogId =
+      method === "PATCH" ? selectedCatalogMicroservice?.id : null;
 
     const response = await request(
-      `/api/v3/catalog/microservices${method === "PATCH" && catalogId ? "/" + catalogId : ''}`,
+      `/api/v3/catalog/microservices${method === "PATCH" && catalogId ? "/" + catalogId : ""}`,
       {
         method: method,
         headers: {
@@ -216,7 +223,7 @@ function CatalogMicroservices() {
     if (response?.ok) {
       pushFeedback({
         message: `Catalog ${method === "PATCH" ? "Updated" : "Added"}!`,
-        type: "success"
+        type: "success",
       });
       fetchCatalog();
       setLoading(false);
@@ -229,7 +236,10 @@ function CatalogMicroservices() {
   const handleDeleteCatalogMicroservice = async () => {
     try {
       if (!selectedCatalogMicroservice?.id) {
-        pushFeedback({ message: "No catalog microservice selected", type: "error" });
+        pushFeedback({
+          message: "No catalog microservice selected",
+          type: "error",
+        });
         return;
       }
 
@@ -475,8 +485,7 @@ function CatalogMicroservices() {
         onDelete={() => setShowDeleteConfirmModal(true)}
         onEditYaml={handleEditYaml}
         title={
-          selectedCatalogMicroservice?.name ||
-          "Catalog Microservice Details"
+          selectedCatalogMicroservice?.name || "Catalog Microservice Details"
         }
         data={selectedCatalogMicroservice}
         fields={slideOverFields}
@@ -495,7 +504,9 @@ function CatalogMicroservices() {
         onCancel={() => setShowDeleteConfirmModal(false)}
         onConfirm={handleDeleteCatalogMicroservice}
         title={`Deleting Catalog Microservice ${selectedCatalogMicroservice?.name}`}
-        message={"This action will remove the catalog microservice from the system if item's category is not 'SYSTEM' or not in use by any microservices. This is not reversible."}
+        message={
+          "This action will remove the catalog microservice from the system if item's category is not 'SYSTEM' or not in use by any microservices. This is not reversible."
+        }
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
       />

@@ -16,8 +16,7 @@ function Registries() {
   const { request } = React.useContext(ControllerContext);
   const { pushFeedback } = React.useContext(FeedbackContext);
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedRegistry, setSelectedRegistry] =
-    useState<any | null>(null);
+  const [selectedRegistry, setSelectedRegistry] = useState<any | null>(null);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const location = useLocation();
   const params = new URLSearchParams(location.search);
@@ -32,9 +31,7 @@ function Registries() {
   async function fetchRegistries() {
     try {
       setFetching(true);
-      const registriesResponse = await request(
-        "/api/v3/registries",
-      );
+      const registriesResponse = await request("/api/v3/registries");
       if (!registriesResponse.ok) {
         pushFeedback({
           message: registriesResponse.message,
@@ -52,7 +49,6 @@ function Registries() {
     }
   }
 
-
   useEffect(() => {
     fetchRegistries();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -60,7 +56,9 @@ function Registries() {
 
   useEffect(() => {
     if (registryId && registries) {
-      const found = registries.find((item: any) => item.id.toString() === registryId);
+      const found = registries.find(
+        (item: any) => item.id.toString() === registryId,
+      );
       if (found) {
         handleRowClick(found);
       }
@@ -69,7 +67,7 @@ function Registries() {
   }, [registryId, registries]);
 
   const handleEditYaml = () => {
-    const name = selectedRegistry?.url.replace(/\./g, '-') || 'untitled';
+    const name = selectedRegistry?.url.replace(/\./g, "-") || "untitled";
 
     const yamlObj = {
       apiVersion: "datasance.com/v3",
@@ -89,7 +87,7 @@ function Registries() {
     const yamlString = yaml.dump(yamlObj, {
       noRefs: true,
       indent: 2,
-      lineWidth: -1
+      lineWidth: -1,
     });
 
     addYamlSession({
@@ -117,20 +115,21 @@ function Registries() {
   async function handleYamlUpdate(registries: any, method?: string) {
     try {
       const res = await request(
-        `/api/v3/registries${method === "PATCH" && selectedRegistry?.id ? `/${selectedRegistry.id}` : ''}`,
+        `/api/v3/registries${method === "PATCH" && selectedRegistry?.id ? `/${selectedRegistry.id}` : ""}`,
         {
           method: method,
           headers: {
             "content-type": "application/json",
           },
           body: JSON.stringify(registries),
-        }
+        },
       );
 
       if (!res.ok) {
-       pushFeedback({ message: res.message, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       } else {
-        const registryName = method === "POST" ? registries.url : (selectedRegistry.id || "New");
+        const registryName =
+          method === "POST" ? registries.url : selectedRegistry.id || "New";
         pushFeedback({
           message: `Registry ${registryName} ${method === "POST" ? "Added" : "Updated"}`,
           type: "success",
@@ -153,12 +152,9 @@ function Registries() {
         return;
       }
 
-      const res = await request(
-        `/api/v3/registries/${selectedRegistry.id}`,
-        {
-          method: "DELETE",
-        },
-      );
+      const res = await request(`/api/v3/registries/${selectedRegistry.id}`, {
+        method: "DELETE",
+      });
 
       if (!res.ok) {
         pushFeedback({
@@ -190,11 +186,12 @@ function Registries() {
           const docs = yaml.loadAll(evt.target.result);
 
           if (!Array.isArray(docs)) {
-            pushFeedback({ message: "Could not parse the file: Invalid YAML format", type: "error" });
+            pushFeedback({
+              message: "Could not parse the file: Invalid YAML format",
+              type: "error",
+            });
             return;
           }
-
-          
 
           for (const doc of docs) {
             if (!doc) {
@@ -205,21 +202,18 @@ function Registries() {
 
             if (err) {
               console.error("Error parsing a document:", err);
-              pushFeedback({ message: `Error processing item: ${err}`, type: "error" });
-              
+              pushFeedback({
+                message: `Error processing item: ${err}`,
+                type: "error",
+              });
             } else {
               try {
                 await handleYamlUpdate(registry, "POST");
-                
               } catch (e) {
                 console.error("Error updating a document:", e);
-                
               }
             }
           }
-
-          
-
         } catch (e) {
           console.error({ e });
           pushFeedback({ message: "Could not parse the file", type: "error" });
@@ -315,10 +309,7 @@ function Registries() {
         open={isOpen}
         onClose={() => setIsOpen(false)}
         onDelete={() => setShowDeleteConfirmModal(true)}
-        title={
-          selectedRegistry?.url ||
-          "Registry Details"
-        }
+        title={selectedRegistry?.url || "Registry Details"}
         data={selectedRegistry}
         fields={slideOverFields}
         customWidth={600}
@@ -330,7 +321,9 @@ function Registries() {
         onCancel={() => setShowDeleteConfirmModal(false)}
         onConfirm={handleDeleteRegistry}
         title={`Deleting Registry ${selectedRegistry?.url || selectedRegistry?.id}`}
-        message={"This action will remove the registry from the system If no microservice is using this registry. This is not reversible."}
+        message={
+          "This action will remove the registry from the system If no microservice is using this registry. This is not reversible."
+        }
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
       />

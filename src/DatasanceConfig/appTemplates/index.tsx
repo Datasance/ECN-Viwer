@@ -111,7 +111,7 @@ function AppTemplates() {
         method: "DELETE",
       });
       if (!res.ok) {
-       pushFeedback({ message: res.message, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       } else {
         setCatalog(catalog.filter((i: any) => i.id !== item.id));
         pushFeedback({
@@ -254,7 +254,6 @@ function AppTemplates() {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
     }
   }
-
 
   const handleEditYaml = () => {
     if (!selectedApplicationTemplate) return;
@@ -540,11 +539,11 @@ function AppTemplates() {
             key: "defaultValue",
             header: "Default Value",
             formatter: ({ row }: any) => {
-              const value = row.defaultValue
-              if (value === null || value === undefined || value === '') {
-                return <span className="text-gray-400 italic">No default</span>
+              const value = row.defaultValue;
+              if (value === null || value === undefined || value === "") {
+                return <span className="text-gray-400 italic">No default</span>;
               }
-              return <span className="text-white">{value}</span>
+              return <span className="text-white">{value}</span>;
             },
           },
         ];

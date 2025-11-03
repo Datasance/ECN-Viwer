@@ -6,7 +6,10 @@ export const parseService = async (doc) => {
   }
 
   if (doc.apiVersion !== "datasance.com/v3") {
-    return [null, `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v3`];
+    return [
+      null,
+      `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v3`,
+    ];
   }
 
   if (doc.kind !== "Service") {
@@ -28,9 +31,11 @@ export const parseService = async (doc) => {
     name: name,
     type: lget(spec, "type", null),
     resource: lget(spec, "resource", null),
-    defaultBridge: lget(spec, "defaultBridge", 'default-router'),
+    defaultBridge: lget(spec, "defaultBridge", "default-router"),
     targetPort: lget(spec, "targetPort", 0),
-    tags: Array.isArray(lget(doc, "metadata.tags", [])) ? lget(doc, "metadata.tags", []) : [lget(doc, "metadata.tags", "")],
+    tags: Array.isArray(lget(doc, "metadata.tags", []))
+      ? lget(doc, "metadata.tags", [])
+      : [lget(doc, "metadata.tags", "")],
   };
 
   // Only include k8sType and servicePort if they are present in the YAML

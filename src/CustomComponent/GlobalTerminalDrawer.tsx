@@ -21,16 +21,19 @@ const GlobalTerminalDrawer = () => {
   } = useTerminal();
 
   const activeYamlSession = yamlSessions.find((s) => s.id === activeSessionId);
-  const activeDeploySession = deploySessions.find((s) => s.id === activeSessionId);
+  const activeDeploySession = deploySessions.find(
+    (s) => s.id === activeSessionId,
+  );
 
   // Use refs to store stable tab components
   const terminalTabsRef = useRef(new Map());
   const yamlTabsRef = useRef(new Map());
   const deployTabsRef = useRef(new Map());
-  
+
   // State to track deploy function for header button
   const [deployFunction, setDeployFunction] = React.useState<any>(null);
-  const [showDeployConfirmModal, setShowDeployConfirmModal] = React.useState(false);
+  const [showDeployConfirmModal, setShowDeployConfirmModal] =
+    React.useState(false);
 
   // Clear deploy function when switching away from deploy sessions
   React.useEffect(() => {
@@ -38,7 +41,6 @@ const GlobalTerminalDrawer = () => {
       setDeployFunction(null);
     }
   }, [activeDeploySession]);
-
 
   // Handle deploy confirm
   const handleDeployConfirm = useCallback(async () => {
@@ -126,7 +128,9 @@ const GlobalTerminalDrawer = () => {
             onClose={() => {
               handleRemoveSession(session.id);
             }}
-            onDirtyChange={(isDirty) => updateDeploySession(session.id, isDirty)}
+            onDirtyChange={(isDirty) =>
+              updateDeploySession(session.id, isDirty)
+            }
             onDeployFunctionChange={(deployFunc) => {
               setDeployFunction(deployFunc);
             }}
@@ -168,7 +172,14 @@ const GlobalTerminalDrawer = () => {
     });
 
     return allTabs;
-  }, [sessions, yamlSessions, deploySessions, handleRemoveSession, updateYamlContent, updateDeploySession]);
+  }, [
+    sessions,
+    yamlSessions,
+    deploySessions,
+    handleRemoveSession,
+    updateYamlContent,
+    updateDeploySession,
+  ]);
 
   const handleTabChange = (tabId: string) => {
     setActiveSession(tabId);
@@ -229,12 +240,17 @@ const GlobalTerminalDrawer = () => {
     return null;
   }, [activeSessionId]); // Only depend on activeSessionId, not the session objects
 
-  if (sessions.length === 0 && yamlSessions.length === 0 && deploySessions.length === 0) {
+  if (
+    sessions.length === 0 &&
+    yamlSessions.length === 0 &&
+    deploySessions.length === 0
+  ) {
     return null;
   }
 
   // Determine if the active tab is a YAML or deploy tab with unsaved changes
-  const isActiveTabDirty = activeYamlSession?.isDirty || activeDeploySession?.isDirty || false;
+  const isActiveTabDirty =
+    activeYamlSession?.isDirty || activeDeploySession?.isDirty || false;
 
   // Generate dynamic title based on active session
   const getTitle = () => {
@@ -263,7 +279,7 @@ const GlobalTerminalDrawer = () => {
       >
         {activeSessionContent}
       </ResizableBottomDrawer>
-      
+
       <UnsavedChangesModal
         open={showDeployConfirmModal}
         onCancel={() => setShowDeployConfirmModal(false)}

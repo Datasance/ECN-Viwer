@@ -12,7 +12,6 @@ import { parseService } from "../../Utils/parseServiceYaml";
 import yaml from "js-yaml";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 
-
 function Services() {
   const [fetching, setFetching] = React.useState(true);
   const [services, setServices] = React.useState([]);
@@ -151,10 +150,16 @@ function Services() {
     };
 
     // Only include k8sType and servicePort if they are not null
-    if (selectedService.k8sType !== null && selectedService.k8sType !== undefined) {
+    if (
+      selectedService.k8sType !== null &&
+      selectedService.k8sType !== undefined
+    ) {
       spec.k8sType = selectedService.k8sType;
     }
-    if (selectedService.servicePort !== null && selectedService.servicePort !== undefined) {
+    if (
+      selectedService.servicePort !== null &&
+      selectedService.servicePort !== undefined
+    ) {
       spec.servicePort = selectedService.servicePort;
     }
 
@@ -163,7 +168,9 @@ function Services() {
       kind: "Service",
       metadata: {
         name: selectedService.name,
-        tags: Array.isArray(selectedService.tags) ? selectedService.tags : [selectedService.tags],
+        tags: Array.isArray(selectedService.tags)
+          ? selectedService.tags
+          : [selectedService.tags],
       },
       spec,
     };
@@ -171,7 +178,7 @@ function Services() {
     const yamlString = yaml.dump(yamlObj, {
       noRefs: true,
       indent: 2,
-      lineWidth: -1
+      lineWidth: -1,
     });
 
     addYamlSession({
@@ -206,11 +213,12 @@ function Services() {
           const docs = yaml.loadAll(evt.target.result);
 
           if (!Array.isArray(docs)) {
-            pushFeedback({ message: "Could not parse the file: Invalid YAML format", type: "error" });
+            pushFeedback({
+              message: "Could not parse the file: Invalid YAML format",
+              type: "error",
+            });
             return;
           }
-
-          
 
           for (const doc of docs) {
             if (!doc) {
@@ -221,21 +229,18 @@ function Services() {
 
             if (err) {
               console.error("Error parsing a document:", err);
-              pushFeedback({ message: `Error processing item: ${err}`, type: "error" });
-              
+              pushFeedback({
+                message: `Error processing item: ${err}`,
+                type: "error",
+              });
             } else {
               try {
                 await handleYamlUpdate(service, "POST");
-                
               } catch (e) {
                 console.error("Error updating a document:", e);
-                
               }
             }
           }
-
-          
-
         } catch (e) {
           console.error({ e });
           pushFeedback({ message: "Could not parse the file", type: "error" });
@@ -255,18 +260,18 @@ function Services() {
       const name = service.name;
 
       const res = await request(
-        `/api/v3/services${method === "PATCH" ? "/" + name : ''}`,
+        `/api/v3/services${method === "PATCH" ? "/" + name : ""}`,
         {
           method: method,
           headers: {
             "content-type": "application/json",
           },
           body: JSON.stringify(service),
-        }
+        },
       );
 
       if (!res.ok) {
-       pushFeedback({ message: res.message, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({
           message: `Service ${name} ${method === "POST" ? "Added" : "Updated"}`,
@@ -290,12 +295,9 @@ function Services() {
         return;
       }
 
-      const res = await request(
-        `/api/v3/services/${selectedService.name}`,
-        {
-          method: "DELETE",
-        },
-      );
+      const res = await request(`/api/v3/services/${selectedService.name}`, {
+        method: "DELETE",
+      });
 
       if (!res.ok) {
         pushFeedback({
@@ -481,7 +483,9 @@ function Services() {
               onCancel={() => setShowDeleteConfirmModal(false)}
               onConfirm={handleDeleteService}
               title={`Deleting Service ${selectedService?.name}`}
-              message={"This action will remove the network service from the system. This is not reversible."}
+              message={
+                "This action will remove the network service from the system. This is not reversible."
+              }
               cancelLabel={"Cancel"}
               confirmLabel={"Delete"}
             />

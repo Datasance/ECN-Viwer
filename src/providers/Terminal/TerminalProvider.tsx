@@ -68,10 +68,7 @@ interface TerminalContextType {
     content: string,
     isDirty: boolean,
   ) => void;
-  updateDeploySession: (
-    sessionId: string,
-    isDirty: boolean,
-  ) => void;
+  updateDeploySession: (sessionId: string, isDirty: boolean) => void;
 }
 
 const TerminalContext = createContext<TerminalContextType | undefined>(
@@ -145,7 +142,7 @@ export const TerminalProvider: React.FC<TerminalProviderProps> = ({
         isActive: true,
         createdAt: Date.now(),
       };
-      
+
       setYamlSessions((prev) => {
         // Check if a session with the same title already exists
         const existingIndex = prev.findIndex(

@@ -1,5 +1,5 @@
-import React, { useCallback, useRef, useEffect } from 'react'
-import DeployApplicationTemplate from '../Catalog/Application/DeployApplicationTemplate'
+import React, { useCallback, useRef, useEffect } from "react";
+import DeployApplicationTemplate from "../Catalog/Application/DeployApplicationTemplate";
 
 interface StableDeployTabProps {
   sessionId: string;
@@ -14,28 +14,31 @@ const StableDeployTab: React.FC<StableDeployTabProps> = ({
   template,
   onClose,
   onDirtyChange,
-  onDeployFunctionChange
+  onDeployFunctionChange,
 }) => {
-  const deployFunctionRef = useRef<any>(null)
+  const deployFunctionRef = useRef<any>(null);
 
-  const handleDeployFunction = useCallback((deployData: any) => {
-    deployFunctionRef.current = deployData
-    // Mark as dirty if there are changes
-    const hasChanges = deployData.isValid && deployData.loading === false
-    onDirtyChange(hasChanges)
-    
-    // Pass deploy function to parent for header button
-    if (onDeployFunctionChange) {
-      onDeployFunctionChange(deployData)
-    }
-  }, [onDirtyChange, onDeployFunctionChange])
+  const handleDeployFunction = useCallback(
+    (deployData: any) => {
+      deployFunctionRef.current = deployData;
+      // Mark as dirty if there are changes
+      const hasChanges = deployData.isValid && deployData.loading === false;
+      onDirtyChange(hasChanges);
+
+      // Pass deploy function to parent for header button
+      if (onDeployFunctionChange) {
+        onDeployFunctionChange(deployData);
+      }
+    },
+    [onDirtyChange, onDeployFunctionChange],
+  );
 
   // Pass deploy function to parent whenever it changes
   useEffect(() => {
     if (onDeployFunctionChange && deployFunctionRef.current) {
-      onDeployFunctionChange(deployFunctionRef.current)
+      onDeployFunctionChange(deployFunctionRef.current);
     }
-  }, [onDeployFunctionChange])
+  }, [onDeployFunctionChange]);
 
   return (
     <div className="h-full flex flex-col">
@@ -45,7 +48,7 @@ const StableDeployTab: React.FC<StableDeployTabProps> = ({
         onDeploy={handleDeployFunction}
       />
     </div>
-  )
-}
+  );
+};
 
-export default StableDeployTab
+export default StableDeployTab;

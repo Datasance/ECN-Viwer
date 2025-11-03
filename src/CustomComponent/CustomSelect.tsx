@@ -1,4 +1,9 @@
-import Select, { GroupBase, MultiValue, SingleValue, ActionMeta } from "react-select";
+import Select, {
+  GroupBase,
+  MultiValue,
+  SingleValue,
+  ActionMeta,
+} from "react-select";
 
 type OptionType = {
   label: string;
@@ -26,13 +31,12 @@ export default function CustomSelect({
   setSelected,
   setIsOpen,
 }: CustomSelectProps) {
-
   const handleChange = (
     value: SingleValue<OptionType> | MultiValue<OptionType>,
-    actionMeta: ActionMeta<OptionType>
+    actionMeta: ActionMeta<OptionType>,
   ) => {
     const selectedValue = isMulti
-      ? ((value as MultiValue<OptionType>)?.slice() || null)
+      ? (value as MultiValue<OptionType>)?.slice() || null
       : (value as SingleValue<OptionType> | null);
 
     if (setSelected) {
@@ -59,8 +63,16 @@ export default function CustomSelect({
       placeholder={placeholder}
       isClearable={isClearable}
       styles={{
-        control: (provided) => ({ ...provided, backgroundColor: "white", color: "black" }),
-        menu: (provided) => ({ ...provided, backgroundColor: "white", color: "black" }),
+        control: (provided) => ({
+          ...provided,
+          backgroundColor: "white",
+          color: "black",
+        }),
+        menu: (provided) => ({
+          ...provided,
+          backgroundColor: "white",
+          color: "black",
+        }),
         singleValue: (provided) => ({ ...provided, color: "black" }),
         option: (provided, state) => ({
           ...provided,

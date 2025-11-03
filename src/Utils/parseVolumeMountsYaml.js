@@ -6,7 +6,10 @@ export const parseVolumeMount = async (doc) => {
   }
 
   if (doc.apiVersion !== "datasance.com/v3") {
-    return [null, `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v3`];
+    return [
+      null,
+      `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v3`,
+    ];
   }
 
   if (doc.kind !== "VolumeMount") {
@@ -26,7 +29,10 @@ export const parseVolumeMount = async (doc) => {
   const configMapName = lget(doc, "spec.configMapName", null);
 
   if (!secretName && !configMapName) {
-    return [null, "Invalid VolumeMount: Must specify one of secretName or configMapName in spec."];
+    return [
+      null,
+      "Invalid VolumeMount: Must specify one of secretName or configMapName in spec.",
+    ];
   }
 
   const volumeMountApiObject = {

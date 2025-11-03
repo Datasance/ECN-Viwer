@@ -114,7 +114,7 @@ function NodesList() {
       });
 
       if (!res.ok) {
-       pushFeedback({ message: res.message, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
         return;
       } else {
         pushFeedback({ message: "Agent Rebooted", type: "success" });
@@ -133,7 +133,7 @@ function NodesList() {
       });
 
       if (!res.ok) {
-       pushFeedback({ message: res.message, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
         return;
       } else {
         pushFeedback({ message: "Agent Deleted", type: "success" });
@@ -152,7 +152,7 @@ function NodesList() {
       });
 
       if (!res.ok) {
-       pushFeedback({ message: res.message, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
         return;
       } else {
         pushFeedback({ message: "Agent Pruned", type: "success" });
@@ -270,17 +270,17 @@ function NodesList() {
   const generateProvisionCommands = (): string[] => {
     const apiUrl = getApiEndpointUrl();
     const commands: string[] = [];
-    
+
     commands.push(`iofog-agent config -a ${apiUrl}`);
 
     if (provisionKeyData?.caCert) {
       commands.push(`iofog-agent cert ${provisionKeyData.caCert}`);
     }
-    
+
     if (provisionKeyData?.key) {
       commands.push(`iofog-agent provision ${provisionKeyData.key}`);
     }
-    
+
     return commands;
   };
 
@@ -488,7 +488,10 @@ function NodesList() {
           const docs = yaml.loadAll(evt.target.result);
 
           if (!Array.isArray(docs)) {
-            pushFeedback({ message: "Could not parse the file: Invalid YAML format", type: "error" });
+            pushFeedback({
+              message: "Could not parse the file: Invalid YAML format",
+              type: "error",
+            });
             return;
           }
 
@@ -501,22 +504,24 @@ function NodesList() {
 
             if (err) {
               console.error("Error parsing a document:", err);
-              pushFeedback({ message: `Error processing item: ${err}`, type: "error" });
-              
+              pushFeedback({
+                message: `Error processing item: ${err}`,
+                type: "error",
+              });
             } else {
               try {
                 await handleYamlPost(agentData);
-                
               } catch (e) {
                 console.error("Error posting a document:", e);
-                
               }
             }
           }
-
         } catch (e) {
           console.error({ e });
-          pushFeedback({ message: "Could not parse the file. Check YAML syntax.", type: "error" });
+          pushFeedback({
+            message: "Could not parse the file. Check YAML syntax.",
+            type: "error",
+          });
         }
       };
 
@@ -589,10 +594,13 @@ function NodesList() {
       });
 
       if (!res.ok) {
-       pushFeedback({ message: res.message, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
         throw new Error(res.message || "Something went wrong");
       } else {
-        pushFeedback({ message: `Agent: ${selectedNode?.name} Config Updated`, type: "success" });
+        pushFeedback({
+          message: `Agent: ${selectedNode?.name} Config Updated`,
+          type: "success",
+        });
         setEditorDataChanged(null);
         setIsOpen(false);
       }
@@ -952,15 +960,24 @@ function NodesList() {
     },
     {
       label: "Cpu Violation",
-      render: (row: any) => (row.cpuViolation === "0" || row.cpuViolation === "false" ? "false" : "true"),
+      render: (row: any) =>
+        row.cpuViolation === "0" || row.cpuViolation === "false"
+          ? "false"
+          : "true",
     },
     {
       label: "Disk Violation",
-      render: (row: any) => (row.diskViolation === "0" || row.diskViolation === "false" ? "false" : "true"),
+      render: (row: any) =>
+        row.diskViolation === "0" || row.diskViolation === "false"
+          ? "false"
+          : "true",
     },
     {
       label: "Memory Violation",
-      render: (row: any) => (row.memoryViolation === "0" || row.memoryViolation === "false" ? "false" : "true"),
+      render: (row: any) =>
+        row.memoryViolation === "0" || row.memoryViolation === "false"
+          ? "false"
+          : "true",
     },
     {
       label: "Is Ready To Rollback",
@@ -1372,7 +1389,9 @@ function NodesList() {
         onCancel={() => setShowDeleteConfirmModal(false)}
         onConfirm={handleDelete}
         title={`Deleting Agent ${selectedNode?.name}`}
-        message={"This action will remove the agent from the system. All microservices and applications running on this agent will be deleted. This is not reversible."}
+        message={
+          "This action will remove the agent from the system. All microservices and applications running on this agent will be deleted. This is not reversible."
+        }
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
       />
@@ -1401,7 +1420,9 @@ function NodesList() {
           loadingProvisionKey ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-3 text-gray-700">Loading provision key...</span>
+              <span className="ml-3 text-gray-700">
+                Loading provision key...
+              </span>
             </div>
           ) : provisionKeyData ? (
             <div className="space-y-6">
@@ -1426,13 +1447,22 @@ function NodesList() {
                   <button
                     onClick={() => handleCopyItem(provisionKeyData.key, "key")}
                     className="text-gray-400 hover:text-gray-600"
-                    title={copiedItem === "key" ? "Copied!" : "Copy to clipboard"}
+                    title={
+                      copiedItem === "key" ? "Copied!" : "Copy to clipboard"
+                    }
                   >
-                    {copiedItem === "key" ? <CheckIcon fontSize="small" /> : <FileCopyIcon fontSize="small" />}
+                    {copiedItem === "key" ? (
+                      <CheckIcon fontSize="small" />
+                    ) : (
+                      <FileCopyIcon fontSize="small" />
+                    )}
                   </button>
                 </div>
                 <div className="bg-gray-800 rounded px-2 py-1">
-                  <CryptoTextBox data={provisionKeyData.key || ""} mode="plain" />
+                  <CryptoTextBox
+                    data={provisionKeyData.key || ""}
+                    mode="plain"
+                  />
                 </div>
               </div>
 
@@ -1444,15 +1474,28 @@ function NodesList() {
                       CA Certificate (Base64)
                     </div>
                     <button
-                      onClick={() => handleCopyItem(provisionKeyData.caCert, "caCert")}
+                      onClick={() =>
+                        handleCopyItem(provisionKeyData.caCert, "caCert")
+                      }
                       className="text-gray-400 hover:text-gray-600"
-                      title={copiedItem === "caCert" ? "Copied!" : "Copy to clipboard"}
+                      title={
+                        copiedItem === "caCert"
+                          ? "Copied!"
+                          : "Copy to clipboard"
+                      }
                     >
-                      {copiedItem === "caCert" ? <CheckIcon fontSize="small" /> : <FileCopyIcon fontSize="small" />}
+                      {copiedItem === "caCert" ? (
+                        <CheckIcon fontSize="small" />
+                      ) : (
+                        <FileCopyIcon fontSize="small" />
+                      )}
                     </button>
                   </div>
                   <div className="bg-gray-800 rounded px-2 py-1">
-                    <CryptoTextBox data={provisionKeyData.caCert} mode="encrypted" />
+                    <CryptoTextBox
+                      data={provisionKeyData.caCert}
+                      mode="encrypted"
+                    />
                   </div>
                 </div>
               )}
@@ -1468,26 +1511,45 @@ function NodesList() {
                     className="text-gray-400 hover:text-gray-600"
                     title={commandsVisible ? "Hide commands" : "Show commands"}
                   >
-                    {commandsVisible ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                    {commandsVisible ? (
+                      <VisibilityOffIcon fontSize="small" />
+                    ) : (
+                      <VisibilityIcon fontSize="small" />
+                    )}
                   </button>
                 </div>
                 <div className="bg-gray-100 rounded p-3 space-y-2">
                   {commandsVisible ? (
                     generateProvisionCommands().map((cmd, index) => (
-                      <div key={index} className="flex items-center justify-between bg-white rounded px-3 py-2">
-                        <code className="text-sm text-gray-800 font-mono flex-1 break-all">{cmd}</code>
+                      <div
+                        key={index}
+                        className="flex items-center justify-between bg-white rounded px-3 py-2"
+                      >
+                        <code className="text-sm text-gray-800 font-mono flex-1 break-all">
+                          {cmd}
+                        </code>
                         <button
                           onClick={() => handleCopyItem(cmd, `cmd-${index}`)}
                           className="ml-2 text-gray-400 hover:text-gray-600 flex-shrink-0"
-                          title={copiedItem === `cmd-${index}` ? "Copied!" : "Copy to clipboard"}
+                          title={
+                            copiedItem === `cmd-${index}`
+                              ? "Copied!"
+                              : "Copy to clipboard"
+                          }
                         >
-                          {copiedItem === `cmd-${index}` ? <CheckIcon fontSize="small" /> : <FileCopyIcon fontSize="small" />}
+                          {copiedItem === `cmd-${index}` ? (
+                            <CheckIcon fontSize="small" />
+                          ) : (
+                            <FileCopyIcon fontSize="small" />
+                          )}
                         </button>
                       </div>
                     ))
                   ) : (
                     <div className="bg-white rounded px-3 py-2">
-                      <code className="text-sm text-gray-400 font-mono">Click to view commands</code>
+                      <code className="text-sm text-gray-400 font-mono">
+                        Click to view commands
+                      </code>
                     </div>
                   )}
                 </div>

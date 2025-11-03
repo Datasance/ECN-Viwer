@@ -165,14 +165,14 @@ function VolumeMounts() {
       );
 
       if (!res.ok) {
-       pushFeedback({ message: res.message, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
         return;
       } else {
         pushFeedback({ message: "Volume Mount Attached", type: "success" });
         setShowAttachModal(false);
         setAgentsToAttach([]);
         setIsOpen(false);
-        fetchVolumeMounts()
+        fetchVolumeMounts();
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -195,7 +195,7 @@ function VolumeMounts() {
       );
 
       if (!res.ok) {
-       pushFeedback({ message: res.message, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
         return;
       } else {
         pushFeedback({ message: "Volume Mount Detached", type: "success" });
@@ -215,12 +215,9 @@ function VolumeMounts() {
         return;
       }
 
-      const res = await request(
-        `/api/v3/volumeMounts/${selectedVolume.name}`,
-        {
-          method: "DELETE",
-        },
-      );
+      const res = await request(`/api/v3/volumeMounts/${selectedVolume.name}`, {
+        method: "DELETE",
+      });
 
       if (!res.ok) {
         pushFeedback({
@@ -273,7 +270,6 @@ function VolumeMounts() {
           }
 
           await handleYamlUpdate(volumeMountItem, "PATCH");
-
         } catch (e: any) {
           pushFeedback({ message: e.message, type: "error", uuid: "error" });
         }
@@ -291,11 +287,12 @@ function VolumeMounts() {
           const docs = yaml.loadAll(evt.target.result);
 
           if (!Array.isArray(docs)) {
-            pushFeedback({ message: "Could not parse the file: Invalid YAML format", type: "error" });
+            pushFeedback({
+              message: "Could not parse the file: Invalid YAML format",
+              type: "error",
+            });
             return;
           }
-
-          
 
           for (const doc of docs) {
             if (!doc) {
@@ -306,21 +303,18 @@ function VolumeMounts() {
 
             if (err) {
               console.error("Error parsing a document:", err);
-              pushFeedback({ message: `Error processing item: ${err}`, type: "error" });
-              
+              pushFeedback({
+                message: `Error processing item: ${err}`,
+                type: "error",
+              });
             } else {
               try {
                 await handleYamlUpdate(volumeMountItem, "POST");
-                
               } catch (e) {
                 console.error("Error updating a document:", e);
-                
               }
             }
           }
-
-          
-
         } catch (e) {
           console.error({ e });
           pushFeedback({ message: "Could not parse the file", type: "error" });
@@ -339,10 +333,16 @@ function VolumeMounts() {
     try {
       // Remove null values from the payload
       const cleanedPayload: any = { ...parsed };
-      if (cleanedPayload.secretName === null || cleanedPayload.secretName === undefined) {
+      if (
+        cleanedPayload.secretName === null ||
+        cleanedPayload.secretName === undefined
+      ) {
         delete cleanedPayload.secretName;
       }
-      if (cleanedPayload.configMapName === null || cleanedPayload.configMapName === undefined) {
+      if (
+        cleanedPayload.configMapName === null ||
+        cleanedPayload.configMapName === undefined
+      ) {
         delete cleanedPayload.configMapName;
       }
 
@@ -363,7 +363,8 @@ function VolumeMounts() {
           type: "error",
         });
       } else {
-        const volumeMountName = parsed.name || selectedVolume?.name || "VolumeMount";
+        const volumeMountName =
+          parsed.name || selectedVolume?.name || "VolumeMount";
         pushFeedback({
           message: `VolumeMount: ${volumeMountName} ${method === "POST" ? "Added" : "Updated"}`,
           type: "success",
@@ -676,7 +677,9 @@ function VolumeMounts() {
             onCancel={() => setShowDeleteConfirmModal(false)}
             onConfirm={handleDeleteVolumeMount}
             title={`Deleting Volume Mount ${selectedVolume?.name}`}
-            message={"This action will remove the volume mount from all linked fog nodes. If any microservices are using this volume mount, they will need to be updated to use a different volume mount. This is not reversible."}
+            message={
+              "This action will remove the volume mount from all linked fog nodes. If any microservices are using this volume mount, they will need to be updated to use a different volume mount. This is not reversible."
+            }
             cancelLabel={"Cancel"}
             confirmLabel={"Delete"}
           />

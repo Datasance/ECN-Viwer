@@ -230,7 +230,7 @@ export default function MicroserviceDetails({
           },
         );
         if (!res.ok) {
-         pushFeedback({ message: res.message, type: "error" });
+          pushFeedback({ message: res.message, type: "error" });
           setOpenAddPortMicroserviceDialog(false);
         } else {
           pushFeedback({ message: "Microservice Deleted", type: "success" });
@@ -256,7 +256,7 @@ export default function MicroserviceDetails({
         },
       );
       if (!res.ok) {
-       pushFeedback({ message: res.message, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({ message: "Controller Updated", type: "success" });
         setOpenAddPortMicroserviceDialog(false);
@@ -280,7 +280,7 @@ export default function MicroserviceDetails({
           },
         );
         if (!res.ok) {
-         pushFeedback({ message: res.message, type: "error" });
+          pushFeedback({ message: res.message, type: "error" });
         } else {
           pushFeedback({ message: "Controller Updated", type: "success" });
           setOpenDeletePortDialog(false);
@@ -308,7 +308,7 @@ export default function MicroserviceDetails({
         },
       );
       if (!res.ok) {
-       pushFeedback({ message: res.message, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({ message: "Controller Updated", type: "success" });
         setOpenAddVolumeMappingMicroserviceDialog(false);
@@ -332,7 +332,7 @@ export default function MicroserviceDetails({
           },
         );
         if (!res.ok) {
-         pushFeedback({ message: res.message, type: "error" });
+          pushFeedback({ message: res.message, type: "error" });
         } else {
           pushFeedback({ message: "Controller Updated", type: "success" });
           setOpenDeleteVolumeMappingDialog(false);
@@ -486,7 +486,7 @@ export default function MicroserviceDetails({
             setFileParsing(false);
             setOpenChangeYamlMicroserviceDialog(false);
           } catch (e) {
-           pushFeedback({ message: res.message, type: "error" });
+            pushFeedback({ message: res.message, type: "error" });
             setFileParsing(false);
             setOpenChangeYamlMicroserviceDialog(false);
           }
@@ -554,7 +554,7 @@ export default function MicroserviceDetails({
         },
       );
       if (!res.ok) {
-       pushFeedback({ message: res.message, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
         setOpenRebootAgentDialog(false);
       } else {
         pushFeedback({ message: "Microservice Rebuilt", type: "success" });

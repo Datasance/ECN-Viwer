@@ -92,7 +92,7 @@ function MicroservicesList() {
         },
       );
       if (!res.ok) {
-       pushFeedback({ message: res.message, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({ message: "Microservice Rebuilt", type: "success" });
         setShowResetConfirmModal(false);
@@ -111,7 +111,7 @@ function MicroservicesList() {
         },
       });
       if (!res.ok) {
-       pushFeedback({ message: res.message, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({ message: "Microservice Deleted", type: "success" });
         setIsOpen(false);
@@ -131,7 +131,7 @@ function MicroservicesList() {
         },
       });
       if (!res.ok) {
-       pushFeedback({ message: res.message, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({ message: "Port Deleted", type: "success" });
         setIsOpen(false);
@@ -151,7 +151,7 @@ function MicroservicesList() {
         },
       });
       if (!res.ok) {
-       pushFeedback({ message: res.message, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({ message: "Volume Deleted", type: "success" });
         setIsOpen(false);
@@ -177,7 +177,7 @@ function MicroservicesList() {
         },
       );
       if (!res.ok) {
-       pushFeedback({ message: res.message, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({
           message: "Microservice Config Updated. ",
@@ -234,7 +234,7 @@ function MicroservicesList() {
         },
       );
       if (!res.ok) {
-       pushFeedback({ message: res.message, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({
           message: "Microservice Config Deleted. ",
@@ -294,9 +294,10 @@ function MicroservicesList() {
   };
 
   const deployMicroservice = async (microservice: any, method?: string) => {
-    const url = method === "POST" 
-      ? `/api/v3/microservices`
-      : `/api/v3/microservices/${selectedMs?.uuid}`;
+    const url =
+      method === "POST"
+        ? `/api/v3/microservices`
+        : `/api/v3/microservices/${selectedMs?.uuid}`;
     try {
       const res = await request(url, {
         method: method || "PATCH",
@@ -328,13 +329,16 @@ function MicroservicesList() {
           pushFeedback({ message: error.message, type: "error" });
           throw new Error(error.message);
         } catch (e) {
-         pushFeedback({ message: res?.message || "Something went wrong", type: "error" });
+          pushFeedback({
+            message: res?.message || "Something went wrong",
+            type: "error",
+          });
           throw new Error(res?.message || "Something went wrong");
         }
       } else {
-        pushFeedback({ 
-          message: `Microservice ${method === "POST" ? "Added" : "Updated"}!`, 
-          type: "success" 
+        pushFeedback({
+          message: `Microservice ${method === "POST" ? "Added" : "Updated"}!`,
+          type: "success",
         });
         setEditorDataChanged(null);
       }
@@ -354,7 +358,10 @@ function MicroservicesList() {
           const docs = yaml.loadAll(evt.target.result);
 
           if (!Array.isArray(docs)) {
-            pushFeedback({ message: "Could not parse the file: Invalid YAML format", type: "error" });
+            pushFeedback({
+              message: "Could not parse the file: Invalid YAML format",
+              type: "error",
+            });
             return;
           }
 
@@ -363,26 +370,28 @@ function MicroservicesList() {
               continue;
             }
 
-            const [microserviceData, err] = await parseMicroserviceFile(doc);
+            const [err] = await parseMicroserviceFile(doc);
 
             if (err) {
               console.error("Error parsing a document:", err);
-              pushFeedback({ message: `Error processing item: ${err}`, type: "error" });
-              
+              pushFeedback({
+                message: `Error processing item: ${err}`,
+                type: "error",
+              });
             } else {
               try {
                 await handleYamlUpdate(yaml.dump(doc), "POST");
-                
               } catch (e) {
                 console.error("Error updating a document:", e);
-                
               }
             }
           }
-
         } catch (e) {
           console.error({ e });
-          pushFeedback({ message: "Could not parse the file. Check YAML syntax.", type: "error" });
+          pushFeedback({
+            message: "Could not parse the file. Check YAML syntax.",
+            type: "error",
+          });
         }
       };
 
@@ -503,7 +512,7 @@ function MicroservicesList() {
         setShowStartStopConfirmModal(false);
         setIsOpen(false);
       } else {
-       pushFeedback({ message: res.message, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error" });
@@ -733,7 +742,8 @@ function MicroservicesList() {
     {
       label: "Catalog Item Id",
       render: (row: any) => {
-        if (!row?.catalogItemId) return <span className="text-gray-400">N/A</span>;
+        if (!row?.catalogItemId)
+          return <span className="text-gray-400">N/A</span>;
         return (
           <NavLink
             to={`/config/CatalogMicroservices?catalogItemid=${encodeURIComponent(row.catalogItemId)}`}
@@ -1230,7 +1240,9 @@ function MicroservicesList() {
         onCancel={() => setShowResetConfirmModal(false)}
         onConfirm={handleRestart}
         title={`Rebuilding Microservice ${selectedMs?.name}`}
-        message={"This action will rebuild the microservice. Pulling the image and restarting the microservice. This is not reversible."}
+        message={
+          "This action will rebuild the microservice. Pulling the image and restarting the microservice. This is not reversible."
+        }
         cancelLabel={"Cancel"}
         confirmLabel={"Rebuild"}
         confirmColor="bg-blue"
@@ -1240,7 +1252,9 @@ function MicroservicesList() {
         onCancel={() => setShowDeleteConfirmModal(false)}
         onConfirm={handleDelete}
         title={`Deleting Microservice ${selectedMs?.name}`}
-        message={"This action will remove the microservice from the system. All data and configurations will be lost. This is not reversible."}
+        message={
+          "This action will remove the microservice from the system. All data and configurations will be lost. This is not reversible."
+        }
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
       />
@@ -1249,7 +1263,9 @@ function MicroservicesList() {
         onCancel={() => setShowPortDeleteConfirmModal(false)}
         onConfirm={handlePortsDelete}
         title={`Deleting Port ${selectedPort?.internal}`}
-        message={"This action will remove the port from the microservice. This is not reversible."}
+        message={
+          "This action will remove the port from the microservice. This is not reversible."
+        }
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
       />
@@ -1258,7 +1274,9 @@ function MicroservicesList() {
         onCancel={() => setShowVolumeDeleteConfirmModal(false)}
         onConfirm={handleVolumeDelete}
         title={`Deleting Volume ${selectedVolume?.host}`}
-        message={"This action will remove the volume from the microservice. This is not reversible."}
+        message={
+          "This action will remove the volume from the microservice. This is not reversible."
+        }
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
       />
