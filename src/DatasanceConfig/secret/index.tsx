@@ -9,9 +9,10 @@ import "ace-builds/src-noconflict/ace";
 import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/mode-yaml";
 import yaml from "js-yaml";
-import lget from "lodash/get";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
+import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
+import { parseSecret } from "../../Utils/parseSecretYaml";
 
 function Secrets() {
   const [fetching, setFetching] = React.useState(true);
@@ -20,6 +21,7 @@ function Secrets() {
   const { pushFeedback } = React.useContext(FeedbackContext);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedSecret, setselectedSecret] = useState<any | null>(null);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const { addYamlSession } = useTerminal();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
@@ -48,7 +50,7 @@ function Secrets() {
       const secretsItemsResponse = await request("/api/v3/secrets");
       if (!secretsItemsResponse.ok) {
         pushFeedback({
-          message: secretsItemsResponse.statusText,
+          message: secretsItemsResponse.message,
           type: "error",
         });
         setFetching(false);
@@ -68,7 +70,7 @@ function Secrets() {
       setFetching(true);
       const itemResponse = await request(`/api/v3/secrets/${secretName}`);
       if (!itemResponse.ok) {
-        pushFeedback({ message: itemResponse.statusText, type: "error" });
+        pushFeedback({ message: itemResponse.message, type: "error" });
         setFetching(false);
         return;
       }
@@ -102,66 +104,140 @@ function Secrets() {
     };
     const yamlString = yaml.dump(yamlObj, { noRefs: true, indent: 2 });
 
-    // Add YAML editor session to global state
     addYamlSession({
-      title: `YAML: ${selectedSecret?.name}`,
+      title: `Secret YAML: ${selectedSecret?.name}`,
       content: yamlString,
       isDirty: false,
       onSave: async (content: string) => {
-        await handleYamlUpdate(content);
+        try {
+          const parsedDoc = yaml.load(content);
+          const [secret, err] = await parseSecret(parsedDoc);
+
+          if (err) {
+            pushFeedback({ message: err, type: "error" });
+            return;
+          }
+
+          await handleYamlUpdate(secret, "PATCH");
+        } catch (e: any) {
+          pushFeedback({ message: e.message, type: "error", uuid: "error" });
+        }
       },
     });
   };
 
-  const parseSecret = async (doc: any) => {
-    if (doc.apiVersion !== "datasance.com/v3") {
-      return [
-        {},
-        `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v3`,
-      ];
-    }
-    if (doc.kind !== "Secret") {
-      return [{}, `Invalid kind ${doc.kind}`];
-    }
-    if (!doc.metadata || !doc.data) {
-      return [{}, "Invalid YAML format"];
-    }
-    const secret = {
-      name: lget(doc, "metadata.name", lget(doc, "spec.name", undefined)),
-      data: lget(doc, "data", {}),
-    };
+  const handleYamlParse = async (item: any) => {
+    const file = item;
+    if (file) {
+      const reader = new window.FileReader();
 
-    return [secret];
+      reader.onload = async function (evt: any) {
+        try {
+          const docs = yaml.loadAll(evt.target.result);
+
+          if (!Array.isArray(docs)) {
+            pushFeedback({
+              message: "Could not parse the file: Invalid YAML format",
+              type: "error",
+            });
+            return;
+          }
+
+          for (const doc of docs) {
+            if (!doc) {
+              continue;
+            }
+
+            const [secret, err] = await parseSecret(doc);
+
+            if (err) {
+              console.error("Error parsing a document:", err);
+              pushFeedback({
+                message: `Error processing item: ${err}`,
+                type: "error",
+              });
+            } else {
+              try {
+                await handleYamlUpdate(secret, "POST");
+              } catch (e) {
+                console.error("Error updating a document:", e);
+              }
+            }
+          }
+        } catch (e) {
+          console.error({ e });
+          pushFeedback({ message: "Could not parse the file", type: "error" });
+        }
+      };
+
+      reader.onerror = function (evt) {
+        pushFeedback({ message: evt, type: "error" });
+      };
+
+      reader.readAsText(file, "UTF-8");
+    }
   };
 
-  async function handleYamlUpdate(content: string) {
+  async function handleYamlUpdate(secret: any, method?: string) {
     try {
-      const parsed = yaml.load(content) as any;
-      const [secret, err] = await parseSecret(parsed);
-      if (err) {
-        return pushFeedback({ message: err, type: "error" });
-      }
-      const res = await request(`/api/v3/secrets/${selectedSecret?.name}`, {
-        method: "PATCH",
-        headers: {
-          "content-type": "application/json",
+      const name = secret.name;
+
+      const res = await request(
+        `/api/v3/secrets${method === "PATCH" ? `/${name}` : ""}`,
+        {
+          method: method,
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify(secret),
         },
-        body: JSON.stringify(secret),
-      });
+      );
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({
-          message: `${selectedSecret?.name} Updated`,
+          message: `${name} ${method === "POST" ? "Added" : "Updated"}`,
           type: "success",
         });
         setIsOpen(false);
+        fetchSecrets();
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
     }
   }
+
+  const handleDeleteSecret = async () => {
+    try {
+      if (!selectedSecret?.name) {
+        pushFeedback({ message: "No secret selected", type: "error" });
+        return;
+      }
+
+      const res = await request(`/api/v3/secrets/${selectedSecret.name}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        pushFeedback({
+          message: res.message,
+          type: "error",
+        });
+      } else {
+        pushFeedback({
+          message: `Secret ${selectedSecret.name} deleted`,
+          type: "success",
+        });
+        setShowDeleteConfirmModal(false);
+        setIsOpen(false);
+        setselectedSecret(null);
+        fetchSecrets();
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  };
 
   const columns = [
     {
@@ -266,15 +342,30 @@ function Secrets() {
               columns={columns}
               data={secrets}
               getRowKey={(row: any) => row.name}
+              uploadDropzone
+              uploadFunction={handleYamlParse}
             />
             <SlideOver
               open={isOpen}
               onClose={() => setIsOpen(false)}
+              onDelete={() => setShowDeleteConfirmModal(true)}
               onEditYaml={handleEditYaml}
               title={selectedSecret?.name || "Secret Details"}
               data={selectedSecret}
               fields={slideOverFields}
               customWidth={600}
+            />
+
+            <UnsavedChangesModal
+              open={showDeleteConfirmModal}
+              onCancel={() => setShowDeleteConfirmModal(false)}
+              onConfirm={handleDeleteSecret}
+              title={`Deleting Secret ${selectedSecret?.name}`}
+              message={
+                "This action will remove the secret from the system. If any Volume Mounts/Certificates are using this secret, they will be deleted and If any microservices are using this secret, they will need to be updated to use a different secret. This is not reversible."
+              }
+              cancelLabel={"Cancel"}
+              confirmLabel={"Delete"}
             />
           </div>
         </>

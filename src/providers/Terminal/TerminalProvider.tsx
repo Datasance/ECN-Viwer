@@ -6,7 +6,7 @@ import React, {
   ReactNode,
 } from "react";
 
-export type TabType = "terminal" | "yaml-editor";
+export type TabType = "terminal" | "yaml-editor" | "deploy";
 
 export interface TerminalSession {
   id: string;
@@ -31,11 +31,22 @@ export interface YamlEditorSession {
   isDirty: boolean;
 }
 
-export type GlobalTab = TerminalSession | YamlEditorSession;
+export interface DeploySession {
+  id: string;
+  title: string;
+  template: any;
+  onClose?: () => void;
+  isActive: boolean;
+  createdAt: number;
+  isDirty: boolean;
+}
+
+export type GlobalTab = TerminalSession | YamlEditorSession | DeploySession;
 
 interface TerminalContextType {
   sessions: TerminalSession[];
   yamlSessions: YamlEditorSession[];
+  deploySessions: DeploySession[];
   activeSessionId: string | null;
   isDrawerOpen: boolean;
   addTerminalSession: (
@@ -43,6 +54,9 @@ interface TerminalContextType {
   ) => string;
   addYamlSession: (
     session: Omit<YamlEditorSession, "id" | "isActive" | "createdAt">,
+  ) => string;
+  addDeploySession: (
+    session: Omit<DeploySession, "id" | "isActive" | "createdAt">,
   ) => string;
   removeSession: (sessionId: string) => void;
   setActiveSession: (sessionId: string) => void;
@@ -54,6 +68,7 @@ interface TerminalContextType {
     content: string,
     isDirty: boolean,
   ) => void;
+  updateDeploySession: (sessionId: string, isDirty: boolean) => void;
 }
 
 const TerminalContext = createContext<TerminalContextType | undefined>(
@@ -77,6 +92,7 @@ export const TerminalProvider: React.FC<TerminalProviderProps> = ({
 }) => {
   const [sessions, setSessions] = useState<TerminalSession[]>([]);
   const [yamlSessions, setYamlSessions] = useState<YamlEditorSession[]>([]);
+  const [deploySessions, setDeploySessions] = useState<DeploySession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -138,6 +154,42 @@ export const TerminalProvider: React.FC<TerminalProviderProps> = ({
           const updated = [...prev];
           updated[existingIndex] = {
             ...newSession,
+          };
+          return updated;
+        } else {
+          // Add new session
+          return [...prev, newSession];
+        }
+      });
+
+      setActiveSessionId(id);
+      setIsDrawerOpen(true);
+      return id;
+    },
+    [],
+  );
+
+  const addDeploySession = useCallback(
+    (sessionData: Omit<DeploySession, "id" | "isActive" | "createdAt">) => {
+      const id = `deploy-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const newSession: DeploySession = {
+        ...sessionData,
+        id,
+        isActive: true,
+        createdAt: Date.now(),
+      };
+
+      setDeploySessions((prev) => {
+        // Check if a session with the same title already exists
+        const existingIndex = prev.findIndex(
+          (s) => s.title === sessionData.title,
+        );
+
+        if (existingIndex >= 0) {
+          // Update existing session
+          const updated = [...prev];
+          updated[existingIndex] = {
+            ...newSession,
             id: prev[existingIndex].id,
           };
           return updated;
@@ -166,6 +218,11 @@ export const TerminalProvider: React.FC<TerminalProviderProps> = ({
         return filtered;
       });
 
+      setDeploySessions((prev) => {
+        const filtered = prev.filter((s) => s.id !== sessionId);
+        return filtered;
+      });
+
       // If we're removing the active session, switch to another session or close drawer
       if (activeSessionId === sessionId) {
         setSessions((prev) => {
@@ -176,18 +233,25 @@ export const TerminalProvider: React.FC<TerminalProviderProps> = ({
             const remainingYamlSessions = prevYaml.filter(
               (s) => s.id !== sessionId,
             );
-            const allRemainingSessions = [
-              ...remainingTerminalSessions,
-              ...remainingYamlSessions,
-            ];
+            setDeploySessions((prevDeploy) => {
+              const remainingDeploySessions = prevDeploy.filter(
+                (s) => s.id !== sessionId,
+              );
+              const allRemainingSessions = [
+                ...remainingTerminalSessions,
+                ...remainingYamlSessions,
+                ...remainingDeploySessions,
+              ];
 
-            if (allRemainingSessions.length > 0) {
-              setActiveSessionId(allRemainingSessions[0].id);
-            } else {
-              setActiveSessionId(null);
-              setIsDrawerOpen(false);
-            }
+              if (allRemainingSessions.length > 0) {
+                setActiveSessionId(allRemainingSessions[0].id);
+              } else {
+                setActiveSessionId(null);
+                setIsDrawerOpen(false);
+              }
 
+              return remainingDeploySessions;
+            });
             return remainingYamlSessions;
           });
           return remainingTerminalSessions;
@@ -215,6 +279,7 @@ export const TerminalProvider: React.FC<TerminalProviderProps> = ({
   const closeAllSessions = useCallback(() => {
     setSessions([]);
     setYamlSessions([]);
+    setDeploySessions([]);
     setActiveSessionId(null);
     setIsDrawerOpen(false);
   }, []);
@@ -230,19 +295,33 @@ export const TerminalProvider: React.FC<TerminalProviderProps> = ({
     [],
   );
 
+  const updateDeploySession = useCallback(
+    (sessionId: string, isDirty: boolean) => {
+      setDeploySessions((prev) =>
+        prev.map((session) =>
+          session.id === sessionId ? { ...session, isDirty } : session,
+        ),
+      );
+    },
+    [],
+  );
+
   const value: TerminalContextType = {
     sessions,
     yamlSessions,
+    deploySessions,
     activeSessionId,
     isDrawerOpen,
     addTerminalSession,
     addYamlSession,
+    addDeploySession,
     removeSession,
     setActiveSession,
     openDrawer,
     closeDrawer,
     closeAllSessions,
     updateYamlContent,
+    updateDeploySession,
   };
 
   return (

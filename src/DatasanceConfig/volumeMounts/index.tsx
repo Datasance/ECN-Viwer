@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import CustomDataTable from "../../CustomComponent/CustomDataTable";
 import { ControllerContext } from "../../ControllerProvider";
 import { FeedbackContext } from "../../Utils/FeedbackContext";
@@ -8,6 +8,12 @@ import { useLocation } from "react-router-dom";
 import { useData } from "../../providers/Data";
 import { StatusColor, StatusType } from "../../Utils/Enums/StatusColor";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
+import CustomActionModal from "../../CustomComponent/CustomActionModal";
+import CustomSelect from "../../CustomComponent/CustomSelect";
+import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
+import yaml from "js-yaml";
+import { useTerminal } from "../../providers/Terminal/TerminalProvider";
+import { parseVolumeMount } from "../../Utils/parseVolumeMountsYaml";
 
 function VolumeMounts() {
   const { data } = useData();
@@ -17,10 +23,41 @@ function VolumeMounts() {
   const { pushFeedback } = React.useContext(FeedbackContext);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedVolume, setselectedVolume] = useState<any | null>(null);
-  const [fogUuids, setFogUuids] = useState<any[]>([]);
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const volumeMountName = params.get("volumeMountName");
+  const [showAttachModal, setShowAttachModal] = useState(false);
+  const [showDetachModal, setShowDetachModal] = useState(false);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const { addYamlSession } = useTerminal();
+
+  const [allAgentOptions, setAllAgentOptions] = useState<any[]>([]);
+  const [linkedAgentItems, setLinkedAgentItems] = useState<any[]>([]);
+  const [agentsToAttach, setAgentsToAttach] = useState<any[]>([]);
+  const [agentsToDetach, setAgentsToDetach] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (data?.reducedAgents?.byUUID) {
+      const allOptions = Object.entries(data.reducedAgents.byUUID).map(
+        ([uuid, agent]: [string, any]) => ({
+          value: uuid,
+          label: agent.name,
+        }),
+      );
+      setAllAgentOptions(allOptions);
+    }
+  }, [data]);
+
+  const linkedAgentUuidsSet = useMemo(
+    () => new Set(linkedAgentItems.map((item) => item.value)),
+    [linkedAgentItems],
+  );
+
+  const availableToAttachOptions = useMemo(() => {
+    return allAgentOptions.filter(
+      (option) => !linkedAgentUuidsSet.has(option.value),
+    );
+  }, [allAgentOptions, linkedAgentUuidsSet]);
 
   const handleRowClick = (row: any) => {
     if (row.name) {
@@ -85,7 +122,20 @@ function VolumeMounts() {
       }
       const fogUuidsData = await fogUuidsResponse.json();
       const fogUuids = fogUuidsData.fogUuids || [];
-      setFogUuids(Array.isArray(fogUuids) ? fogUuids : []);
+
+      const linkedItems = (Array.isArray(fogUuids) ? fogUuids : [])
+        .map((uuid: string) => {
+          const agent = data?.reducedAgents?.byUUID?.[uuid];
+          return agent
+            ? { value: uuid, label: agent.name, status: agent.daemonStatus }
+            : null;
+        })
+        .filter(
+          (item): item is { value: string; label: string; status: string } =>
+            item !== null,
+        );
+      setLinkedAgentItems(linkedItems);
+
       setIsOpen(true);
       setFetching(false);
     } catch (e: any) {
@@ -98,6 +148,238 @@ function VolumeMounts() {
     fetchVolumeMounts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const attachVolumeMount = async () => {
+    try {
+      const res = await request(
+        `/api/v3/volumeMounts/${selectedVolume.name}/link`,
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            fogUuids: agentsToAttach.map((item: any) => item.value),
+          }),
+        },
+      );
+
+      if (!res.ok) {
+        pushFeedback({ message: res.message, type: "error" });
+        return;
+      } else {
+        pushFeedback({ message: "Volume Mount Attached", type: "success" });
+        setShowAttachModal(false);
+        setAgentsToAttach([]);
+        setIsOpen(false);
+        fetchVolumeMounts();
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  };
+
+  const detachVolumeMount = async () => {
+    try {
+      const res = await request(
+        `/api/v3/volumeMounts/${selectedVolume.name}/link`,
+        {
+          method: "DELETE",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            fogUuids: agentsToDetach.map((item: any) => item.value),
+          }),
+        },
+      );
+
+      if (!res.ok) {
+        pushFeedback({ message: res.message, type: "error" });
+        return;
+      } else {
+        pushFeedback({ message: "Volume Mount Detached", type: "success" });
+        setShowDetachModal(false);
+        setAgentsToDetach([]);
+        setIsOpen(false);
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  };
+
+  const handleDeleteVolumeMount = async () => {
+    try {
+      if (!selectedVolume?.name) {
+        pushFeedback({ message: "No volume mount selected", type: "error" });
+        return;
+      }
+
+      const res = await request(`/api/v3/volumeMounts/${selectedVolume.name}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        pushFeedback({
+          message: res.statusText || "Failed to delete volume mount",
+          type: "error",
+        });
+      } else {
+        pushFeedback({
+          message: `VolumeMount ${selectedVolume.name} deleted`,
+          type: "success",
+        });
+        setShowDeleteConfirmModal(false);
+        setIsOpen(false);
+        setselectedVolume(null);
+        fetchVolumeMounts();
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  };
+
+  const handleEditYaml = () => {
+    const yamlDump = {
+      apiVersion: "datasance.com/v3",
+      kind: "VolumeMount",
+      metadata: {
+        name: selectedVolume?.name,
+      },
+      spec: {
+        configMapName: selectedVolume?.configMapName,
+        secretName: selectedVolume?.secretName,
+      },
+    };
+
+    const yamlString = yaml.dump(yamlDump, { noRefs: true, indent: 2 });
+
+    addYamlSession({
+      title: `VolumeMountYAML: ${selectedVolume?.name}`,
+      content: yamlString,
+      isDirty: false,
+      onSave: async (content: string) => {
+        try {
+          const parsedDoc = yaml.load(content);
+
+          const [volumeMountItem, err] = await parseVolumeMount(parsedDoc);
+
+          if (err) {
+            pushFeedback({ message: err, type: "error" });
+            return;
+          }
+
+          await handleYamlUpdate(volumeMountItem, "PATCH");
+        } catch (e: any) {
+          pushFeedback({ message: e.message, type: "error", uuid: "error" });
+        }
+      },
+    });
+  };
+
+  const handleYamlParse = async (item: any) => {
+    const file = item;
+    if (file) {
+      const reader = new window.FileReader();
+
+      reader.onload = async function (evt: any) {
+        try {
+          const docs = yaml.loadAll(evt.target.result);
+
+          if (!Array.isArray(docs)) {
+            pushFeedback({
+              message: "Could not parse the file: Invalid YAML format",
+              type: "error",
+            });
+            return;
+          }
+
+          for (const doc of docs) {
+            if (!doc) {
+              continue;
+            }
+
+            const [volumeMountItem, err] = await parseVolumeMount(doc);
+
+            if (err) {
+              console.error("Error parsing a document:", err);
+              pushFeedback({
+                message: `Error processing item: ${err}`,
+                type: "error",
+              });
+            } else {
+              try {
+                await handleYamlUpdate(volumeMountItem, "POST");
+              } catch (e) {
+                console.error("Error updating a document:", e);
+              }
+            }
+          }
+        } catch (e) {
+          console.error({ e });
+          pushFeedback({ message: "Could not parse the file", type: "error" });
+        }
+      };
+
+      reader.onerror = function (evt) {
+        pushFeedback({ message: evt, type: "error" });
+      };
+
+      reader.readAsText(file, "UTF-8");
+    }
+  };
+
+  async function handleYamlUpdate(parsed: any, method?: string) {
+    try {
+      // Remove null values from the payload
+      const cleanedPayload: any = { ...parsed };
+      if (
+        cleanedPayload.secretName === null ||
+        cleanedPayload.secretName === undefined
+      ) {
+        delete cleanedPayload.secretName;
+      }
+      if (
+        cleanedPayload.configMapName === null ||
+        cleanedPayload.configMapName === undefined
+      ) {
+        delete cleanedPayload.configMapName;
+      }
+
+      const res = await request(
+        `/api/v3/volumeMounts${method === "PATCH" && selectedVolume?.name ? `/${selectedVolume.name}` : ""}`,
+        {
+          method: method,
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify(cleanedPayload),
+        },
+      );
+
+      if (res === null || !res.ok) {
+        pushFeedback({
+          message: res?.statusText ?? "Something went wrong",
+          type: "error",
+        });
+      } else {
+        const volumeMountName =
+          parsed.name || selectedVolume?.name || "VolumeMount";
+        pushFeedback({
+          message: `VolumeMount: ${volumeMountName} ${method === "POST" ? "Added" : "Updated"}`,
+          type: "success",
+        });
+        if (method === "PATCH") {
+          setIsOpen(false);
+        }
+        // Refresh the list after successful POST or PATCH
+        fetchVolumeMounts();
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+      throw e;
+    }
+  }
 
   const columns = [
     {
@@ -184,7 +466,7 @@ function VolumeMounts() {
     {
       label: "Fog Nodes",
       render: () => {
-        if (!Array.isArray(fogUuids)) {
+        if (!Array.isArray(linkedAgentItems) || linkedAgentItems.length === 0) {
           return (
             <div className="flex items-center space-x-2 text-gray-400">
               <svg
@@ -204,26 +486,7 @@ function VolumeMounts() {
             </div>
           );
         }
-        if (fogUuids.length === 0) {
-          return (
-            <div className="flex items-center space-x-2 text-gray-400">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                />
-              </svg>
-              <span>No fog nodes linked</span>
-            </div>
-          );
-        }
+
         return (
           <div className="space-y-3">
             <div className="flex items-center space-x-2">
@@ -239,25 +502,24 @@ function VolumeMounts() {
                 />
               </svg>
               <span className="text-sm font-medium text-gray-300">
-                {fogUuids.length} fog node{fogUuids.length !== 1 ? "s" : ""}{" "}
-                linked
+                {linkedAgentItems.length} fog node
+                {linkedAgentItems.length !== 1 ? "s" : ""} linked
               </span>
             </div>
             <div className="bg-gray-800/50 rounded-lg border border-gray-700/50 overflow-hidden backdrop-blur-sm">
               <div className="divide-y divide-gray-700/50">
-                {fogUuids.map((fogUuid: any, index: number) => {
-                  const agent = data.reducedAgents.byUUID[fogUuid];
-                  const statusKey = agent?.daemonStatus;
+                {linkedAgentItems.map((linkedItem: any) => {
+                  const statusKey = linkedItem.status;
                   const bgColor =
                     StatusColor[statusKey as StatusType] ?? "#9CA3AF";
 
                   return (
                     <div
-                      key={fogUuid}
+                      key={linkedItem.value}
                       className="p-3 hover:bg-gray-750/50 transition-all duration-200 group"
                     >
                       <NavLink
-                        to={`/nodes/list?agentId=${encodeURIComponent(fogUuid)}`}
+                        to={`/nodes/list?agentId=${encodeURIComponent(linkedItem.value)}`}
                         className="flex items-center justify-between"
                       >
                         <div className="flex items-center space-x-3 flex-1">
@@ -267,10 +529,10 @@ function VolumeMounts() {
                           ></div>
                           <div className="flex-1 min-w-0">
                             <div className="text-sm text-gray-300 group-hover:text-blue-400 transition-colors duration-200">
-                              {fogUuid}
+                              {linkedItem.value}
                             </div>
                             <div className="text-xs text-gray-500 mt-0.5">
-                              {agent?.name || "Unknown Agent"}
+                              {linkedItem.label || "Unknown Agent"}
                             </div>
                           </div>
                         </div>
@@ -339,17 +601,88 @@ function VolumeMounts() {
               columns={columns}
               data={volumeMounts || []}
               getRowKey={(row: any) => row.uuid || row.id || Math.random()}
+              uploadDropzone
+              uploadFunction={handleYamlParse}
             />
 
             <SlideOver
               open={isOpen}
               onClose={() => setIsOpen(false)}
+              onAttach={() => setShowAttachModal(true)}
+              onDetach={() => {
+                setAgentsToDetach([]);
+                setShowDetachModal(true);
+              }}
+              onDelete={() => setShowDeleteConfirmModal(true)}
+              onEditYaml={handleEditYaml}
               title={selectedVolume?.name || "Secret Details"}
               data={selectedVolume}
               fields={slideOverFields}
               customWidth={600}
             />
           </div>
+
+          <CustomActionModal
+            open={showAttachModal}
+            onConfirm={attachVolumeMount}
+            onCancel={() => {
+              setShowAttachModal(false);
+              setAgentsToAttach([]);
+            }}
+            confirmLabel="Attach"
+            confirmColor="blue"
+            child={
+              <div className="h-[14vh]">
+                <CustomSelect
+                  options={availableToAttachOptions}
+                  selected={agentsToAttach}
+                  setSelected={setAgentsToAttach}
+                  isMulti
+                  isClearable
+                  placeholder="Select agent(s) to attach..."
+                  className="bg-white rounded shadow"
+                />
+              </div>
+            }
+            title={`Attach ${selectedVolume?.name}`}
+          />
+
+          <CustomActionModal
+            open={showDetachModal}
+            onConfirm={detachVolumeMount}
+            onCancel={() => {
+              setShowDetachModal(false);
+              setAgentsToDetach([]);
+            }}
+            confirmLabel="Detach"
+            confirmColor="blue"
+            child={
+              <div className="h-[14vh]">
+                <CustomSelect
+                  options={linkedAgentItems}
+                  selected={agentsToDetach}
+                  setSelected={setAgentsToDetach}
+                  isMulti
+                  isClearable
+                  placeholder="Select agent(s) to detach..."
+                  className="bg-white rounded shadow"
+                />
+              </div>
+            }
+            title={`Detach from ${selectedVolume?.name}`}
+          />
+
+          <UnsavedChangesModal
+            open={showDeleteConfirmModal}
+            onCancel={() => setShowDeleteConfirmModal(false)}
+            onConfirm={handleDeleteVolumeMount}
+            title={`Deleting Volume Mount ${selectedVolume?.name}`}
+            message={
+              "This action will remove the volume mount from all linked fog nodes. If any microservices are using this volume mount, they will need to be updated to use a different volume mount. This is not reversible."
+            }
+            cancelLabel={"Cancel"}
+            confirmLabel={"Delete"}
+          />
         </>
       )}
     </>

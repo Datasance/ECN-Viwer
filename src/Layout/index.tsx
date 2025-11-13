@@ -20,6 +20,7 @@ import LayersRounded from "@material-ui/icons/LayersRounded";
 import { useData } from "../providers/Data";
 import { useController } from "../ControllerProvider";
 import { useAuth } from "react-oidc-context";
+import { useTerminal } from "../providers/Terminal/TerminalProvider";
 
 import Dashboard from "../Dashboard";
 import SwaggerDoc from "../swagger/SwaggerDoc";
@@ -66,8 +67,11 @@ export default function Layout() {
   const auth = useAuth();
   const returnHomeCbRef = React.useRef<(() => void) | null>(null);
   const { status, updateController } = useController();
+  const { isDrawerOpen } = useTerminal();
   const [collapsed, setCollapsed] = React.useState(true);
   const [isPinned, setIsPinned] = React.useState(false);
+  const sidebarRef = React.useRef<HTMLDivElement>(null);
+  const [sidebarWidth, setSidebarWidth] = React.useState(80);
   const returnHome = () => {
     if (returnHomeCbRef.current) {
       returnHomeCbRef.current();
@@ -87,6 +91,38 @@ export default function Layout() {
     }
   };
 
+  // Measure actual sidebar width dynamically
+  React.useEffect(() => {
+    const measureSidebar = () => {
+      if (sidebarRef.current) {
+        requestAnimationFrame(() => {
+          if (sidebarRef.current) {
+            const rect = sidebarRef.current.getBoundingClientRect();
+            setSidebarWidth(rect.width);
+          }
+        });
+      }
+    };
+
+    const timeoutId = setTimeout(measureSidebar, 100);
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (sidebarRef.current) {
+      resizeObserver = new ResizeObserver(measureSidebar);
+      resizeObserver.observe(sidebarRef.current);
+    }
+
+    window.addEventListener("resize", measureSidebar);
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+      window.removeEventListener("resize", measureSidebar);
+    };
+  }, [collapsed, isPinned]);
+
   if (auth.isLoading) {
     return null;
   }
@@ -98,6 +134,7 @@ export default function Layout() {
         <div className="flex">
           <ProSidebarProvider>
             <div
+              ref={sidebarRef}
               className="h-screen overflow-y-auto custom-scrollbar"
               onMouseEnter={() => !isPinned && setCollapsed(false)}
               onMouseLeave={() => !isPinned && setCollapsed(true)}
@@ -341,7 +378,17 @@ export default function Layout() {
             </div>
           </ProSidebarProvider>
 
-          <div className="flex-1 px-5 pt-6 overflow-auto bg-gray-900 h-screen overflow-auto">
+          <div
+            className="flex-1 px-5 pt-6 overflow-auto bg-gray-900 overflow-auto"
+            style={{
+              height: isDrawerOpen
+                ? "calc(100vh - var(--terminal-drawer-height, 40px))"
+                : "100vh",
+              maxHeight: isDrawerOpen
+                ? "calc(100vh - var(--terminal-drawer-height, 40px))"
+                : "100vh",
+            }}
+          >
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" Component={Dashboard} />
@@ -383,7 +430,10 @@ export default function Layout() {
             </Routes>
           </div>
         </div>
-        <GlobalTerminalDrawer />
+        <GlobalTerminalDrawer 
+          sidebarCollapsed={collapsed} 
+          sidebarWidth={sidebarWidth}
+        />
       </div>
     </HashRouter>
   );

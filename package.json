@@ -1,6 +1,6 @@
 {
   "name": "@datasance/ecn-viewer",
-  "version": "v1.2.1",
+  "version": "v1.2.3",
   "description": "Datasance ioFog Edge Cloud Network Viewer project  \\nCopyright (c) 2023 Datasance Teknoloji A.S.",
   "main": "index.js",
   "author": "Emirhan Durmus",
@@ -22,8 +22,8 @@
     "@material-ui/icons": "^4.11.3",
     "@material-ui/styles": "^4.11.5",
     "@mdi/js": "^7.4.47",
-    "@types/leaflet": "^1.9.12",
     "@msgpack/msgpack": "^3.1.2",
+    "@types/leaflet": "^1.9.12",
     "ajv": "^8.17.1",
     "ajv-keywords": "^5.1.0",
     "apexcharts": "^3.45.0",
@@ -36,7 +36,6 @@
     "leaflet": "^1.9.3",
     "lodash": "^4.17.21",
     "moment": "^2.30.1",
-    "npm": "^10.9.2",
     "oidc-client-ts": "^2.4.1",
     "pretty-bytes": "^6.1.1",
     "react": "^18.3.1",
@@ -98,7 +97,6 @@
   "devDependencies": {
     "@babel/preset-env": "^7.24.7",
     "@babel/preset-react": "^7.24.7",
-    "@tailwindcss/postcss7-compat": "^2.2.17",
     "@testing-library/jest-dom": "^6.4.6",
     "@testing-library/react": "^16.0.0",
     "@types/js-yaml": "^4.0.9",

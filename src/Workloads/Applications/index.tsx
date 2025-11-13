@@ -73,7 +73,7 @@ function ApplicationList() {
         setShowStartStopConfirmModal(false);
         setIsOpen(false);
       } else {
-        pushFeedback({ message: res.statusText, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error" });
@@ -96,7 +96,7 @@ function ApplicationList() {
       );
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
         return;
       } else {
         pushFeedback({ message: "Application Deleted", type: "success" });
@@ -128,7 +128,7 @@ function ApplicationList() {
           const error = await res.json();
           pushFeedback({ message: error.message, type: "error" });
         } catch (e) {
-          pushFeedback({ message: res.statusText, type: "error" });
+          pushFeedback({ message: res.message, type: "error" });
         }
       } else {
         pushFeedback({
@@ -170,7 +170,7 @@ function ApplicationList() {
   const handleEditYaml = () => {
     // Add YAML editor session to global state
     addYamlSession({
-      title: `YAML: ${selectedApplication?.name}`,
+      title: `Application YAML: ${selectedApplication?.name}`,
       content: yamlDump,
       isDirty: false,
       onSave: async (content: string) => {
@@ -227,7 +227,7 @@ function ApplicationList() {
               const error = await res.json();
               pushFeedback({ message: error.message, type: "error" });
             } catch (e) {
-              pushFeedback({ message: res.statusText, type: "error" });
+              pushFeedback({ message: res.message, type: "error" });
             }
           } else {
             pushFeedback({
@@ -551,8 +551,10 @@ function ApplicationList() {
         open={showResetConfirmModal}
         onCancel={() => setShowResetConfirmModal(false)}
         onConfirm={handleRestart}
-        title={`Restart ${selectedApplication?.name}`}
-        message={"This is not reversible."}
+        title={`Restarting Application ${selectedApplication?.name}`}
+        message={
+          "This action will restart the application. This is not reversible."
+        }
         cancelLabel={"Cancel"}
         confirmLabel={"Restart"}
         confirmColor="bg-blue"
@@ -561,8 +563,10 @@ function ApplicationList() {
         open={showDeleteConfirmModal}
         onCancel={() => setShowDeleteConfirmModal(false)}
         onConfirm={handleDelete}
-        title={`Delete ${selectedApplication?.name}`}
-        message={"This is not reversible."}
+        title={`Deleting Application ${selectedApplication?.name}`}
+        message={
+          "This action will remove the application from the system. All microservices running on this application will be deleted. This is not reversible."
+        }
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
       />
@@ -571,7 +575,7 @@ function ApplicationList() {
         onCancel={() => setShowStartStopConfirmModal(false)}
         onConfirm={handleStartStop}
         title={`${!selectedApplication?.isActivated ? "ACTIVE" : "INACTIVE"} ${selectedApplication?.name}`}
-        message={"This is not reversible."}
+        message={`Are you sure you want to ${!selectedApplication?.isActivated ? "start" : "stop"} this application?`}
         cancelLabel={"Cancel"}
         confirmLabel={`${!selectedApplication?.isActivated ? "ACTIVE" : "INACTIVE"}`}
       />

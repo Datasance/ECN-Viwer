@@ -4,7 +4,11 @@ import { ControllerContext } from "../../ControllerProvider";
 import { FeedbackContext } from "../../Utils/FeedbackContext";
 import SlideOver from "../../CustomComponent/SlideOver";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
+import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import { useLocation } from "react-router-dom";
+import yaml from "js-yaml";
+import { useTerminal } from "../../providers/Terminal/TerminalProvider";
+import { parseRegistries } from "../../Utils/parseRegistriesYaml";
 
 function Registries() {
   const [fetching, setFetching] = React.useState(true);
@@ -12,11 +16,12 @@ function Registries() {
   const { request } = React.useContext(ControllerContext);
   const { pushFeedback } = React.useContext(FeedbackContext);
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedRegistry, setSelectedRegistry] =
-    useState<any | null>(null);
+  const [selectedRegistry, setSelectedRegistry] = useState<any | null>(null);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const registryId = params.get("registryId");
+  const { addYamlSession } = useTerminal();
 
   const handleRowClick = (row: any) => {
     setSelectedRegistry(row);
@@ -26,12 +31,10 @@ function Registries() {
   async function fetchRegistries() {
     try {
       setFetching(true);
-      const registriesResponse = await request(
-        "/api/v3/registries",
-      );
+      const registriesResponse = await request("/api/v3/registries");
       if (!registriesResponse.ok) {
         pushFeedback({
-          message: registriesResponse.statusText,
+          message: registriesResponse.message,
           type: "error",
         });
         setFetching(false);
@@ -46,7 +49,6 @@ function Registries() {
     }
   }
 
-
   useEffect(() => {
     fetchRegistries();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -54,13 +56,177 @@ function Registries() {
 
   useEffect(() => {
     if (registryId && registries) {
-      const found = registries.find((item: any) => item.id.toString() === registryId);
+      const found = registries.find(
+        (item: any) => item.id.toString() === registryId,
+      );
       if (found) {
         handleRowClick(found);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [registryId, registries]);
+
+  const handleEditYaml = () => {
+    const name = selectedRegistry?.url.replace(/\./g, "-") || "untitled";
+
+    const yamlObj = {
+      apiVersion: "datasance.com/v3",
+      kind: "Registry",
+      metadata: {
+        name: name,
+      },
+      spec: {
+        url: selectedRegistry?.url,
+        private: !selectedRegistry?.isPublic,
+        username: selectedRegistry?.username,
+        email: selectedRegistry?.userEmail,
+        password: selectedRegistry?.password,
+      },
+    };
+
+    const yamlString = yaml.dump(yamlObj, {
+      noRefs: true,
+      indent: 2,
+      lineWidth: -1,
+    });
+
+    addYamlSession({
+      title: `Registry YAML: ${name}`,
+      content: yamlString,
+      isDirty: false,
+      onSave: async (content: string) => {
+        try {
+          const parsedDoc = yaml.load(content);
+          const [registry, err] = await parseRegistries(parsedDoc);
+
+          if (err) {
+            pushFeedback({ message: err, type: "error" });
+            return;
+          }
+
+          await handleYamlUpdate(registry, "PATCH");
+        } catch (e: any) {
+          pushFeedback({ message: e.message, type: "error", uuid: "error" });
+        }
+      },
+    });
+  };
+
+  async function handleYamlUpdate(registries: any, method?: string) {
+    try {
+      const res = await request(
+        `/api/v3/registries${method === "PATCH" && selectedRegistry?.id ? `/${selectedRegistry.id}` : ""}`,
+        {
+          method: method,
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify(registries),
+        },
+      );
+
+      if (!res.ok) {
+        pushFeedback({ message: res.message, type: "error" });
+      } else {
+        const registryName =
+          method === "POST" ? registries.url : selectedRegistry.id || "New";
+        pushFeedback({
+          message: `Registry ${registryName} ${method === "POST" ? "Added" : "Updated"}`,
+          type: "success",
+        });
+        if (method === "PATCH") {
+          setIsOpen(false);
+        }
+        // Refresh the list after successful POST or PATCH
+        fetchRegistries();
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  }
+
+  const handleDeleteRegistry = async () => {
+    try {
+      if (!selectedRegistry?.id) {
+        pushFeedback({ message: "No registry selected", type: "error" });
+        return;
+      }
+
+      const res = await request(`/api/v3/registries/${selectedRegistry.id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        pushFeedback({
+          message: res.message,
+          type: "error",
+        });
+      } else {
+        pushFeedback({
+          message: `Registry ${selectedRegistry.url || selectedRegistry.id} deleted`,
+          type: "success",
+        });
+        setShowDeleteConfirmModal(false);
+        setIsOpen(false);
+        setSelectedRegistry(null);
+        fetchRegistries();
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  };
+
+  const handleYamlParse = async (item: any) => {
+    const file = item;
+    if (file) {
+      const reader = new window.FileReader();
+
+      reader.onload = async function (evt: any) {
+        try {
+          const docs = yaml.loadAll(evt.target.result);
+
+          if (!Array.isArray(docs)) {
+            pushFeedback({
+              message: "Could not parse the file: Invalid YAML format",
+              type: "error",
+            });
+            return;
+          }
+
+          for (const doc of docs) {
+            if (!doc) {
+              continue;
+            }
+
+            const [registry, err] = await parseRegistries(doc);
+
+            if (err) {
+              console.error("Error parsing a document:", err);
+              pushFeedback({
+                message: `Error processing item: ${err}`,
+                type: "error",
+              });
+            } else {
+              try {
+                await handleYamlUpdate(registry, "POST");
+              } catch (e) {
+                console.error("Error updating a document:", e);
+              }
+            }
+          }
+        } catch (e) {
+          console.error({ e });
+          pushFeedback({ message: "Could not parse the file", type: "error" });
+        }
+      };
+
+      reader.onerror = function (evt) {
+        pushFeedback({ message: evt, type: "error" });
+      };
+
+      reader.readAsText(file, "UTF-8");
+    }
+  };
 
   const columns = [
     {
@@ -85,11 +251,6 @@ function Registries() {
       header: "PRIVATE",
       render: (row: any) => <span>{row.isPublic ? "false" : "true"}</span>,
     },
-    {
-      key: "isSecure",
-      header: "SECURE",
-      render: (row: any) => <span>{row.isSecure ? "true" : "false"}</span>,
-    },
   ];
 
   const slideOverFields = [
@@ -110,20 +271,8 @@ function Registries() {
       render: (row: any) => row.userEmail || "N/A",
     },
     {
-      label: "Is Public",
-      render: (row: any) => row.isPublic ? "true" : "false",
-    },
-    {
-      label: "Is Secure",
-      render: (row: any) => row.isSecure ? "true" : "false",
-    },
-    {
-      label: "Requires Certificate",
-      render: (row: any) => row.requiresCert ? "true" : "false",
-    },
-    {
-      label: "Certificate",
-      render: (row: any) => row.certificate || "N/A",
+      label: "Private",
+      render: (row: any) => <span>{row.isPublic ? "false" : "true"}</span>,
     },
   ];
 
@@ -150,6 +299,8 @@ function Registries() {
               columns={columns}
               data={registries}
               getRowKey={(row: any) => row.id}
+              uploadDropzone
+              uploadFunction={handleYamlParse}
             />
           </div>
         </>
@@ -157,13 +308,24 @@ function Registries() {
       <SlideOver
         open={isOpen}
         onClose={() => setIsOpen(false)}
-        title={
-          selectedRegistry?.url ||
-          "Registry Details"
-        }
+        onDelete={() => setShowDeleteConfirmModal(true)}
+        title={selectedRegistry?.url || "Registry Details"}
         data={selectedRegistry}
         fields={slideOverFields}
         customWidth={600}
+        onEditYaml={handleEditYaml}
+      />
+
+      <UnsavedChangesModal
+        open={showDeleteConfirmModal}
+        onCancel={() => setShowDeleteConfirmModal(false)}
+        onConfirm={handleDeleteRegistry}
+        title={`Deleting Registry ${selectedRegistry?.url || selectedRegistry?.id}`}
+        message={
+          "This action will remove the registry from the system If no microservice is using this registry. This is not reversible."
+        }
+        cancelLabel={"Cancel"}
+        confirmLabel={"Delete"}
       />
     </>
   );

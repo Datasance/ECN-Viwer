@@ -14,6 +14,7 @@ import lget from "lodash/get";
 import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
 import EditOutlinedIcon from "@material-ui/icons/EditOutlined";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
+import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 
 function ConfigMaps() {
@@ -23,6 +24,7 @@ function ConfigMaps() {
   const { pushFeedback } = React.useContext(FeedbackContext);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedConfigMap, setSelectedConfigMap] = useState<any | null>(null);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const { addYamlSession } = useTerminal();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
@@ -33,7 +35,6 @@ function ConfigMaps() {
   const [editorValues, setEditorValues] = React.useState<
     Record<string, string>
   >({});
-
   const handleRowClick = (row: any) => {
     if (row.name) {
       fetchConfigMapItem(row.name);
@@ -59,7 +60,7 @@ function ConfigMaps() {
       const configMapsItemsResponse = await request("/api/v3/configmaps");
       if (!configMapsItemsResponse.ok) {
         pushFeedback({
-          message: configMapsItemsResponse.statusText,
+          message: configMapsItemsResponse.message,
           type: "error",
         });
         setFetching(false);
@@ -79,7 +80,7 @@ function ConfigMaps() {
       setFetching(true);
       const itemResponse = await request(`/api/v3/configmaps/${configMapName}`);
       if (!itemResponse.ok) {
-        pushFeedback({ message: itemResponse.statusText, type: "error" });
+        pushFeedback({ message: itemResponse.message, type: "error" });
         setFetching(false);
         return;
       }
@@ -129,16 +130,107 @@ function ConfigMaps() {
 
     const yamlString = `${yamlHeader}\n${dataSection}`;
 
-    // Add YAML editor session to global state
     addYamlSession({
-      title: `YAML: ${selectedConfigMap?.name}`,
+      title: `ConfigMap YAML: ${selectedConfigMap?.name}`,
       content: yamlString,
       isDirty: false,
       onSave: async (content: string) => {
-        await handleYamlUpdate(content);
+        try {
+          const parsedDoc = yaml.load(content);
+          const [configMap, err] = await parseConfigMap(parsedDoc);
+
+          if (err) {
+            pushFeedback({ message: err, type: "error" });
+            return;
+          }
+
+          await handleYamlUpdate(configMap, "PATCH");
+        } catch (e: any) {
+          pushFeedback({ message: e.message, type: "error", uuid: "error" });
+        }
       },
     });
   };
+
+  const handleYamlParse = async (item: any) => {
+    const file = item;
+    if (file) {
+      const reader = new window.FileReader();
+
+      reader.onload = async function (evt: any) {
+        try {
+          const docs = yaml.loadAll(evt.target.result);
+
+          if (!Array.isArray(docs)) {
+            pushFeedback({
+              message: "Could not parse the file: Invalid YAML format",
+              type: "error",
+            });
+            return;
+          }
+
+          for (const doc of docs) {
+            if (!doc) {
+              continue;
+            }
+            const [configMap, err] = await parseConfigMap(doc);
+            if (err) {
+              console.error("Error parsing a document:", err);
+              pushFeedback({
+                message: `Error processing item: ${err}`,
+                type: "error",
+              });
+            } else {
+              try {
+                await handleYamlUpdate(configMap, "POST");
+              } catch (e) {
+                console.error("Error updating a document:", e);
+              }
+            }
+          }
+        } catch (e) {
+          console.error({ e });
+          pushFeedback({ message: "Could not parse the file", type: "error" });
+        }
+      };
+
+      reader.onerror = function (evt) {
+        pushFeedback({ message: evt, type: "error" });
+      };
+
+      reader.readAsText(file, "UTF-8");
+    }
+  };
+
+  async function handleYamlUpdate(configMap: any, method?: string) {
+    try {
+      const name = configMap.name;
+
+      const res = await request(
+        `/api/v3/configmaps${method === "PATCH" && name ? `/${name}` : ""}`,
+        {
+          method: method,
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify(configMap),
+        },
+      );
+
+      if (!res.ok) {
+        pushFeedback({ message: res.message, type: "error" });
+      } else {
+        pushFeedback({
+          message: `${name} ${method === "POST" ? "Added" : "Updated"}`,
+          type: "success",
+        });
+        setIsOpen(false);
+        fetchConfigMaps();
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  }
 
   const parseConfigMap = async (doc: any) => {
     if (doc.apiVersion !== "datasance.com/v3") {
@@ -161,38 +253,6 @@ function ConfigMaps() {
 
     return [configMap];
   };
-
-  async function handleYamlUpdate(content: string) {
-    try {
-      const parsed = yaml.load(content) as any;
-      const [configMap, err] = await parseConfigMap(parsed);
-      if (err) {
-        return pushFeedback({ message: err, type: "error" });
-      }
-      const res = await request(
-        `/api/v3/configmaps/${selectedConfigMap?.name}`,
-        {
-          method: "PATCH",
-          headers: {
-            "content-type": "application/json",
-          },
-          body: JSON.stringify(configMap),
-        },
-      );
-
-      if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
-      } else {
-        pushFeedback({
-          message: `${selectedConfigMap?.name} Updated`,
-          type: "success",
-        });
-        setIsOpen(false);
-      }
-    } catch (e: any) {
-      pushFeedback({ message: e.message, type: "error", uuid: "error" });
-    }
-  }
 
   const handleSave = async (key: string, updatedYamlString: string) => {
     try {
@@ -239,8 +299,15 @@ function ConfigMaps() {
         return pushFeedback({ message: err, type: "error" });
       }
 
+      if (!selectedConfigMap?.name) {
+        return pushFeedback({
+          message: "ConfigMap name is required",
+          type: "error",
+        });
+      }
+
       const res = await request(
-        `/api/v3/configmaps/${selectedConfigMap?.name}`,
+        `/api/v3/configmaps/${selectedConfigMap.name}`,
         {
           method: "PATCH",
           headers: {
@@ -251,10 +318,10 @@ function ConfigMaps() {
       );
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({
-          message: `${selectedConfigMap?.name} Updated`,
+          message: `${selectedConfigMap.name} Updated`,
           type: "success",
         });
         setIsOpen(false);
@@ -305,8 +372,15 @@ function ConfigMaps() {
         return pushFeedback({ message: err, type: "error" });
       }
 
+      if (!selectedConfigMap?.name) {
+        return pushFeedback({
+          message: "ConfigMap name is required",
+          type: "error",
+        });
+      }
+
       const res = await request(
-        `/api/v3/configmaps/${selectedConfigMap?.name}`,
+        `/api/v3/configmaps/${selectedConfigMap.name}`,
         {
           method: "PATCH",
           headers: {
@@ -317,13 +391,47 @@ function ConfigMaps() {
       );
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({
-          message: `${selectedConfigMap?.name} Deleted key ${key}`,
+          message: `${selectedConfigMap.name} Deleted key ${key}`,
           type: "success",
         });
         setIsOpen(false);
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  };
+
+  const handleDeleteConfigMap = async () => {
+    try {
+      if (!selectedConfigMap?.name) {
+        pushFeedback({ message: "No config map selected", type: "error" });
+        return;
+      }
+
+      const res = await request(
+        `/api/v3/configmaps/${selectedConfigMap.name}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (!res.ok) {
+        pushFeedback({
+          message: res.message,
+          type: "error",
+        });
+      } else {
+        pushFeedback({
+          message: `ConfigMap ${selectedConfigMap.name} deleted`,
+          type: "success",
+        });
+        setShowDeleteConfirmModal(false);
+        setIsOpen(false);
+        setSelectedConfigMap(null);
+        fetchConfigMaps();
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -509,15 +617,30 @@ function ConfigMaps() {
               columns={columns}
               data={configMaps}
               getRowKey={(row: any) => row.id}
+              uploadDropzone
+              uploadFunction={handleYamlParse}
             />
             <SlideOver
               open={isOpen}
               onClose={() => setIsOpen(false)}
+              onDelete={() => setShowDeleteConfirmModal(true)}
               onEditYaml={handleEditYaml}
               title={selectedConfigMap?.name || "Config Map Details"}
               data={selectedConfigMap}
               fields={slideOverFields}
               customWidth={600}
+            />
+
+            <UnsavedChangesModal
+              open={showDeleteConfirmModal}
+              onCancel={() => setShowDeleteConfirmModal(false)}
+              onConfirm={handleDeleteConfigMap}
+              title={`Deleting Config Map ${selectedConfigMap?.name}`}
+              message={
+                "This action will remove the config map from the system. If any Volume Mounts are using this config map, they will be deleted and If any microservices are using this config map, they will need to be updated to use a different config map. This is not reversible."
+              }
+              cancelLabel={"Cancel"}
+              confirmLabel={"Delete"}
             />
           </div>
         </>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import CustomLeaflet from "../../CustomComponent/CustomLeaflet";
 import { useData } from "../../providers/Data";
 import SlideOver from "../../CustomComponent/SlideOver";
@@ -7,7 +7,9 @@ import { formatDistanceToNow, format } from "date-fns";
 import { useFeedback } from "../../Utils/FeedbackContext";
 import { useController } from "../../ControllerProvider";
 import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
+import CustomActionModal from "../../CustomComponent/CustomActionModal";
 import CustomSelect from "../../CustomComponent/CustomSelect";
+import CryptoTextBox from "../../CustomComponent/CustomCryptoTextBox";
 import "ace-builds/src-noconflict/ace";
 import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/mode-yaml";
@@ -18,15 +20,14 @@ import { getTextColor } from "../../ECNViewer/utils";
 import { NavLink } from "react-router-dom";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 import { useAuth } from "react-oidc-context";
+import FileCopyIcon from "@material-ui/icons/FileCopy";
+import CheckIcon from "@material-ui/icons/Check";
+import VisibilityIcon from "@material-ui/icons/Visibility";
+import VisibilityOffIcon from "@material-ui/icons/VisibilityOff";
 
 interface CustomLeafletProps {
   collapsed: boolean;
 }
-
-type OptionType = {
-  label: string;
-  value: string;
-};
 
 const formatDuration = (milliseconds: number): string => {
   if (!milliseconds || milliseconds <= 0) return "N/A";
@@ -62,10 +63,15 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [showCleanConfirmModal, setShowCleanConfirmModal] = useState(false);
+  const [showProvisionKeyModal, setShowProvisionKeyModal] = useState(false);
+  const [provisionKeyData, setProvisionKeyData] = useState<any | null>(null);
+  const [copiedItem, setCopiedItem] = useState<string | null>(null);
+  const [loadingProvisionKey, setLoadingProvisionKey] = useState(false);
+  const [commandsVisible, setCommandsVisible] = useState(false);
   const [editorDataChanged, setEditorDataChanged] = React.useState<any>();
   const { addTerminalSession, addYamlSession } = useTerminal();
   const auth = useAuth();
-
+  const [selectedAgentItem, setSelectedAgentItem] = useState<any>(null);
   const markers = data?.reducedAgents?.byName
     ? Object.values(data.reducedAgents.byName)
         .filter((agent: any) => agent.latitude && agent.longitude)
@@ -81,21 +87,22 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
         }))
     : [];
 
-  const selectOptions: OptionType[] = markers.map((m) => ({
+  const selectOptions = markers.map((m) => ({
     value: m.id,
     label: m.label,
   }));
 
-  const handleSelectChange = (option: OptionType | null) => {
-    if (option) {
-      const selectedAgent = data.reducedAgents.byUUID[option.value];
+  useEffect(() => {
+    if (selectedAgentItem) {
+      const selectedAgent = data.reducedAgents.byUUID[selectedAgentItem];
       setSelectedNode(selectedAgent);
       setIsOpen(true);
     } else {
       setSelectedNode(null);
       setIsOpen(false);
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAgentItem]);
 
   const handleButtonClick = (marker: any) => {
     if (marker) {
@@ -142,7 +149,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
       });
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
         return;
       } else {
         pushFeedback({ message: "Agent Rebooted", type: "success" });
@@ -160,7 +167,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
       });
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText || res.status, type: "error" });
+        pushFeedback({ message: res.message || res.status, type: "error" });
         return;
       } else {
         pushFeedback({ message: "Agent deleted!", type: "success" });
@@ -179,11 +186,11 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
       });
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
         return;
       } else {
         pushFeedback({ message: "Agent Pruned", type: "success" });
-        setShowResetConfirmModal(false);
+        setShowCleanConfirmModal(false);
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -258,7 +265,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
       });
 
       if (!res.ok) {
-        pushFeedback?.({ message: res.statusText, type: "error" });
+        pushFeedback?.({ message: res.message, type: "error" });
         return;
       }
 
@@ -283,7 +290,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
 
         // Add terminal session to global state
         addTerminalSession({
-          title: `Shell: ${selectedNode?.name}`,
+          title: `Agent Shell: ${selectedNode?.name}`,
           socketUrl,
           authToken: auth?.user?.access_token,
           microserviceUuid: debugUuid,
@@ -368,7 +375,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
 
     // Add YAML editor session to global state
     addYamlSession({
-      title: `YAML: ${selectedNode?.name}`,
+      title: `AgentConfig YAML: ${selectedNode?.name}`,
       content: yamlString,
       isDirty: false,
       onSave: async (content: string) => {
@@ -410,10 +417,13 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
       });
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
-        throw new Error(res.statusText);
+        pushFeedback({ message: res.message, type: "error" });
+        throw new Error(res.message || "Something went wrong");
       } else {
-        pushFeedback({ message: `Agent: ${selectedNode?.name} Config Updated`, type: "success" });
+        pushFeedback({
+          message: `Agent: ${selectedNode?.name} Config Updated`,
+          type: "success",
+        });
         setEditorDataChanged(null);
         setIsOpen(false);
       }
@@ -422,6 +432,81 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
       throw e;
     }
   }
+
+  const handleProvisionKey = async () => {
+    if (!selectedNode?.uuid) {
+      pushFeedback({ message: "No agent selected", type: "error" });
+      return;
+    }
+
+    setLoadingProvisionKey(true);
+    setShowProvisionKeyModal(true);
+
+    try {
+      const res = await request(
+        `/api/v3/iofog/${selectedNode.uuid}/provisioning-key`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+          },
+        },
+      );
+
+      if (!res.ok) {
+        pushFeedback({
+          message: res.message,
+          type: "error",
+        });
+        setShowProvisionKeyModal(false);
+        setLoadingProvisionKey(false);
+        return;
+      }
+
+      const data = await res.json();
+      setProvisionKeyData(data);
+      setLoadingProvisionKey(false);
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+      setShowProvisionKeyModal(false);
+      setLoadingProvisionKey(false);
+    }
+  };
+
+  const handleCopyItem = async (text: string, itemName: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedItem(itemName);
+      setTimeout(() => setCopiedItem(null), 1500);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
+
+  const getApiEndpointUrl = (): string => {
+    if (window.controllerConfig?.url) {
+      const u = new URL(window.controllerConfig.url);
+      return `${u.protocol}//${u.host}/api/v3`;
+    }
+    return `http://${window.location.hostname}:${window?.controllerConfig?.port || 51121}/api/v3`;
+  };
+
+  const generateProvisionCommands = (): string[] => {
+    const apiUrl = getApiEndpointUrl();
+    const commands: string[] = [];
+
+    commands.push(`iofog-agent config -a ${apiUrl}`);
+
+    if (provisionKeyData?.caCert) {
+      commands.push(`iofog-agent cert ${provisionKeyData.caCert}`);
+    }
+
+    if (provisionKeyData?.key) {
+      commands.push(`iofog-agent provision ${provisionKeyData.key}`);
+    }
+
+    return commands;
+  };
 
   const slideOverFields = [
     {
@@ -697,15 +782,24 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
     },
     {
       label: "Cpu Violation",
-      render: (row: any) => (row.cpuViolation === "0" ? "false" : "true"),
+      render: (row: any) =>
+        row.cpuViolation === "0" || row.cpuViolation === "false"
+          ? "false"
+          : "true",
     },
     {
       label: "Disk Violation",
-      render: (row: any) => (row.diskViolation === "0" ? "false" : "true"),
+      render: (row: any) =>
+        row.diskViolation === "0" || row.diskViolation === "false"
+          ? "false"
+          : "true",
     },
     {
       label: "Memory Violation",
-      render: (row: any) => (row.memoryViolation === "0" ? "false" : "true"),
+      render: (row: any) =>
+        row.memoryViolation === "0" || row.memoryViolation === "false"
+          ? "false"
+          : "true",
     },
     {
       label: "Is Ready To Rollback",
@@ -1085,9 +1179,9 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
           collapsed={collapsed}
           selectedMarkerId={selectedNode?.uuid || undefined}
         />
-        <CustomSelect<OptionType>
+        <CustomSelect
           options={selectOptions}
-          onChange={handleSelectChange}
+          setSelected={setSelectedAgentItem}
           isClearable
           placeholder="Select an agent..."
           className="!absolute top-3 left-16 w-[250px] z-[50] bg-white rounded shadow"
@@ -1105,13 +1199,14 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
         onClean={() => setShowCleanConfirmModal(true)}
         onEditYaml={handleEditYaml}
         onTerminal={() => enableExecAndOpenTerminal(selectedNode?.uuid!)}
+        onProvisionKey={handleProvisionKey}
       />
       <UnsavedChangesModal
         open={showResetConfirmModal}
         onCancel={() => setShowResetConfirmModal(false)}
         onConfirm={handleRestart}
         title={`Restart ${selectedNode?.name}`}
-        message={"This is not reversible."}
+        message={"This action will restart the agent node."}
         cancelLabel={"Cancel"}
         confirmLabel={"Restart"}
         confirmColor="bg-blue"
@@ -1121,8 +1216,10 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
         open={showDeleteConfirmModal}
         onCancel={() => setShowDeleteConfirmModal(false)}
         onConfirm={handleDelete}
-        title={`Delete ${selectedNode?.name}`}
-        message={"This is not reversible."}
+        title={`Deleting Agent ${selectedNode?.name}`}
+        message={
+          "This action will remove the agent from the system. All microservices and applications running on this agent will be deleted. This is not reversible."
+        }
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
       />
@@ -1130,12 +1227,168 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
         open={showCleanConfirmModal}
         onCancel={() => setShowCleanConfirmModal(false)}
         onConfirm={handleClean}
-        title={`Prune ${selectedNode?.name}`}
+        title={`Pruning Agent ${selectedNode?.name}`}
         message={
           "This action will remove all unused container images from the selected agent. Images not associated with a running microservice will be permanently deleted. Make sure all necessary images are in use before proceeding.\n \nThis is not reversible!"
         }
         cancelLabel={"Cancel"}
         confirmLabel={"Prune"}
+      />
+
+      <CustomActionModal
+        open={showProvisionKeyModal}
+        onCancel={() => {
+          setShowProvisionKeyModal(false);
+          setProvisionKeyData(null);
+          setCommandsVisible(false);
+        }}
+        title={`Provision Key - ${selectedNode?.name}`}
+        cancelLabel={"Close"}
+        child={
+          loadingProvisionKey ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-3 text-gray-700">
+                Loading provision key...
+              </span>
+            </div>
+          ) : provisionKeyData ? (
+            <div className="space-y-6">
+              {/* Expiration Time */}
+              {provisionKeyData.expirationTime && (
+                <div>
+                  <div className="text-sm font-medium text-gray-700 mb-2">
+                    Expiration Time
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {new Date(provisionKeyData.expirationTime).toLocaleString()}
+                  </div>
+                </div>
+              )}
+
+              {/* Provision Key */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm font-medium text-gray-700">
+                    Provision Key
+                  </div>
+                  <button
+                    onClick={() => handleCopyItem(provisionKeyData.key, "key")}
+                    className="text-gray-400 hover:text-gray-600"
+                    title={
+                      copiedItem === "key" ? "Copied!" : "Copy to clipboard"
+                    }
+                  >
+                    {copiedItem === "key" ? (
+                      <CheckIcon fontSize="small" />
+                    ) : (
+                      <FileCopyIcon fontSize="small" />
+                    )}
+                  </button>
+                </div>
+                <div className="bg-gray-800 rounded px-2 py-1">
+                  <CryptoTextBox
+                    data={provisionKeyData.key || ""}
+                    mode="plain"
+                  />
+                </div>
+              </div>
+
+              {/* CA Certificate */}
+              {provisionKeyData.caCert && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-medium text-gray-700">
+                      CA Certificate (Base64)
+                    </div>
+                    <button
+                      onClick={() =>
+                        handleCopyItem(provisionKeyData.caCert, "caCert")
+                      }
+                      className="text-gray-400 hover:text-gray-600"
+                      title={
+                        copiedItem === "caCert"
+                          ? "Copied!"
+                          : "Copy to clipboard"
+                      }
+                    >
+                      {copiedItem === "caCert" ? (
+                        <CheckIcon fontSize="small" />
+                      ) : (
+                        <FileCopyIcon fontSize="small" />
+                      )}
+                    </button>
+                  </div>
+                  <div className="bg-gray-800 rounded px-2 py-1">
+                    <CryptoTextBox
+                      data={provisionKeyData.caCert}
+                      mode="encrypted"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Provision Commands */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm font-medium text-gray-700">
+                    Provision Commands
+                  </div>
+                  <button
+                    onClick={() => setCommandsVisible(!commandsVisible)}
+                    className="text-gray-400 hover:text-gray-600"
+                    title={commandsVisible ? "Hide commands" : "Show commands"}
+                  >
+                    {commandsVisible ? (
+                      <VisibilityOffIcon fontSize="small" />
+                    ) : (
+                      <VisibilityIcon fontSize="small" />
+                    )}
+                  </button>
+                </div>
+                <div className="bg-gray-100 rounded p-3 space-y-2">
+                  {commandsVisible ? (
+                    generateProvisionCommands().map((cmd, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between bg-white rounded px-3 py-2"
+                      >
+                        <code className="text-sm text-gray-800 font-mono flex-1 break-all">
+                          {cmd}
+                        </code>
+                        <button
+                          onClick={() => handleCopyItem(cmd, `cmd-${index}`)}
+                          className="ml-2 text-gray-400 hover:text-gray-600 flex-shrink-0"
+                          title={
+                            copiedItem === `cmd-${index}`
+                              ? "Copied!"
+                              : "Copy to clipboard"
+                          }
+                        >
+                          {copiedItem === `cmd-${index}` ? (
+                            <CheckIcon fontSize="small" />
+                          ) : (
+                            <FileCopyIcon fontSize="small" />
+                          )}
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="bg-white rounded px-3 py-2">
+                      <code className="text-sm text-gray-400 font-mono">
+                        Click to view commands
+                      </code>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-600">
+              No provision key data available
+            </div>
+          )
+        }
       />
     </div>
   );

@@ -8,6 +8,7 @@ import PlayCircleFilledOutlined from "@material-ui/icons/PlayCircleFilledOutline
 import StopOutlined from "@material-ui/icons/StopOutlined";
 import PublishOutlined from "@material-ui/icons/PublishOutlined";
 import DescriptionOutlined from "@material-ui/icons/DescriptionOutlined";
+import VpnKeyIcon from "@material-ui/icons/VpnKey";
 
 type Field<T> = {
   label: string;
@@ -32,6 +33,9 @@ type SlideOverProps<T> = {
   onClean?: () => void;
   customWidth?: number;
   onTerminal?: () => void;
+  onAttach?: () => void;
+  onDetach?: () => void;
+  onProvisionKey?: () => void;
 };
 
 const SlideOver = <T,>({
@@ -49,6 +53,9 @@ const SlideOver = <T,>({
   onDetails,
   onClean,
   onTerminal,
+  onAttach,
+  onDetach,
+  onProvisionKey,
   customWidth,
 }: SlideOverProps<T>) => {
   const [width, setWidth] = useState(customWidth ? customWidth : 480);
@@ -92,7 +99,7 @@ const SlideOver = <T,>({
 
   return (
     <Transition show={open} as={Fragment}>
-      <Dialog as="div" className="relative z-40" onClose={onClose}>
+      <Dialog as="div" className="relative z-[100]" onClose={onClose}>
         <Transition.Child
           as={Fragment}
           enter="ease-in-out duration-500"
@@ -102,10 +109,10 @@ const SlideOver = <T,>({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" />
+          <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity z-[100]" />
         </Transition.Child>
 
-        <div className="fixed inset-0 overflow-hidden">
+        <div className="fixed inset-0 overflow-hidden z-[100]">
           <div className="absolute inset-0 overflow-hidden">
             <div className="pointer-events-none fixed inset-y-0 right-0 flex pl-10">
               <Transition.Child
@@ -118,7 +125,7 @@ const SlideOver = <T,>({
                 leaveTo="translate-x-full"
               >
                 <Dialog.Panel
-                  className="pointer-events-auto h-full max-h-screen bg-gray-800 text-white shadow-xl overflow-y-auto relative flex flex-col"
+                  className="pointer-events-auto h-full max-h-screen bg-gray-800 text-white shadow-xl overflow-y-auto relative flex flex-col z-[100]"
                   style={{ width: `${width}px` }}
                 >
                   <div
@@ -132,10 +139,54 @@ const SlideOver = <T,>({
                       {title || "Details"}
                     </Dialog.Title>
                     <div className="flex items-center gap-2">
+                      {onAttach && (
+                        <button
+                          onClick={onAttach}
+                          className="hover:text-white hover:bg-sky-500 rounded"
+                          title="Attach"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              fill="none"
+                              stroke="#fff"
+                              stroke-linecap="square"
+                              stroke-width="2"
+                              d="m20.506 12.313l-7.778 7.778a6 6 0 0 1-8.485-8.485l7.778-7.778a4 4 0 1 1 5.657 5.657L9.9 17.263a2 2 0 1 1-2.829-2.829l7.071-7.07"
+                            />
+                          </svg>
+                        </button>
+                      )}
+                      {onDetach && (
+                        <button
+                          onClick={onDetach}
+                          className="hover:text-white hover:bg-sky-500 rounded"
+                          title="Detach"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              fill="none"
+                              stroke="#fff"
+                              stroke-width="2"
+                              d="m4 4l16 16m2-8l-5.28 5.28M15 19l-2 2c-6 6-15-3-9-9l2-2m2-2l5-5c4-4 10 2 6 6l-5 5m-2 2l-2 2c-2 2-5-1-3-3l2-2m2-2l5-5"
+                            />
+                          </svg>
+                        </button>
+                      )}
                       {onTerminal && (
                         <button
                           onClick={onTerminal}
-                          className="hover:text-green-600 hover:bg-white rounded"
+                          className="hover:text-white hover:bg-sky-500 rounded"
+                          title="Terminal"
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -150,10 +201,20 @@ const SlideOver = <T,>({
                           </svg>
                         </button>
                       )}
+                      {onProvisionKey && (
+                        <button
+                          onClick={onProvisionKey}
+                          className="hover:text-white hover:bg-sky-500 rounded"
+                          title="Provision Key"
+                        >
+                          <VpnKeyIcon fontSize="small" />
+                        </button>
+                      )}
                       {onClean && (
                         <button
                           onClick={onClean}
-                          className="hover:text-green-600 hover:bg-white rounded"
+                          className="hover:text-white hover:bg-sky-500 rounded"
+                          title="Clean"
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -177,7 +238,8 @@ const SlideOver = <T,>({
                       {onPublish && (
                         <button
                           onClick={onPublish}
-                          className="hover:text-green-600 hover:bg-white rounded"
+                          className="hover:text-white hover:bg-sky-500 rounded"
+                          title="Publish"
                         >
                           <PublishOutlined fontSize="small" />
                         </button>
@@ -185,7 +247,8 @@ const SlideOver = <T,>({
                       {onDetails && (
                         <button
                           onClick={onDetails}
-                          className="hover:text-green-600 hover:bg-white rounded"
+                          className="hover:text-white hover:bg-sky-500 rounded"
+                          title="Details"
                         >
                           <DescriptionOutlined fontSize="small" />
                         </button>
@@ -193,7 +256,8 @@ const SlideOver = <T,>({
                       {onEditYaml && (
                         <button
                           onClick={onEditYaml}
-                          className="hover:text-green-600 hover:bg-white rounded"
+                          className="hover:text-white hover:bg-sky-500 rounded"
+                          title="Edit"
                         >
                           <EditOutlinedIcon fontSize="small" />
                         </button>
@@ -202,14 +266,15 @@ const SlideOver = <T,>({
                         (!startStopValue ? (
                           <button
                             onClick={onStartStop}
-                            className="hover:text-green-600 hover:bg-white rounded"
+                            className="hover:text-white hover:bg-sky-500 rounded"
+                            title="Start"
                           >
                             <PlayCircleFilledOutlined fontSize="small" />
                           </button>
                         ) : (
                           <button
                             onClick={onStartStop}
-                            className="hover:text-red-600 hover:bg-white rounded"
+                            className="hover:text-red-600 hover:bg-sky-500 rounded"
                           >
                             <StopOutlined fontSize="medium" />
                           </button>
@@ -217,7 +282,8 @@ const SlideOver = <T,>({
                       {onRestart && (
                         <button
                           onClick={onRestart}
-                          className="hover:text-green-600 hover:bg-white rounded"
+                          className="hover:text-white hover:bg-sky-500 rounded"
+                          title="Restart"
                         >
                           <RestartAltIcon fontSize="small" />
                         </button>
@@ -225,14 +291,15 @@ const SlideOver = <T,>({
                       {onDelete && (
                         <button
                           onClick={onDelete}
-                          className="hover:text-red-600 hover:bg-white rounded"
+                          className="hover:text-red-600 hover:bg-sky-500 rounded"
+                          title="Delete"
                         >
                           <DeleteOutlineIcon fontSize="small" />
                         </button>
                       )}
                       <button
                         onClick={onClose}
-                        className="hover:text-black hover:bg-white rounded"
+                        className="hover:text-black hover:bg-sky-500 rounded"
                       >
                         <XMarkIcon fontSize="small" />
                       </button>

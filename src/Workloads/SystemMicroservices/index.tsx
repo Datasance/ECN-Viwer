@@ -90,7 +90,7 @@ function SystemMicroserviceList() {
         },
       );
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({ message: "Microservice Rebuilt", type: "success" });
         setShowResetConfirmModal(false);
@@ -112,7 +112,7 @@ function SystemMicroserviceList() {
         },
       );
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({ message: "Microservice Deleted", type: "success" });
         setIsOpen(false);
@@ -135,7 +135,7 @@ function SystemMicroserviceList() {
         },
       );
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({ message: "Port Deleted", type: "success" });
         setIsOpen(false);
@@ -158,7 +158,7 @@ function SystemMicroserviceList() {
         },
       );
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({ message: "Volume Deleted", type: "success" });
         setIsOpen(false);
@@ -184,7 +184,7 @@ function SystemMicroserviceList() {
         },
       );
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({
           message: "Microservice Config Updated. ",
@@ -211,7 +211,7 @@ function SystemMicroserviceList() {
         },
       );
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       } else {
         pushFeedback({
           message: "Microservice Config Deleted. ",
@@ -333,8 +333,11 @@ function SystemMicroserviceList() {
           pushFeedback({ message: error.message, type: "error" });
           throw new Error(error.message);
         } catch (e) {
-          pushFeedback({ message: res.statusText, type: "error" });
-          throw new Error(res.statusText);
+          pushFeedback({
+            message: res.message || "Something went wrong",
+            type: "error",
+          });
+          throw new Error(res.message || "Something went wrong");
         }
       } else {
         pushFeedback({ message: "Microservice updated!", type: "success" });
@@ -357,7 +360,7 @@ function SystemMicroserviceList() {
   const handleEditYaml = () => {
     // Add YAML editor session to global state
     addYamlSession({
-      title: `YAML: ${selectedMs?.name}`,
+      title: `System Microservice YAML: ${selectedMs?.name}`,
       content: yamlDump,
       isDirty: false,
       onSave: async (content: string) => {
@@ -405,7 +408,7 @@ function SystemMicroserviceList() {
         );
 
         if (!res.ok) {
-          pushFeedback?.({ message: res.statusText, type: "error" });
+          pushFeedback?.({ message: res.message, type: "error" });
           return;
         }
 
@@ -434,7 +437,7 @@ function SystemMicroserviceList() {
 
       // Add terminal session to global state
       addTerminalSession({
-        title: `Shell: ${microservice.name}`,
+        title: `System Microservice Shell: ${microservice.name}`,
         socketUrl,
         authToken: auth?.user?.access_token,
         microserviceUuid: microserviceUuid,
@@ -654,7 +657,8 @@ function SystemMicroserviceList() {
     {
       label: "Catalog Item Id",
       render: (row: any) => {
-        if (!row?.catalogItemId) return <span className="text-gray-400">N/A</span>;
+        if (!row?.catalogItemId)
+          return <span className="text-gray-400">N/A</span>;
         return (
           <NavLink
             to={`/config/CatalogMicroservices?catalogItemid=${encodeURIComponent(row.catalogItemId)}`}
@@ -1143,7 +1147,9 @@ function SystemMicroserviceList() {
         onCancel={() => setShowResetConfirmModal(false)}
         onConfirm={handleRestart}
         title={`Rebuild ${selectedMs?.name}`}
-        message={"This is not reversible."}
+        message={
+          "This action will rebuild the microservice. Pulling the image and restarting the microservice. This is not reversible."
+        }
         cancelLabel={"Cancel"}
         confirmLabel={"Rebuild"}
         confirmColor="bg-blue"
@@ -1153,7 +1159,9 @@ function SystemMicroserviceList() {
         onCancel={() => setShowDeleteConfirmModal(false)}
         onConfirm={handleDelete}
         title={`Delete ${selectedMs?.name}`}
-        message={"This is not reversible."}
+        message={
+          "This action will remove the microservice from the system. All data and configurations will be lost. This is not reversible."
+        }
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
       />
@@ -1162,7 +1170,9 @@ function SystemMicroserviceList() {
         onCancel={() => setShowPortDeleteConfirmModal(false)}
         onConfirm={handlePortsDelete}
         title={`Delete Port ${selectedPort?.internal}`}
-        message={"This is not reversible."}
+        message={
+          "This action will remove the port mapping from the microservice. This is not reversible."
+        }
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
       />
@@ -1171,7 +1181,9 @@ function SystemMicroserviceList() {
         onCancel={() => setShowVolumeDeleteConfirmModal(false)}
         onConfirm={handleVolumeDelete}
         title={`Delete Volume ${selectedVolume?.host}`}
-        message={"This is not reversible."}
+        message={
+          "This action will remove the volume from the microservice. This is not reversible."
+        }
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
       />

@@ -7,6 +7,8 @@ import { formatDistanceToNow, format } from "date-fns";
 import { useController } from "../../ControllerProvider";
 import { useFeedback } from "../../Utils/FeedbackContext";
 import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
+import CustomActionModal from "../../CustomComponent/CustomActionModal";
+import CryptoTextBox from "../../CustomComponent/CustomCryptoTextBox";
 import "ace-builds/src-noconflict/ace";
 import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/mode-yaml";
@@ -17,6 +19,10 @@ import { NavLink } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 import { useAuth } from "react-oidc-context";
+import FileCopyIcon from "@material-ui/icons/FileCopy";
+import CheckIcon from "@material-ui/icons/Check";
+import VisibilityIcon from "@material-ui/icons/Visibility";
+import VisibilityOffIcon from "@material-ui/icons/VisibilityOff";
 
 const formatDuration = (milliseconds: number): string => {
   if (!milliseconds || milliseconds <= 0) return "N/A";
@@ -52,6 +58,11 @@ function NodesList() {
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [showCleanConfirmModal, setShowCleanConfirmModal] = useState(false);
+  const [showProvisionKeyModal, setShowProvisionKeyModal] = useState(false);
+  const [provisionKeyData, setProvisionKeyData] = useState<any | null>(null);
+  const [copiedItem, setCopiedItem] = useState<string | null>(null);
+  const [loadingProvisionKey, setLoadingProvisionKey] = useState(false);
+  const [commandsVisible, setCommandsVisible] = useState(false);
   const [editorDataChanged, setEditorDataChanged] = React.useState<any>();
   const { addTerminalSession, addYamlSession } = useTerminal();
   const location = useLocation();
@@ -103,7 +114,7 @@ function NodesList() {
       });
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
         return;
       } else {
         pushFeedback({ message: "Agent Rebooted", type: "success" });
@@ -116,17 +127,17 @@ function NodesList() {
 
   const handleDelete = async () => {
     try {
-      const res = await request(`/api/v3/iofog/${selectedNode.uuid}/reboot`, {
-        method: "POST",
+      const res = await request(`/api/v3/iofog/${selectedNode.uuid}`, {
+        method: "DELETE",
         headers: { "Content-Type": "application/json" },
       });
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
         return;
       } else {
-        pushFeedback({ message: "Agent Rebooted", type: "success" });
-        setShowResetConfirmModal(false);
+        pushFeedback({ message: "Agent Deleted", type: "success" });
+        setShowDeleteConfirmModal(false);
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -141,11 +152,11 @@ function NodesList() {
       });
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
         return;
       } else {
         pushFeedback({ message: "Agent Pruned", type: "success" });
-        setShowResetConfirmModal(false);
+        setShowCleanConfirmModal(false);
       }
     } catch (e: any) {
       pushFeedback({ message: e.message, type: "error", uuid: "error" });
@@ -198,6 +209,81 @@ function NodesList() {
     return null;
   };
 
+  const handleProvisionKey = async () => {
+    if (!selectedNode?.uuid) {
+      pushFeedback({ message: "No agent selected", type: "error" });
+      return;
+    }
+
+    setLoadingProvisionKey(true);
+    setShowProvisionKeyModal(true);
+
+    try {
+      const res = await request(
+        `/api/v3/iofog/${selectedNode.uuid}/provisioning-key`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+          },
+        },
+      );
+
+      if (!res.ok) {
+        pushFeedback({
+          message: res.message,
+          type: "error",
+        });
+        setShowProvisionKeyModal(false);
+        setLoadingProvisionKey(false);
+        return;
+      }
+
+      const data = await res.json();
+      setProvisionKeyData(data);
+      setLoadingProvisionKey(false);
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+      setShowProvisionKeyModal(false);
+      setLoadingProvisionKey(false);
+    }
+  };
+
+  const handleCopyItem = async (text: string, itemName: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedItem(itemName);
+      setTimeout(() => setCopiedItem(null), 1500);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
+
+  const getApiEndpointUrl = (): string => {
+    if (window.controllerConfig?.url) {
+      const u = new URL(window.controllerConfig.url);
+      return `${u.protocol}//${u.host}/api/v3`;
+    }
+    return `http://${window.location.hostname}:${window?.controllerConfig?.port || 51121}/api/v3`;
+  };
+
+  const generateProvisionCommands = (): string[] => {
+    const apiUrl = getApiEndpointUrl();
+    const commands: string[] = [];
+
+    commands.push(`iofog-agent config -a ${apiUrl}`);
+
+    if (provisionKeyData?.caCert) {
+      commands.push(`iofog-agent cert ${provisionKeyData.caCert}`);
+    }
+
+    if (provisionKeyData?.key) {
+      commands.push(`iofog-agent provision ${provisionKeyData.key}`);
+    }
+
+    return commands;
+  };
+
   const enableExecAndOpenTerminal = async (nodeUuid: string) => {
     try {
       // Check if node is running
@@ -245,7 +331,7 @@ function NodesList() {
 
         // Add terminal session to global state
         addTerminalSession({
-          title: `Shell: ${selectedNode?.name}`,
+          title: `Agent Shell: ${selectedNode?.name}`,
           socketUrl,
           authToken: auth?.user?.access_token,
           microserviceUuid: debugUuid,
@@ -330,13 +416,144 @@ function NodesList() {
 
     // Add YAML editor session to global state
     addYamlSession({
-      title: `YAML: ${selectedNode?.name}`,
+      title: `AgentConfig YAML: ${selectedNode?.name}`,
       content: yamlString,
       isDirty: false,
       onSave: async (content: string) => {
         await handleYamlUpdate(content);
       },
     });
+  };
+
+  const parseAgentYaml = async (doc: any) => {
+    if (doc.apiVersion !== "datasance.com/v3") {
+      return [
+        null,
+        `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v3`,
+      ];
+    }
+    if (doc.kind !== "Agent") {
+      return [null, `Invalid kind ${doc.kind}, expected Agent`];
+    }
+    if (!doc.metadata || !doc.spec) {
+      return [null, "Invalid YAML format (missing metadata or spec)"];
+    }
+
+    const spec = doc.spec ?? {};
+    const metadata = doc.metadata ?? {};
+    const config = spec.config ?? {};
+
+    // For Agent YAML, config fields are nested under spec.config
+    // If spec.config exists, merge its fields with top-level spec fields
+    const agentData: any = {
+      name: spec.name || metadata.name,
+      host: spec.host,
+      ...config, // All config fields go here
+    };
+
+    agentData.tags = metadata.tags;
+
+    // Handle routerConfig if it exists in config
+    if (config.routerConfig) {
+      agentData.routerMode = config.routerConfig.routerMode;
+      agentData.messagingPort = config.routerConfig.messagingPort;
+
+      if (config.routerConfig.edgeRouterPort !== undefined) {
+        agentData.edgeRouterPort = config.routerConfig.edgeRouterPort;
+      }
+      if (config.routerConfig.interRouterPort !== undefined) {
+        agentData.interRouterPort = config.routerConfig.interRouterPort;
+      }
+    }
+
+    // Handle fogType/agentType conversion
+    if (config.agentType !== undefined) {
+      agentData.fogType = config.agentType;
+    } else if (config.fogType !== undefined) {
+      const fogType =
+        config.fogType === "Auto" ? 0 : config.fogType === "x86" ? 1 : 2;
+      agentData.fogType = fogType;
+    }
+
+    return [agentData, null];
+  };
+
+  const handleYamlParse = async (item: any) => {
+    const file = item;
+    if (file) {
+      const reader = new window.FileReader();
+
+      reader.onload = async function (evt: any) {
+        try {
+          const docs = yaml.loadAll(evt.target.result);
+
+          if (!Array.isArray(docs)) {
+            pushFeedback({
+              message: "Could not parse the file: Invalid YAML format",
+              type: "error",
+            });
+            return;
+          }
+
+          for (const doc of docs) {
+            if (!doc) {
+              continue;
+            }
+
+            const [agentData, err] = await parseAgentYaml(doc);
+
+            if (err) {
+              console.error("Error parsing a document:", err);
+              pushFeedback({
+                message: `Error processing item: ${err}`,
+                type: "error",
+              });
+            } else {
+              try {
+                await handleYamlPost(agentData);
+              } catch (e) {
+                console.error("Error posting a document:", e);
+              }
+            }
+          }
+        } catch (e) {
+          console.error({ e });
+          pushFeedback({
+            message: "Could not parse the file. Check YAML syntax.",
+            type: "error",
+          });
+        }
+      };
+
+      reader.onerror = function (evt) {
+        pushFeedback({ message: evt, type: "error" });
+      };
+
+      reader.readAsText(file, "UTF-8");
+    }
+  };
+
+  const handleYamlPost = async (agentData: any) => {
+    try {
+      const res = await request(`/api/v3/iofog`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(agentData),
+      });
+
+      if (!res.ok) {
+        pushFeedback({ message: res.message, type: "error" });
+      } else {
+        pushFeedback({
+          message: `Agent ${agentData.name || "Added"} Added`,
+          type: "success",
+        });
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
   };
 
   async function handleYamlUpdate(content?: string) {
@@ -377,10 +594,13 @@ function NodesList() {
       });
 
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
-        throw new Error(res.statusText);
+        pushFeedback({ message: res.message, type: "error" });
+        throw new Error(res.message || "Something went wrong");
       } else {
-        pushFeedback({ message: `Agent: ${selectedNode?.name} Config Updated`, type: "success" });
+        pushFeedback({
+          message: `Agent: ${selectedNode?.name} Config Updated`,
+          type: "success",
+        });
         setEditorDataChanged(null);
         setIsOpen(false);
       }
@@ -740,15 +960,24 @@ function NodesList() {
     },
     {
       label: "Cpu Violation",
-      render: (row: any) => (row.cpuViolation === "0" ? "false" : "true"),
+      render: (row: any) =>
+        row.cpuViolation === "0" || row.cpuViolation === "false"
+          ? "false"
+          : "true",
     },
     {
       label: "Disk Violation",
-      render: (row: any) => (row.diskViolation === "0" ? "false" : "true"),
+      render: (row: any) =>
+        row.diskViolation === "0" || row.diskViolation === "false"
+          ? "false"
+          : "true",
     },
     {
       label: "Memory Violation",
-      render: (row: any) => (row.memoryViolation === "0" ? "false" : "true"),
+      render: (row: any) =>
+        row.memoryViolation === "0" || row.memoryViolation === "false"
+          ? "false"
+          : "true",
     },
     {
       label: "Is Ready To Rollback",
@@ -1126,6 +1355,8 @@ function NodesList() {
         columns={columns}
         data={Object.values(data?.reducedAgents?.byName || [])}
         getRowKey={(row: any) => row.uuid}
+        uploadDropzone
+        uploadFunction={handleYamlParse}
       />
 
       <SlideOver
@@ -1139,6 +1370,7 @@ function NodesList() {
         onClean={() => setShowCleanConfirmModal(true)}
         onEditYaml={handleEditYaml}
         onTerminal={() => enableExecAndOpenTerminal(selectedNode?.uuid!)}
+        onProvisionKey={handleProvisionKey}
         customWidth={750}
       />
 
@@ -1147,7 +1379,7 @@ function NodesList() {
         onCancel={() => setShowResetConfirmModal(false)}
         onConfirm={handleRestart}
         title={`Restart ${selectedNode?.name}`}
-        message={"This is not reversible."}
+        message={"This action will restart the agent node."}
         cancelLabel={"Cancel"}
         confirmLabel={"Restart"}
         confirmColor="bg-blue"
@@ -1156,8 +1388,10 @@ function NodesList() {
         open={showDeleteConfirmModal}
         onCancel={() => setShowDeleteConfirmModal(false)}
         onConfirm={handleDelete}
-        title={`Delete ${selectedNode?.name}`}
-        message={"This is not reversible."}
+        title={`Deleting Agent ${selectedNode?.name}`}
+        message={
+          "This action will remove the agent from the system. All microservices and applications running on this agent will be deleted. This is not reversible."
+        }
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
       />
@@ -1165,12 +1399,168 @@ function NodesList() {
         open={showCleanConfirmModal}
         onCancel={() => setShowCleanConfirmModal(false)}
         onConfirm={handleClean}
-        title={`Prune ${selectedNode?.name}`}
+        title={`Pruning Agent ${selectedNode?.name}`}
         message={
           "This action will remove all unused container images from the selected agent. Images not associated with a running microservice will be permanently deleted. Make sure all necessary images are in use before proceeding.\n \nThis is not reversible!"
         }
         cancelLabel={"Cancel"}
         confirmLabel={"Prune"}
+      />
+
+      <CustomActionModal
+        open={showProvisionKeyModal}
+        onCancel={() => {
+          setShowProvisionKeyModal(false);
+          setProvisionKeyData(null);
+          setCommandsVisible(false);
+        }}
+        title={`Provision Key - ${selectedNode?.name}`}
+        cancelLabel={"Close"}
+        child={
+          loadingProvisionKey ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-3 text-gray-700">
+                Loading provision key...
+              </span>
+            </div>
+          ) : provisionKeyData ? (
+            <div className="space-y-6">
+              {/* Expiration Time */}
+              {provisionKeyData.expirationTime && (
+                <div>
+                  <div className="text-sm font-medium text-gray-700 mb-2">
+                    Expiration Time
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {new Date(provisionKeyData.expirationTime).toLocaleString()}
+                  </div>
+                </div>
+              )}
+
+              {/* Provision Key */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm font-medium text-gray-700">
+                    Provision Key
+                  </div>
+                  <button
+                    onClick={() => handleCopyItem(provisionKeyData.key, "key")}
+                    className="text-gray-400 hover:text-gray-600"
+                    title={
+                      copiedItem === "key" ? "Copied!" : "Copy to clipboard"
+                    }
+                  >
+                    {copiedItem === "key" ? (
+                      <CheckIcon fontSize="small" />
+                    ) : (
+                      <FileCopyIcon fontSize="small" />
+                    )}
+                  </button>
+                </div>
+                <div className="bg-gray-800 rounded px-2 py-1">
+                  <CryptoTextBox
+                    data={provisionKeyData.key || ""}
+                    mode="plain"
+                  />
+                </div>
+              </div>
+
+              {/* CA Certificate */}
+              {provisionKeyData.caCert && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-medium text-gray-700">
+                      CA Certificate (Base64)
+                    </div>
+                    <button
+                      onClick={() =>
+                        handleCopyItem(provisionKeyData.caCert, "caCert")
+                      }
+                      className="text-gray-400 hover:text-gray-600"
+                      title={
+                        copiedItem === "caCert"
+                          ? "Copied!"
+                          : "Copy to clipboard"
+                      }
+                    >
+                      {copiedItem === "caCert" ? (
+                        <CheckIcon fontSize="small" />
+                      ) : (
+                        <FileCopyIcon fontSize="small" />
+                      )}
+                    </button>
+                  </div>
+                  <div className="bg-gray-800 rounded px-2 py-1">
+                    <CryptoTextBox
+                      data={provisionKeyData.caCert}
+                      mode="encrypted"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Provision Commands */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm font-medium text-gray-700">
+                    Provision Commands
+                  </div>
+                  <button
+                    onClick={() => setCommandsVisible(!commandsVisible)}
+                    className="text-gray-400 hover:text-gray-600"
+                    title={commandsVisible ? "Hide commands" : "Show commands"}
+                  >
+                    {commandsVisible ? (
+                      <VisibilityOffIcon fontSize="small" />
+                    ) : (
+                      <VisibilityIcon fontSize="small" />
+                    )}
+                  </button>
+                </div>
+                <div className="bg-gray-100 rounded p-3 space-y-2">
+                  {commandsVisible ? (
+                    generateProvisionCommands().map((cmd, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between bg-white rounded px-3 py-2"
+                      >
+                        <code className="text-sm text-gray-800 font-mono flex-1 break-all">
+                          {cmd}
+                        </code>
+                        <button
+                          onClick={() => handleCopyItem(cmd, `cmd-${index}`)}
+                          className="ml-2 text-gray-400 hover:text-gray-600 flex-shrink-0"
+                          title={
+                            copiedItem === `cmd-${index}`
+                              ? "Copied!"
+                              : "Copy to clipboard"
+                          }
+                        >
+                          {copiedItem === `cmd-${index}` ? (
+                            <CheckIcon fontSize="small" />
+                          ) : (
+                            <FileCopyIcon fontSize="small" />
+                          )}
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="bg-white rounded px-3 py-2">
+                      <code className="text-sm text-gray-400 font-mono">
+                        Click to view commands
+                      </code>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-600">
+              No provision key data available
+            </div>
+          )
+        }
       />
     </div>
   );

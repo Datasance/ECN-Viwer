@@ -7,6 +7,10 @@ import SlideOver from "../../CustomComponent/SlideOver";
 import FileCopyIcon from "@material-ui/icons/FileCopy";
 import CheckIcon from "@material-ui/icons/Check";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
+import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
+import { parseService } from "../../Utils/parseServiceYaml";
+import yaml from "js-yaml";
+import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 
 function Services() {
   const [fetching, setFetching] = React.useState(true);
@@ -16,9 +20,11 @@ function Services() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<any | null>(null);
   const [copiedEndpoint, setCopiedEndpoint] = useState<string | null>(null);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const serviceName = params.get("name");
+  const { addYamlSession } = useTerminal();
 
   const handleRowClick = (row: any) => {
     if (row.name) {
@@ -94,7 +100,7 @@ function Services() {
       const servicesItemsResponse = await request("/api/v3/services");
       if (!servicesItemsResponse.ok) {
         pushFeedback({
-          message: servicesItemsResponse.statusText,
+          message: servicesItemsResponse.message,
           type: "error",
         });
         setFetching(false);
@@ -114,7 +120,7 @@ function Services() {
       setFetching(true);
       const itemResponse = await request(`/api/v3/services/${serviceName}`);
       if (!itemResponse.ok) {
-        pushFeedback({ message: itemResponse.statusText, type: "error" });
+        pushFeedback({ message: itemResponse.message, type: "error" });
         setFetching(false);
         return;
       }
@@ -132,6 +138,186 @@ function Services() {
     fetchServices();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleEditYaml = () => {
+    if (!selectedService) return;
+
+    const spec: any = {
+      type: selectedService.type,
+      resource: selectedService.resource,
+      defaultBridge: selectedService.defaultBridge,
+      targetPort: selectedService.targetPort,
+    };
+
+    // Only include k8sType and servicePort if they are not null
+    if (
+      selectedService.k8sType !== null &&
+      selectedService.k8sType !== undefined
+    ) {
+      spec.k8sType = selectedService.k8sType;
+    }
+    if (
+      selectedService.servicePort !== null &&
+      selectedService.servicePort !== undefined
+    ) {
+      spec.servicePort = selectedService.servicePort;
+    }
+
+    const yamlObj = {
+      apiVersion: "datasance.com/v3",
+      kind: "Service",
+      metadata: {
+        name: selectedService.name,
+        tags: Array.isArray(selectedService.tags)
+          ? selectedService.tags
+          : [selectedService.tags],
+      },
+      spec,
+    };
+
+    const yamlString = yaml.dump(yamlObj, {
+      noRefs: true,
+      indent: 2,
+      lineWidth: -1,
+    });
+
+    addYamlSession({
+      title: `Service YAML: ${selectedService.name}`,
+      content: yamlString,
+      isDirty: false,
+      onSave: async (content: string) => {
+        try {
+          const parsedDoc = yaml.load(content);
+          const [service, err] = await parseService(parsedDoc);
+
+          if (err) {
+            pushFeedback({ message: err, type: "error" });
+            return;
+          }
+
+          await handleYamlUpdate(service, "PATCH");
+        } catch (e: any) {
+          pushFeedback({ message: e.message, type: "error", uuid: "error" });
+        }
+      },
+    });
+  };
+
+  const handleYamlParse = async (item: any) => {
+    const file = item;
+    if (file) {
+      const reader = new window.FileReader();
+
+      reader.onload = async function (evt: any) {
+        try {
+          const docs = yaml.loadAll(evt.target.result);
+
+          if (!Array.isArray(docs)) {
+            pushFeedback({
+              message: "Could not parse the file: Invalid YAML format",
+              type: "error",
+            });
+            return;
+          }
+
+          for (const doc of docs) {
+            if (!doc) {
+              continue;
+            }
+
+            const [service, err] = await parseService(doc);
+
+            if (err) {
+              console.error("Error parsing a document:", err);
+              pushFeedback({
+                message: `Error processing item: ${err}`,
+                type: "error",
+              });
+            } else {
+              try {
+                await handleYamlUpdate(service, "POST");
+              } catch (e) {
+                console.error("Error updating a document:", e);
+              }
+            }
+          }
+        } catch (e) {
+          console.error({ e });
+          pushFeedback({ message: "Could not parse the file", type: "error" });
+        }
+      };
+
+      reader.onerror = function (evt) {
+        pushFeedback({ message: evt, type: "error" });
+      };
+
+      reader.readAsText(file, "UTF-8");
+    }
+  };
+
+  async function handleYamlUpdate(service: any, method?: string) {
+    try {
+      const name = service.name;
+
+      const res = await request(
+        `/api/v3/services${method === "PATCH" ? "/" + name : ""}`,
+        {
+          method: method,
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify(service),
+        },
+      );
+
+      if (!res.ok) {
+        pushFeedback({ message: res.message, type: "error" });
+      } else {
+        pushFeedback({
+          message: `Service ${name} ${method === "POST" ? "Added" : "Updated"}`,
+          type: "success",
+        });
+        if (method === "PATCH") {
+          setIsOpen(false);
+        }
+        // Refresh the list after successful POST or PATCH
+        fetchServices();
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  }
+
+  const handleDeleteService = async () => {
+    try {
+      if (!selectedService?.name) {
+        pushFeedback({ message: "No service selected", type: "error" });
+        return;
+      }
+
+      const res = await request(`/api/v3/services/${selectedService.name}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        pushFeedback({
+          message: res.message,
+          type: "error",
+        });
+      } else {
+        pushFeedback({
+          message: `Service ${selectedService.name} deleted`,
+          type: "success",
+        });
+        setShowDeleteConfirmModal(false);
+        setIsOpen(false);
+        setSelectedService(null);
+        fetchServices();
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  };
 
   const columns = [
     {
@@ -277,15 +463,31 @@ function Services() {
               columns={columns}
               data={services}
               getRowKey={(row: any) => row.id}
+              uploadDropzone
+              uploadFunction={handleYamlParse}
             />
 
             <SlideOver
               open={isOpen}
               onClose={() => setIsOpen(false)}
+              onDelete={() => setShowDeleteConfirmModal(true)}
+              onEditYaml={handleEditYaml}
               title={selectedService?.name || "Service Details"}
               data={selectedService}
               fields={slideOverFields}
               customWidth={600}
+            />
+
+            <UnsavedChangesModal
+              open={showDeleteConfirmModal}
+              onCancel={() => setShowDeleteConfirmModal(false)}
+              onConfirm={handleDeleteService}
+              title={`Deleting Service ${selectedService?.name}`}
+              message={
+                "This action will remove the network service from the system. This is not reversible."
+              }
+              cancelLabel={"Cancel"}
+              confirmLabel={"Delete"}
             />
           </div>
         </>

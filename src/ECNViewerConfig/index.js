@@ -36,7 +36,7 @@ export default function Config(props) {
         pushFeedback({ message: "Saved!", type: "success" });
         props.onSave();
       } else {
-        pushFeedback({ message: res.statusText, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       }
     } catch (e) {
       pushFeedback({ message: e.message, type: "error" });

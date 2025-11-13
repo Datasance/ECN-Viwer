@@ -7,6 +7,12 @@ import { format, formatDistanceToNow } from "date-fns";
 import CryptoTextBox from "../../CustomComponent/CustomCryptoTextBox";
 import { NavLink, useLocation } from "react-router-dom";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
+import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
+import {
+  parseCertificate,
+  parseCertificateAuthority,
+} from "../../Utils/parseCertificateYaml";
+import yaml from "js-yaml";
 
 function Certificates() {
   const [fetching, setFetching] = React.useState(true);
@@ -20,6 +26,11 @@ function Certificates() {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const certificateName = params.get("name");
+  const [loading, setLoading] = React.useState(false);
+  const [loadingMessage, setLoadingMessage] = React.useState(
+    "Certificate Adding...",
+  );
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
 
   const handleRowClick = (row: any) => {
     if (row.name) {
@@ -87,6 +98,189 @@ function Certificates() {
     fetchCertificates();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleYamlUpload = async (item: any) => {
+    const file = item;
+    if (file) {
+      const reader = new window.FileReader();
+
+      reader.onload = async function (evt: any) {
+        try {
+          const docs = yaml.loadAll(evt.target.result);
+
+          if (!Array.isArray(docs)) {
+            pushFeedback({
+              message: "Could not parse the file: Invalid YAML format",
+              type: "error",
+            });
+            return;
+          }
+
+          // Sort documents: CertificateAuthority first, then Certificate
+          // This ensures CAs are deployed before certificates that depend on them
+          const sortedDocs = docs
+            .filter((doc) => doc !== null && doc !== undefined)
+            .sort((a, b) => {
+              const kindA = (a as any).kind;
+              const kindB = (b as any).kind;
+
+              // CertificateAuthority should come before Certificate
+              if (kindA === "CertificateAuthority" && kindB === "Certificate") {
+                return -1;
+              }
+              if (kindA === "Certificate" && kindB === "CertificateAuthority") {
+                return 1;
+              }
+              // If same kind or unknown, maintain original order
+              return 0;
+            });
+
+          // Process documents sequentially to ensure CAs are created before certificates
+          for (const doc of sortedDocs) {
+            let parsedItem;
+            let err;
+            const docKind = (doc as any).kind;
+
+            if (docKind === "Certificate") {
+              [parsedItem, err] = await parseCertificate(doc);
+            } else if (docKind === "CertificateAuthority") {
+              [parsedItem, err] = await parseCertificateAuthority(doc);
+            } else {
+              err = `Invalid kind ${docKind}, expected Certificate or CertificateAuthority`;
+            }
+
+            if (err) {
+              console.error("Error parsing a document:", err);
+              pushFeedback({
+                message: `Error processing item: ${err}`,
+                type: "error",
+              });
+            } else {
+              // Await to ensure sequential processing
+              await postCertificateItem(parsedItem, "POST", docKind);
+            }
+          }
+        } catch (e) {
+          console.error({ e });
+          pushFeedback({
+            message: "Could not parse the file. Check YAML syntax.",
+            type: "error",
+          });
+        }
+      };
+
+      reader.onerror = function (evt) {
+        pushFeedback({ message: evt, type: "error" });
+      };
+
+      reader.readAsText(file, "UTF-8");
+    }
+  };
+
+  const postCertificateItem = async (
+    item: any,
+    method?: string,
+    kind?: string,
+  ) => {
+    let newItem;
+
+    if (typeof item === "object" && item !== null) {
+      newItem = { ...item };
+    } else {
+      console.error(
+        "Invalid data type passed to postCertificateItem:",
+        typeof item,
+      );
+      pushFeedback({ message: "Invalid data.", type: "error" });
+      setLoading(false);
+      return;
+    }
+
+    setLoadingMessage(
+      kind === "CertificateAuthority"
+        ? "Certificate Authority Adding..."
+        : "Certificate Adding...",
+    );
+    setLoading(true);
+
+    // Determine the endpoint based on kind
+    let endpoint = "/api/v3/certificates";
+    if (kind === "CertificateAuthority") {
+      endpoint = "/api/v3/certificates/ca";
+      // For PATCH, append the name to the CA endpoint
+      if (method === "PATCH" && newItem.name) {
+        endpoint = `/api/v3/certificates/ca/${newItem.name}`;
+      }
+    } else {
+      // For regular Certificate, append name for PATCH
+      if (method === "PATCH" && newItem.name) {
+        endpoint = `/api/v3/certificates/${newItem.name}`;
+      }
+    }
+
+    const response = await request(endpoint, {
+      method: method,
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newItem),
+    });
+    if (response?.ok) {
+      const itemType =
+        kind === "CertificateAuthority"
+          ? "Certificate Authority"
+          : "Certificate";
+      pushFeedback({
+        message: `${itemType} ${method === "POST" ? "Added" : "Updated"}!`,
+        type: "success",
+      });
+      fetchCertificates();
+      setLoading(false);
+    } else {
+      pushFeedback({ message: response?.message, type: "error" });
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteCertificate = async () => {
+    try {
+      if (!selectedCertificate?.name) {
+        pushFeedback({ message: "No certificate selected", type: "error" });
+        return;
+      }
+
+      // Determine endpoint based on isCA
+      const endpoint = selectedCertificate.isCA
+        ? `/api/v3/certificates/ca/${selectedCertificate.name}`
+        : `/api/v3/certificates/${selectedCertificate.name}`;
+
+      const res = await request(endpoint, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        pushFeedback({
+          message: res.message,
+          type: "error",
+        });
+      } else {
+        const itemType = selectedCertificate.isCA
+          ? "Certificate Authority"
+          : "Certificate";
+        pushFeedback({
+          message: `${itemType} ${selectedCertificate.name} deleted`,
+          type: "success",
+        });
+        setShowDeleteConfirmModal(false);
+        setIsOpen(false);
+        setSelectedCertificate(null);
+        fetchCertificates();
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  };
 
   const columns = [
     {
@@ -263,15 +457,37 @@ function Certificates() {
               columns={columns}
               data={certificates}
               getRowKey={(row: any) => row.name}
+              uploadDropzone
+              uploadFunction={handleYamlUpload}
             />
 
             <SlideOver
               open={isOpen}
               onClose={() => setIsOpen(false)}
+              onDelete={() => setShowDeleteConfirmModal(true)}
               title={selectedCertificate?.name || "Certificate Details"}
               data={selectedCertificate}
               fields={slideOverFields}
               customWidth={600}
+            />
+            <CustomLoadingModal
+              open={loading}
+              message={loadingMessage}
+              spinnerSize="lg"
+              spinnerColor="text-green-500"
+              overlayOpacity={60}
+            />
+
+            <UnsavedChangesModal
+              open={showDeleteConfirmModal}
+              onCancel={() => setShowDeleteConfirmModal(false)}
+              onConfirm={handleDeleteCertificate}
+              title={`Deleting Certificate ${selectedCertificate?.name}`}
+              message={
+                "This action will remove the certificate and tls secret from the system. If any Volume Mounts are using this certificate, they will be deleted and If any microservices are using this certificate, they will need to be updated to use a different certificate. This is not reversible."
+              }
+              cancelLabel={"Cancel"}
+              confirmLabel={"Delete"}
             />
           </div>
         </>

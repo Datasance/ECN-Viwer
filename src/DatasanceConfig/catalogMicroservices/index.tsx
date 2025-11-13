@@ -4,7 +4,11 @@ import { ControllerContext } from "../../ControllerProvider";
 import { FeedbackContext } from "../../Utils/FeedbackContext";
 import SlideOver from "../../CustomComponent/SlideOver";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
+import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import { useLocation, NavLink } from "react-router-dom";
+import yaml from "js-yaml";
+import { parseCatalogMicroservice } from "../../Utils/parseCatalogMicroservice";
+import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 
 function CatalogMicroservices() {
   const [fetching, setFetching] = React.useState(true);
@@ -17,6 +21,12 @@ function CatalogMicroservices() {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const catalogItemId = params.get("catalogItemid");
+  const { addYamlSession } = useTerminal();
+
+  const [loading, setLoading] = React.useState(false);
+  const [loadingMessage, setLoadingMessage] =
+    React.useState("Catalog Adding...");
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
 
   const handleRowClick = (row: any) => {
     if (row.id) {
@@ -32,7 +42,7 @@ function CatalogMicroservices() {
       );
       if (!catalogItemsResponse.ok) {
         pushFeedback({
-          message: catalogItemsResponse.statusText,
+          message: catalogItemsResponse.message,
           type: "error",
         });
         setFetching(false);
@@ -55,7 +65,7 @@ function CatalogMicroservices() {
       );
       if (!catalogItemResponse.ok) {
         pushFeedback({
-          message: catalogItemResponse.statusText,
+          message: catalogItemResponse.message,
           type: "error",
         });
         setFetching(false);
@@ -78,7 +88,9 @@ function CatalogMicroservices() {
 
   useEffect(() => {
     if (catalogItemId && catalog) {
-      const found = catalog.find((item: any) => item.id.toString() === catalogItemId);
+      const found = catalog.find(
+        (item: any) => item.id.toString() === catalogItemId,
+      );
       if (found) {
         handleRowClick(found);
         setIsOpen(true);
@@ -86,6 +98,177 @@ function CatalogMicroservices() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [catalogItemId, catalog]);
+
+  const handleEditYaml = () => {
+    if (!selectedCatalogMicroservice) return;
+
+    const yamlObj = {
+      apiVersion: "datasance.com/v3",
+      kind: "CatalogItem",
+      metadata: {
+        name: selectedCatalogMicroservice.name,
+      },
+      spec: {
+        description: selectedCatalogMicroservice.description,
+        category: selectedCatalogMicroservice.category,
+        x86: selectedCatalogMicroservice.images.find(
+          (x: any) => x.fogTypeId === 1,
+        )?.containerImage,
+        arm: selectedCatalogMicroservice.images.find(
+          (x: any) => x.fogTypeId === 2,
+        )?.containerImage,
+        registry: selectedCatalogMicroservice.registryId,
+        configExample: selectedCatalogMicroservice.configExample,
+      },
+    };
+
+    const yamlString = yaml.dump(yamlObj, {
+      noRefs: true,
+      indent: 2,
+      lineWidth: -1,
+    });
+
+    addYamlSession({
+      title: `CatalogItem YAML: ${selectedCatalogMicroservice.name}`,
+      content: yamlString,
+      isDirty: false,
+      onSave: async (content: string) => {
+        try {
+          const parsedDoc = yaml.load(content);
+          const [catalogItem, err] = await parseCatalogMicroservice(parsedDoc);
+
+          if (err) {
+            pushFeedback({ message: err, type: "error" });
+            return;
+          }
+
+          await postCatalogItem(catalogItem, "PATCH");
+        } catch (e: any) {
+          pushFeedback({ message: e.message, type: "error", uuid: "error" });
+        }
+      },
+    });
+  };
+
+  const handleYamlUpload = async (item: any) => {
+    const file = item;
+    if (file) {
+      const reader = new window.FileReader();
+
+      reader.onload = async function (evt: any) {
+        try {
+          const docs = yaml.loadAll(evt.target.result);
+
+          if (!Array.isArray(docs)) {
+            pushFeedback({
+              message: "Could not parse the file: Invalid YAML format",
+              type: "error",
+            });
+            return;
+          }
+
+          for (const doc of docs) {
+            if (!doc) {
+              continue;
+            }
+
+            const [catalogItem, err] = await parseCatalogMicroservice(doc);
+
+            if (err) {
+              console.error("Error parsing a document:", err);
+              pushFeedback({
+                message: `Error processing item: ${err}`,
+                type: "error",
+              });
+            } else {
+              await postCatalogItem(catalogItem, "POST");
+            }
+          }
+        } catch (e) {
+          console.error({ e });
+          pushFeedback({ message: "Could not parse the file", type: "error" });
+        }
+      };
+
+      reader.onerror = function (evt) {
+        pushFeedback({ message: evt, type: "error" });
+      };
+
+      reader.readAsText(file, "UTF-8");
+    }
+  };
+
+  const postCatalogItem = async (item: any, method?: string) => {
+    const newItem = { ...item };
+    setLoadingMessage(
+      method === "PATCH" ? "Catalog Updating..." : "Catalog Adding...",
+    );
+    setLoading(true);
+
+    // For PATCH, use the ID from selectedCatalogMicroservice since the parsed item doesn't have id
+    const catalogId =
+      method === "PATCH" ? selectedCatalogMicroservice?.id : null;
+
+    const response = await request(
+      `/api/v3/catalog/microservices${method === "PATCH" && catalogId ? "/" + catalogId : ""}`,
+      {
+        method: method,
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newItem),
+      },
+    );
+    if (response?.ok) {
+      pushFeedback({
+        message: `Catalog ${method === "PATCH" ? "Updated" : "Added"}!`,
+        type: "success",
+      });
+      fetchCatalog();
+      setLoading(false);
+    } else {
+      pushFeedback({ message: response?.message, type: "error" });
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteCatalogMicroservice = async () => {
+    try {
+      if (!selectedCatalogMicroservice?.id) {
+        pushFeedback({
+          message: "No catalog microservice selected",
+          type: "error",
+        });
+        return;
+      }
+
+      const res = await request(
+        `/api/v3/catalog/microservices/${selectedCatalogMicroservice.id}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (!res.ok) {
+        pushFeedback({
+          message: res.message,
+          type: "error",
+        });
+      } else {
+        pushFeedback({
+          message: `Catalog Microservice ${selectedCatalogMicroservice.name} deleted`,
+          type: "success",
+        });
+        setShowDeleteConfirmModal(false);
+        setIsOpen(false);
+        setselectedCatalogMicroservice(null);
+        fetchCatalog();
+      }
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error", uuid: "error" });
+    }
+  };
 
   const columns = [
     {
@@ -112,10 +295,18 @@ function CatalogMicroservices() {
     },
     {
       key: "registryId",
-      header: "Registry",
-      render: (row: any) => (
-        <span>{row.registryId === 1 ? "Remote" : "-"}</span>
-      ),
+      header: "Registry Id",
+      render: (row: any) => {
+        if (!row?.registryId) return <span className="text-gray-400">N/A</span>;
+        return (
+          <NavLink
+            to={`/config/registries?registryId=${encodeURIComponent(row.registryId)}`}
+            className="text-blue-400 underline cursor-pointer"
+          >
+            {row.registryId}
+          </NavLink>
+        );
+      },
     },
     {
       key: "images",
@@ -159,34 +350,42 @@ function CatalogMicroservices() {
       label: "Description",
       render: (row: any) => row.description || "N/A",
     },
-    {
-      label: "Disk Required",
-      render: (row: any) => (row.diskRequired === 0 ? "false" : "true"),
-    },
-    {
-      label: "Input Type",
-      render: (row: any) => row.inputType || "N/A",
-    },
-    {
-      label: "Is Public",
-      render: (row: any) => row.isPublic.toString() || "N/A",
-    },
-    {
-      label: "Output Type",
-      render: (row: any) => row.outputType || "N/A",
-    },
-    {
-      label: "Picture",
-      render: (row: any) => row.picture || "N/A",
-    },
-    {
-      label: "publisher",
-      render: (row: any) => row.publisher || "N/A",
-    },
-    {
-      label: "Ram Required",
-      render: (row: any) => row.ramRequired.toString() || "N/A",
-    },
+    // {
+    //   label: "Disk Required",
+    //   render: (row: any) => (row.diskRequired === 0 ? "false" : "true"),
+    // },
+    // {
+    //   label: "Input Type",
+    //   render: (row: any) => {
+    //     if (!row.inputType) return "N/A";
+    //     if (typeof row.inputType === "object") {
+    //       return JSON.stringify(row.inputType);
+    //     }
+    //     return row.inputType;
+    //   },
+    // },
+    // {
+    //   label: "Is Public",
+    //   render: (row: any) => row.isPublic.toString() || "N/A",
+    // },
+    // {
+    //   label: "Output Type",
+    //   render: (row: any) => {
+    //     if (!row.outputType) return "N/A";
+    //     if (typeof row.outputType === "object") {
+    //       return JSON.stringify(row.outputType);
+    //     }
+    //     return row.outputType;
+    //   },
+    // },
+    // {
+    //   label: "publisher",
+    //   render: (row: any) => row.publisher || "N/A",
+    // },
+    // {
+    //   label: "Ram Required",
+    //   render: (row: any) => row.ramRequired.toString() || "N/A",
+    // },
     {
       label: "Registry Id",
       render: (row: any) => {
@@ -274,6 +473,8 @@ function CatalogMicroservices() {
               columns={columns}
               data={catalog}
               getRowKey={(row: any) => row.id}
+              uploadDropzone
+              uploadFunction={handleYamlUpload}
             />
           </div>
         </>
@@ -281,13 +482,33 @@ function CatalogMicroservices() {
       <SlideOver
         open={isOpen}
         onClose={() => setIsOpen(false)}
+        onDelete={() => setShowDeleteConfirmModal(true)}
+        onEditYaml={handleEditYaml}
         title={
-          selectedCatalogMicroservice?.name ||
-          "Catalog Microservice Details"
+          selectedCatalogMicroservice?.name || "Catalog Microservice Details"
         }
         data={selectedCatalogMicroservice}
         fields={slideOverFields}
         customWidth={600}
+      />
+      <CustomLoadingModal
+        open={loading}
+        message={loadingMessage}
+        spinnerSize="lg"
+        spinnerColor="text-green-500"
+        overlayOpacity={60}
+      />
+
+      <UnsavedChangesModal
+        open={showDeleteConfirmModal}
+        onCancel={() => setShowDeleteConfirmModal(false)}
+        onConfirm={handleDeleteCatalogMicroservice}
+        title={`Deleting Catalog Microservice ${selectedCatalogMicroservice?.name}`}
+        message={
+          "This action will remove the catalog microservice from the system if item's category is not 'SYSTEM' or not in use by any microservices. This is not reversible."
+        }
+        cancelLabel={"Cancel"}
+        confirmLabel={"Delete"}
       />
     </>
   );

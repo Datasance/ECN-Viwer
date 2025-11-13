@@ -6,7 +6,6 @@ import lget from "lodash/get";
 import yaml from "js-yaml";
 import { parseMicroservice } from "../../Utils/ApplicationParser";
 import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
-import DeployApplicationTemplate from "../../Catalog/Application/DeployApplicationTemplate";
 import CustomActionModal from "../../CustomComponent/CustomActionModal";
 import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/ace";
@@ -26,13 +25,12 @@ function AppTemplates() {
   const { request } = React.useContext(ControllerContext);
   const { pushFeedback } = React.useContext(FeedbackContext);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
-  const [showDeployModal, setShowDeployModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedItem, setselectedItem] = useState<any>();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedApplicationTemplate, setSelectedApplicationTemplate] =
     useState<any | null>(null);
-  const { addYamlSession } = useTerminal();
+  const { addYamlSession, addDeploySession } = useTerminal();
 
   useEffect(() => {
     fetchCatalog();
@@ -113,7 +111,7 @@ function AppTemplates() {
         method: "DELETE",
       });
       if (!res.ok) {
-        pushFeedback({ message: res.statusText, type: "error" });
+        pushFeedback({ message: res.message, type: "error" });
       } else {
         setCatalog(catalog.filter((i: any) => i.id !== item.id));
         pushFeedback({
@@ -293,12 +291,13 @@ function AppTemplates() {
           },
           {
             registry: ms.registryId ?? null,
-            catalogItemId: ms.catalogItemId ?? null,
+            catalogId: ms.catalogItemId ?? null,
           },
         ),
         container: {
           annotations: JSON.parse(ms.annotations || "{}"),
-          rootHostAccess: ms.rootHostAccess ?? false,
+          hostNetworkMode: ms.hostNetworkMode ?? false,
+          isPrivileged: ms.isPrivileged ?? false,
           runAsUser: ms.runAsUser ?? null,
           ipcMode: ms?.ipcMode ?? "",
           pidMode: ms?.pidMode ?? "",
@@ -365,6 +364,7 @@ function AppTemplates() {
         variables: variables.map((v: any) => ({
           key: v.key,
           description: v.description,
+          defaultValue: v.defaultValue,
         })),
         application: {
           microservices: microservices,
@@ -377,7 +377,7 @@ function AppTemplates() {
 
     // Add YAML editor session to global state
     addYamlSession({
-      title: `YAML: ${selectedApplicationTemplate?.name}`,
+      title: `App Template YAML: ${selectedApplicationTemplate?.name}`,
       content: yamlString,
       isDirty: false,
       onSave: async (content: string) => {
@@ -517,16 +517,10 @@ function AppTemplates() {
           key: route.key,
           applicationTemplateId: route.applicationTemplateId,
           description: route.description,
+          defaultValue: route.defaultValue,
         }));
 
         const columns = [
-          {
-            key: "id",
-            header: "Id",
-            formatter: ({ row }: any) => (
-              <span className="text-white">{row.id}</span>
-            ),
-          },
           {
             key: "key",
             header: "Key",
@@ -535,18 +529,22 @@ function AppTemplates() {
             ),
           },
           {
-            key: "applicationTemplateId",
-            header: "Application Template Id",
-            formatter: ({ row }: any) => (
-              <span className="text-white">{row.applicationTemplateId}</span>
-            ),
-          },
-          {
             key: "description",
             header: "Description",
             formatter: ({ row }: any) => (
               <span className="text-white">{row.description}</span>
             ),
+          },
+          {
+            key: "defaultValue",
+            header: "Default Value",
+            formatter: ({ row }: any) => {
+              const value = row.defaultValue;
+              if (value === null || value === undefined || value === "") {
+                return <span className="text-gray-400 italic">No default</span>;
+              }
+              return <span className="text-white">{value}</span>;
+            },
           },
         ];
 
@@ -567,7 +565,7 @@ function AppTemplates() {
         <>
           <CustomLoadingModal
             open={true}
-            message="Fetching Certificates"
+            message="Fetching Application Templates"
             spinnerSize="lg"
             spinnerColor="text-green-500"
             overlayOpacity={60}
@@ -592,7 +590,15 @@ function AppTemplates() {
           <SlideOver
             open={isOpen}
             onClose={() => setIsOpen(false)}
-            onPublish={() => setShowDeployModal(true)}
+            onPublish={() => {
+              if (selectedApplicationTemplate) {
+                addDeploySession({
+                  title: `Application Template Form: ${selectedApplicationTemplate.name}`,
+                  template: selectedApplicationTemplate,
+                  isDirty: false,
+                });
+              }
+            }}
             onDelete={() => setShowDeleteConfirmModal(true)}
             onEditYaml={handleEditYaml}
             title={
@@ -610,19 +616,11 @@ function AppTemplates() {
             }}
             onConfirm={() => removeCatalogItem(selectedApplicationTemplate)}
             title={`Delete ${selectedApplicationTemplate?.name}`}
-            message={"This is not reversible."}
+            message={
+              "This action will remove the application template from the system. This is not reversible."
+            }
             cancelLabel={"Cancel"}
             confirmLabel={"Delete"}
-          />
-          <CustomActionModal
-            open={showDeployModal}
-            child={
-              <DeployApplicationTemplate
-                template={selectedApplicationTemplate}
-                close={() => setShowDeployModal(false)}
-              />
-            }
-            title={`Deploy ${selectedApplicationTemplate?.name}`}
           />
           <CustomActionModal
             open={showDetailModal}
