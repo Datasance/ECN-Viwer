@@ -105,7 +105,7 @@ function Secrets() {
     const yamlString = yaml.dump(yamlObj, { noRefs: true, indent: 2 });
 
     addYamlSession({
-      title: `YAML: ${selectedSecret?.name}`,
+      title: `Secret YAML: ${selectedSecret?.name}`,
       content: yamlString,
       isDirty: false,
       onSave: async (content: string) => {

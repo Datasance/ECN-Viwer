@@ -459,7 +459,7 @@ function MicroservicesList() {
 
       // Add terminal session to global state
       addTerminalSession({
-        title: `Shell: ${microservice.name}`,
+        title: `Microservice Shell: ${microservice.name}`,
         socketUrl,
         authToken: auth?.user?.access_token,
         microserviceUuid: microserviceUuid,
@@ -483,7 +483,7 @@ function MicroservicesList() {
   const handleEditYaml = () => {
     // Add YAML editor session to global state
     addYamlSession({
-      title: `YAML: ${selectedMs?.name}`,
+      title: `Microservice YAML: ${selectedMs?.name}`,
       content: yamlDump,
       isDirty: false,
       onSave: async (content: string) => {

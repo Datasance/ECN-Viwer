@@ -129,7 +129,7 @@ function CatalogMicroservices() {
     });
 
     addYamlSession({
-      title: `YAML: ${selectedCatalogMicroservice.name}`,
+      title: `CatalogItem YAML: ${selectedCatalogMicroservice.name}`,
       content: yamlString,
       isDirty: false,
       onSave: async (content: string) => {

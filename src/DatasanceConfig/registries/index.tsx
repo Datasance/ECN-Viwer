@@ -91,7 +91,7 @@ function Registries() {
     });
 
     addYamlSession({
-      title: `YAML: ${name}`,
+      title: `Registry YAML: ${name}`,
       content: yamlString,
       isDirty: false,
       onSave: async (content: string) => {

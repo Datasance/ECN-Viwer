@@ -170,7 +170,7 @@ function ApplicationList() {
   const handleEditYaml = () => {
     // Add YAML editor session to global state
     addYamlSession({
-      title: `YAML: ${selectedApplication?.name}`,
+      title: `Application YAML: ${selectedApplication?.name}`,
       content: yamlDump,
       isDirty: false,
       onSave: async (content: string) => {

@@ -360,7 +360,7 @@ function SystemMicroserviceList() {
   const handleEditYaml = () => {
     // Add YAML editor session to global state
     addYamlSession({
-      title: `YAML: ${selectedMs?.name}`,
+      title: `System Microservice YAML: ${selectedMs?.name}`,
       content: yamlDump,
       isDirty: false,
       onSave: async (content: string) => {
@@ -437,7 +437,7 @@ function SystemMicroserviceList() {
 
       // Add terminal session to global state
       addTerminalSession({
-        title: `Shell: ${microservice.name}`,
+        title: `System Microservice Shell: ${microservice.name}`,
         socketUrl,
         authToken: auth?.user?.access_token,
         microserviceUuid: microserviceUuid,
@@ -1147,7 +1147,9 @@ function SystemMicroserviceList() {
         onCancel={() => setShowResetConfirmModal(false)}
         onConfirm={handleRestart}
         title={`Rebuild ${selectedMs?.name}`}
-        message={"This is not reversible."}
+        message={
+          "This action will rebuild the microservice. Pulling the image and restarting the microservice. This is not reversible."
+        }
         cancelLabel={"Cancel"}
         confirmLabel={"Rebuild"}
         confirmColor="bg-blue"
@@ -1157,7 +1159,9 @@ function SystemMicroserviceList() {
         onCancel={() => setShowDeleteConfirmModal(false)}
         onConfirm={handleDelete}
         title={`Delete ${selectedMs?.name}`}
-        message={"This is not reversible."}
+        message={
+          "This action will remove the microservice from the system. All data and configurations will be lost. This is not reversible."
+        }
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
       />
@@ -1166,7 +1170,9 @@ function SystemMicroserviceList() {
         onCancel={() => setShowPortDeleteConfirmModal(false)}
         onConfirm={handlePortsDelete}
         title={`Delete Port ${selectedPort?.internal}`}
-        message={"This is not reversible."}
+        message={
+          "This action will remove the port mapping from the microservice. This is not reversible."
+        }
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
       />
@@ -1175,7 +1181,9 @@ function SystemMicroserviceList() {
         onCancel={() => setShowVolumeDeleteConfirmModal(false)}
         onConfirm={handleVolumeDelete}
         title={`Delete Volume ${selectedVolume?.host}`}
-        message={"This is not reversible."}
+        message={
+          "This action will remove the volume from the microservice. This is not reversible."
+        }
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
       />

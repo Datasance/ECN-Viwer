@@ -44,9 +44,10 @@ export const getMicroserviceYAMLFromJSON = ({
       uuid: microservice.uuid,
       name: microservice.name,
       agent: {
-        name: activeAgents.find(
-          (agent) => agent.uuid === microservice.iofogUuid,
-        )?.name,
+        name:
+          activeAgents.find((a) => a.uuid === microservice.iofogUuid)?.name ??
+          reducedAgents.byUUID[microservice.iofogUuid]?.name ??
+          "__UNKNOWN__",
       },
       images: microservice.images.reduce(
         (acc: any, image: any) => {

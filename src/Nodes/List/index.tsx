@@ -331,7 +331,7 @@ function NodesList() {
 
         // Add terminal session to global state
         addTerminalSession({
-          title: `Shell: ${selectedNode?.name}`,
+          title: `Agent Shell: ${selectedNode?.name}`,
           socketUrl,
           authToken: auth?.user?.access_token,
           microserviceUuid: debugUuid,
@@ -416,7 +416,7 @@ function NodesList() {
 
     // Add YAML editor session to global state
     addYamlSession({
-      title: `YAML: ${selectedNode?.name}`,
+      title: `AgentConfig YAML: ${selectedNode?.name}`,
       content: yamlString,
       isDirty: false,
       onSave: async (content: string) => {
@@ -1379,7 +1379,7 @@ function NodesList() {
         onCancel={() => setShowResetConfirmModal(false)}
         onConfirm={handleRestart}
         title={`Restart ${selectedNode?.name}`}
-        message={"This is not reversible."}
+        message={"This action will restart the agent node."}
         cancelLabel={"Cancel"}
         confirmLabel={"Restart"}
         confirmColor="bg-blue"

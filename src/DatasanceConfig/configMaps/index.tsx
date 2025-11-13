@@ -131,7 +131,7 @@ function ConfigMaps() {
     const yamlString = `${yamlHeader}\n${dataSection}`;
 
     addYamlSession({
-      title: `YAML: ${selectedConfigMap?.name}`,
+      title: `ConfigMap YAML: ${selectedConfigMap?.name}`,
       content: yamlString,
       isDirty: false,
       onSave: async (content: string) => {

@@ -377,7 +377,7 @@ function AppTemplates() {
 
     // Add YAML editor session to global state
     addYamlSession({
-      title: `YAML: ${selectedApplicationTemplate?.name}`,
+      title: `App Template YAML: ${selectedApplicationTemplate?.name}`,
       content: yamlString,
       isDirty: false,
       onSave: async (content: string) => {
@@ -593,7 +593,7 @@ function AppTemplates() {
             onPublish={() => {
               if (selectedApplicationTemplate) {
                 addDeploySession({
-                  title: `Deploy ${selectedApplicationTemplate.name}`,
+                  title: `Application Template Form: ${selectedApplicationTemplate.name}`,
                   template: selectedApplicationTemplate,
                   isDirty: false,
                 });
@@ -616,7 +616,9 @@ function AppTemplates() {
             }}
             onConfirm={() => removeCatalogItem(selectedApplicationTemplate)}
             title={`Delete ${selectedApplicationTemplate?.name}`}
-            message={"This is not reversible."}
+            message={
+              "This action will remove the application template from the system. This is not reversible."
+            }
             cancelLabel={"Cancel"}
             confirmLabel={"Delete"}
           />

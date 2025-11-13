@@ -255,7 +255,7 @@ function VolumeMounts() {
     const yamlString = yaml.dump(yamlDump, { noRefs: true, indent: 2 });
 
     addYamlSession({
-      title: `YAML: ${selectedVolume?.name}`,
+      title: `VolumeMountYAML: ${selectedVolume?.name}`,
       content: yamlString,
       isDirty: false,
       onSave: async (content: string) => {

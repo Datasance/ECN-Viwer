@@ -6,7 +6,15 @@ import StableYamlTab from "./StableYamlTab";
 import StableDeployTab from "./StableDeployTab";
 import UnsavedChangesModal from "./UnsavedChangesModal";
 
-const GlobalTerminalDrawer = () => {
+type GlobalTerminalDrawerProps = {
+  sidebarCollapsed?: boolean;
+  sidebarWidth?: number;
+};
+
+const GlobalTerminalDrawer = ({
+  sidebarCollapsed = true,
+  sidebarWidth: measuredSidebarWidth,
+}: GlobalTerminalDrawerProps) => {
   const {
     sessions,
     yamlSessions,
@@ -263,6 +271,8 @@ const GlobalTerminalDrawer = () => {
     return "Sessions";
   };
 
+  const sidebarWidth = measuredSidebarWidth ?? (sidebarCollapsed ? 80 : 270);
+
   return (
     <>
       <ResizableBottomDrawer
@@ -276,6 +286,7 @@ const GlobalTerminalDrawer = () => {
         onTabChange={handleTabChange}
         onTabClose={handleTabClose}
         showUnsavedChangesModal={isActiveTabDirty}
+        leftOffset={sidebarWidth}
       >
         {activeSessionContent}
       </ResizableBottomDrawer>

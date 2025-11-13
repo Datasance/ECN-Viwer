@@ -182,7 +182,7 @@ function Services() {
     });
 
     addYamlSession({
-      title: `YAML: ${selectedService.name}`,
+      title: `Service YAML: ${selectedService.name}`,
       content: yamlString,
       isDirty: false,
       onSave: async (content: string) => {

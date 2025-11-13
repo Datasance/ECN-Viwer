@@ -197,7 +197,7 @@ function SystemApplicationList() {
   const handleEditYaml = () => {
     // Add YAML editor session to global state
     addYamlSession({
-      title: `YAML: ${selectedApplication?.name}`,
+      title: `System Application YAML: ${selectedApplication?.name}`,
       content: yamlDump,
       isDirty: false,
       onSave: async (content: string) => {
@@ -554,7 +554,9 @@ function SystemApplicationList() {
         onCancel={() => setShowResetConfirmModal(false)}
         onConfirm={handleRestart}
         title={`Restart ${selectedApplication?.name}`}
-        message={"This is not reversible."}
+        message={
+          "This action will restart the application. This is not reversible."
+        }
         cancelLabel={"Cancel"}
         confirmLabel={"Restart"}
         confirmColor="bg-blue"
@@ -564,7 +566,9 @@ function SystemApplicationList() {
         onCancel={() => setShowDeleteConfirmModal(false)}
         onConfirm={handleDelete}
         title={`Delete ${selectedApplication?.name}`}
-        message={"This is not reversible."}
+        message={
+          "This action will remove the application from the system. All microservices running on this application will be deleted. This is not reversible."
+        }
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
       />
@@ -573,7 +577,7 @@ function SystemApplicationList() {
         onCancel={() => setShowStartStopConfirmModal(false)}
         onConfirm={handleStartStop}
         title={`${!selectedApplication?.isActivated ? "ACTIVE" : "INACTIVE"} ${selectedApplication?.name}`}
-        message={"This is not reversible."}
+        message={`This action will ${!selectedApplication?.isActivated ? "start" : "stop"} the application. This is not reversible.`}
         cancelLabel={"Cancel"}
         confirmLabel={`${!selectedApplication?.isActivated ? "ACTIVE" : "INACTIVE"}`}
       />
