@@ -16,6 +16,7 @@ import ChevronRightSharp from "@material-ui/icons/ChevronRightSharp";
 import Hub from "@material-ui/icons/DeviceHubRounded";
 import StorageRounded from "@material-ui/icons/StorageRounded";
 import LayersRounded from "@material-ui/icons/LayersRounded";
+import EventIcon from "@material-ui/icons/Event";
 
 import { useData } from "../providers/Data";
 import { useController } from "../ControllerProvider";
@@ -43,6 +44,7 @@ import Certificates from "../DatasanceConfig/certificates";
 import Services from "../DatasanceConfig/services";
 import Map from "../ECNViewer/Map/Map";
 import GlobalTerminalDrawer from "../CustomComponent/GlobalTerminalDrawer";
+import Events from "../Events";
 
 const controllerJson = window.controllerConfig || null;
 
@@ -277,6 +279,14 @@ export default function Layout() {
                       </NavLink>
                     </SubMenu>
 
+                    <NavLink to="/events">
+                      {({ isActive }) => (
+                        <MenuItem icon={<EventIcon />} active={isActive}>
+                          Events
+                        </MenuItem>
+                      )}
+                    </NavLink>
+
                     {auth && (
                       <MenuItem
                         icon={<AccountBoxIcon />}
@@ -426,6 +436,7 @@ export default function Layout() {
               <Route path="/config/VolumeMounts" Component={VolumeMounts} />
               <Route path="/config/certificates" Component={Certificates} />
               <Route path="/config/services" Component={Services} />
+              <Route path="/events" Component={Events} />
               <Route Component={() => <Navigate to="/dashboard" />} />
             </Routes>
           </div>
