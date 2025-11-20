@@ -309,11 +309,11 @@ function NodesList() {
         pushFeedback?.({ message: res.statusText, type: "error" });
         return;
       }
-
       pushFeedback?.({
-        message: "Exec enabled, waiting for debug container...",
-        type: "info",
-      });
+        message: "Exec enabled for agent ${selectedNode?.name}, waiting for debug container...",
+        agentName: selectedNode?.name,
+        type: "success",
+      }  );
 
       // Wait for debug microservice to be running
       const debugUuid = await waitForDebugMicroservice(nodeUuid);

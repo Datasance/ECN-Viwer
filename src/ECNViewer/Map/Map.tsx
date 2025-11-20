@@ -270,8 +270,9 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
       }
 
       pushFeedback?.({
-        message: "Exec enabled, waiting for debug container...",
-        type: "info",
+        message: "Exec enabled for agent ${selectedNode?.name}, waiting for debug container...",
+        type: "success",
+        agentName: selectedNode?.name,
       });
 
       // Wait for debug microservice to be running
