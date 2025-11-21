@@ -1,6 +1,6 @@
 {
   "name": "@datasance/ecn-viewer",
-  "version": "v1.2.5",
+  "version": "v1.2.6",
   "description": "Datasance ioFog Edge Cloud Network Viewer project  \\nCopyright (c) 2023 Datasance Teknoloji A.S.",
   "main": "index.js",
   "author": "Emirhan Durmus",
