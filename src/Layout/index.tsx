@@ -441,8 +441,8 @@ export default function Layout() {
             </Routes>
           </div>
         </div>
-        <GlobalTerminalDrawer 
-          sidebarCollapsed={collapsed} 
+        <GlobalTerminalDrawer
+          sidebarCollapsed={collapsed}
           sidebarWidth={sidebarWidth}
         />
       </div>

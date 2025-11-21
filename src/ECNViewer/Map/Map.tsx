@@ -270,7 +270,8 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
       }
 
       pushFeedback?.({
-        message: "Exec enabled for agent ${selectedNode?.name}, waiting for debug container...",
+        message:
+          "Exec enabled for agent ${selectedNode?.name}, waiting for debug container...",
         type: "success",
         agentName: selectedNode?.name,
       });

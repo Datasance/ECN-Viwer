@@ -50,7 +50,7 @@ function Events() {
   });
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   // Local state for filter inputs (not applied until Filter button is clicked)
   const [filterInputs, setFilterInputs] = useState<EventFilters>({
     limit: 50,
@@ -67,16 +67,19 @@ function Events() {
 
   const buildQueryString = (filters: EventFilters): string => {
     const params = new URLSearchParams();
-    
+
     if (filters.limit) params.append("limit", filters.limit.toString());
     if (filters.offset) params.append("offset", filters.offset.toString());
     if (filters.eventType) params.append("eventType", filters.eventType);
-    if (filters.endpointType) params.append("endpointType", filters.endpointType);
+    if (filters.endpointType)
+      params.append("endpointType", filters.endpointType);
     if (filters.status) params.append("status", filters.status);
-    if (filters.resourceType) params.append("resourceType", filters.resourceType);
+    if (filters.resourceType)
+      params.append("resourceType", filters.resourceType);
     if (filters.method) params.append("method", filters.method);
     if (filters.actorId) params.append("actorId", filters.actorId);
-    if (filters.startTime) params.append("startTime", filters.startTime.toString());
+    if (filters.startTime)
+      params.append("startTime", filters.startTime.toString());
     if (filters.endTime) params.append("endTime", filters.endTime.toString());
 
     return params.toString();
@@ -88,7 +91,7 @@ function Events() {
       const queryString = buildQueryString(filters);
       const url = `/api/v3/events${queryString ? `?${queryString}` : ""}`;
       const eventsResponse = await request(url);
-      
+
       if (!eventsResponse.ok) {
         pushFeedback({
           message: eventsResponse.message || "Failed to fetch events",
@@ -97,11 +100,11 @@ function Events() {
         setFetching(false);
         return;
       }
-      
+
       const responseData = await eventsResponse.json();
       const eventsList = responseData.events || responseData || [];
       setEvents(Array.isArray(eventsList) ? eventsList : []);
-      
+
       // Try to get total count from response if available
       if (responseData.total !== undefined) {
         setTotalCount(responseData.total);
@@ -111,10 +114,13 @@ function Events() {
         // If no total provided, estimate based on current results
         setTotalCount(eventsList.length);
       }
-      
+
       setFetching(false);
     } catch (e: any) {
-      pushFeedback({ message: e.message || "Error fetching events", type: "error" });
+      pushFeedback({
+        message: e.message || "Error fetching events",
+        type: "error",
+      });
       setFetching(false);
     }
   }
@@ -124,7 +130,10 @@ function Events() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
-  const handleFilterInputChange = (key: keyof EventFilters, value: string | number | undefined) => {
+  const handleFilterInputChange = (
+    key: keyof EventFilters,
+    value: string | number | undefined,
+  ) => {
     setFilterInputs((prev) => ({
       ...prev,
       [key]: value || undefined,
@@ -167,7 +176,9 @@ function Events() {
     }
   };
 
-  const handlePageInputKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handlePageInputKeyPress = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
     if (e.key === "Enter") {
       handlePageInputSubmit();
     }
@@ -209,7 +220,7 @@ function Events() {
       }
 
       const result = await res.json();
-      
+
       // Handle success message based on deletedAll flag
       let successMessage: string;
       if (result.deletedAll || deleteDays === 0) {
@@ -228,7 +239,10 @@ function Events() {
       // Refresh events after deletion
       fetchEvents();
     } catch (e: any) {
-      pushFeedback({ message: e.message || "Error deleting events", type: "error" });
+      pushFeedback({
+        message: e.message || "Error deleting events",
+        type: "error",
+      });
     }
   };
 
@@ -275,9 +289,7 @@ function Events() {
     return (
       <span
         className={`inline-block px-1.5 py-0.5 text-xs rounded ${
-          isSuccess
-            ? "bg-green-600 text-white"
-            : "bg-red-600 text-white"
+          isSuccess ? "bg-green-600 text-white" : "bg-red-600 text-white"
         }`}
       >
         {status}
@@ -289,7 +301,7 @@ function Events() {
     const method = event.method || "";
     const resource = event.resourceType || "";
     const eventType = event.eventType || "";
-    
+
     // Handle WebSocket events specifically
     if (eventType === "WS_CONNECT") {
       return resource ? `WS CONNECT ${resource}` : "WS CONNECT";
@@ -297,7 +309,7 @@ function Events() {
     if (eventType === "WS_DISCONNECT") {
       return resource ? `WS DISCONNECT ${resource}` : "WS DISCONNECT";
     }
-    
+
     // Extract a readable action description for other events
     if (method && resource) {
       return `${method} ${resource}`;
@@ -311,7 +323,9 @@ function Events() {
     return "Action";
   };
 
-  const formatActor = (actorId: string | null): { display: string; full: string; isEmail: boolean } => {
+  const formatActor = (
+    actorId: string | null,
+  ): { display: string; full: string; isEmail: boolean } => {
     if (!actorId) return { display: "System", full: "System", isEmail: false };
     // If it looks like an email, return full email
     if (actorId.includes("@")) {
@@ -328,8 +342,12 @@ function Events() {
       width: "200px",
       render: (row: AuditEvent) => (
         <div>
-          <div className="font-medium text-white text-sm">{formatRelativeTime(row.timestamp)}</div>
-          <div className="text-xs text-gray-400 mt-0.5">{formatTimestamp(row.timestamp)}</div>
+          <div className="font-medium text-white text-sm">
+            {formatRelativeTime(row.timestamp)}
+          </div>
+          <div className="text-xs text-gray-400 mt-0.5">
+            {formatTimestamp(row.timestamp)}
+          </div>
         </div>
       ),
     },
@@ -340,7 +358,9 @@ function Events() {
       render: (row: AuditEvent) => (
         <div>
           <div className="font-medium text-white flex items-center gap-2 flex-wrap">
-            <span className="text-blue-400 text-sm">{formatActionSummary(row)}</span>
+            <span className="text-blue-400 text-sm">
+              {formatActionSummary(row)}
+            </span>
             {row.resourceType && (
               <span className="text-xs text-gray-300 bg-gray-700 px-1.5 py-0.5 rounded">
                 {row.resourceType}
@@ -348,7 +368,10 @@ function Events() {
             )}
           </div>
           {row.endpointPath && (
-            <div className="text-xs text-gray-400 mt-1 truncate" title={row.endpointPath}>
+            <div
+              className="text-xs text-gray-400 mt-1 truncate"
+              title={row.endpointPath}
+            >
               {row.endpointPath}
             </div>
           )}
@@ -363,7 +386,7 @@ function Events() {
         const actor = formatActor(row.actorId);
         return (
           <div className="flex items-center gap-2 min-w-0">
-            <div 
+            <div
               className={`text-white font-medium text-xs ${
                 actor.isEmail ? "" : "font-mono"
               } truncate`}
@@ -389,9 +412,7 @@ function Events() {
         <div className="flex items-center gap-2">
           {getStatusBadge(row.status)}
           {row.statusCode && (
-            <span className="text-xs text-gray-400">
-              {row.statusCode}
-            </span>
+            <span className="text-xs text-gray-400">{row.statusCode}</span>
           )}
         </div>
       ),
@@ -522,7 +543,10 @@ function Events() {
                   <select
                     value={filterInputs.eventType || ""}
                     onChange={(e) => {
-                      handleFilterInputChange("eventType", e.target.value || undefined);
+                      handleFilterInputChange(
+                        "eventType",
+                        e.target.value || undefined,
+                      );
                       // Apply immediately for dropdowns
                       setFilters((prev) => ({
                         ...prev,
@@ -547,7 +571,10 @@ function Events() {
                   <select
                     value={filterInputs.endpointType || ""}
                     onChange={(e) => {
-                      handleFilterInputChange("endpointType", e.target.value || undefined);
+                      handleFilterInputChange(
+                        "endpointType",
+                        e.target.value || undefined,
+                      );
                       setFilters((prev) => ({
                         ...prev,
                         endpointType: e.target.value || undefined,
@@ -570,7 +597,10 @@ function Events() {
                   <select
                     value={filterInputs.status || ""}
                     onChange={(e) => {
-                      handleFilterInputChange("status", e.target.value || undefined);
+                      handleFilterInputChange(
+                        "status",
+                        e.target.value || undefined,
+                      );
                       setFilters((prev) => ({
                         ...prev,
                         status: e.target.value || undefined,
@@ -593,7 +623,10 @@ function Events() {
                   <select
                     value={filterInputs.method || ""}
                     onChange={(e) => {
-                      handleFilterInputChange("method", e.target.value || undefined);
+                      handleFilterInputChange(
+                        "method",
+                        e.target.value || undefined,
+                      );
                       setFilters((prev) => ({
                         ...prev,
                         method: e.target.value || undefined,
@@ -648,7 +681,10 @@ function Events() {
                     type="text"
                     value={filterInputs.resourceType || ""}
                     onChange={(e) =>
-                      handleFilterInputChange("resourceType", e.target.value || undefined)
+                      handleFilterInputChange(
+                        "resourceType",
+                        e.target.value || undefined,
+                      )
                     }
                     placeholder="e.g., microservice, agent"
                     className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -663,7 +699,10 @@ function Events() {
                     type="text"
                     value={filterInputs.actorId || ""}
                     onChange={(e) =>
-                      handleFilterInputChange("actorId", e.target.value || undefined)
+                      handleFilterInputChange(
+                        "actorId",
+                        e.target.value || undefined,
+                      )
                     }
                     placeholder="Username or agent UUID"
                     className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -742,17 +781,17 @@ function Events() {
             </div>
 
             <div className="w-full overflow-x-auto">
-              <table 
+              <table
                 className="w-full text-sm text-gray-300"
                 style={{ tableLayout: "fixed", minWidth: "100%" }}
               >
                 <colgroup>
                   {columns.map((col, index) => (
-                    <col 
+                    <col
                       key={col.key + index}
-                      style={{ 
+                      style={{
                         width: col.width === "auto" ? "auto" : col.width,
-                        minWidth: col.width === "auto" ? "300px" : col.width
+                        minWidth: col.width === "auto" ? "300px" : col.width,
                       }}
                     />
                   ))}
@@ -763,9 +802,9 @@ function Events() {
                       <th
                         key={col.key + index}
                         className="px-4 py-2 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider"
-                        style={{ 
+                        style={{
                           width: col.width === "auto" ? "auto" : col.width,
-                          minWidth: col.width === "auto" ? "300px" : col.width
+                          minWidth: col.width === "auto" ? "300px" : col.width,
                         }}
                       >
                         {col.header}
@@ -776,7 +815,9 @@ function Events() {
                 <tbody className="bg-gray-900 divide-y divide-gray-700">
                   {events && events.length > 0 ? (
                     events.map((row) => {
-                      const rowKey = row.id?.toString() || `${row.timestamp}-${row.requestId}`;
+                      const rowKey =
+                        row.id?.toString() ||
+                        `${row.timestamp}-${row.requestId}`;
                       return (
                         <tr
                           key={rowKey}
@@ -787,14 +828,24 @@ function Events() {
                             <td
                               key={col.key + index}
                               className="px-4 py-2 align-middle"
-                              style={{ 
-                                width: col.width === "auto" ? "auto" : col.width,
-                                minWidth: col.width === "auto" ? "300px" : col.width,
-                                wordBreak: col.key === "actorId" ? "break-word" : "normal",
-                                overflowWrap: col.key === "actorId" ? "break-word" : "normal"
+                              style={{
+                                width:
+                                  col.width === "auto" ? "auto" : col.width,
+                                minWidth:
+                                  col.width === "auto" ? "300px" : col.width,
+                                wordBreak:
+                                  col.key === "actorId"
+                                    ? "break-word"
+                                    : "normal",
+                                overflowWrap:
+                                  col.key === "actorId"
+                                    ? "break-word"
+                                    : "normal",
                               }}
                             >
-                              {col.render ? col.render(row) : (row as any)[col.key]}
+                              {col.render
+                                ? col.render(row)
+                                : (row as any)[col.key]}
                             </td>
                           ))}
                         </tr>
@@ -833,9 +884,7 @@ function Events() {
                   Previous
                 </button>
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-300 text-sm">
-                    Page
-                  </span>
+                  <span className="text-gray-300 text-sm">Page</span>
                   <input
                     type="number"
                     min="1"
@@ -846,9 +895,7 @@ function Events() {
                     placeholder={currentPage.toString()}
                     className="w-16 px-2 py-1 border border-gray-600 bg-gray-700 text-gray-200 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  <span className="text-gray-300 text-sm">
-                    of {totalPages}
-                  </span>
+                  <span className="text-gray-300 text-sm">of {totalPages}</span>
                   <button
                     onClick={handlePageInputSubmit}
                     className="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-500 transition text-sm"
@@ -888,7 +935,11 @@ function Events() {
 
       {/* Delete Events Modal */}
       <Transition show={showDeleteModal} as={Fragment}>
-        <Dialog as="div" className="relative z-[110]" onClose={() => setShowDeleteModal(false)}>
+        <Dialog
+          as="div"
+          className="relative z-[110]"
+          onClose={() => setShowDeleteModal(false)}
+        >
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -907,9 +958,12 @@ function Events() {
                 Delete Events
               </Dialog.Title>
               <div className="mt-2 text-sm text-gray-300 mb-4">
-                This will permanently delete events. This action cannot be undone.
+                This will permanently delete events. This action cannot be
+                undone.
                 <div className="mt-2 text-xs text-yellow-400 font-medium">
-                  ⚠️ Enter <strong>0</strong> to delete <strong>ALL</strong> events, or enter a number (1-365) to delete events older than that many days.
+                  ⚠️ Enter <strong>0</strong> to delete <strong>ALL</strong>{" "}
+                  events, or enter a number (1-365) to delete events older than
+                  that many days.
                 </div>
               </div>
               <div className="mb-4">
@@ -927,7 +981,11 @@ function Events() {
                       setDeleteDays(0);
                     } else {
                       const numValue = parseInt(value);
-                      if (!isNaN(numValue) && numValue >= 0 && numValue <= 365) {
+                      if (
+                        !isNaN(numValue) &&
+                        numValue >= 0 &&
+                        numValue <= 365
+                      ) {
                         setDeleteDays(numValue);
                       }
                     }
@@ -966,4 +1024,3 @@ function Events() {
 }
 
 export default Events;
-

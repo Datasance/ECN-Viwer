@@ -434,7 +434,11 @@ function MicroservicesList() {
           return;
         }
 
-        pushFeedback?.({ message: `Exec enabled for microservice ${microservice.name}`, type: "success", microserviceName: microservice.name });
+        pushFeedback?.({
+          message: `Exec enabled for microservice ${microservice.name}`,
+          type: "success",
+          microserviceName: microservice.name,
+        });
       } else if (execStatus === "active") {
         pushFeedback?.({
           message: "Exec session already active",
