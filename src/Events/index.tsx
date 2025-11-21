@@ -1,6 +1,7 @@
 import React, { useEffect, useState, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import RefreshIcon from "@material-ui/icons/Refresh";
+import GetAppIcon from "@material-ui/icons/GetApp";
 import { ControllerContext } from "../ControllerProvider";
 import { FeedbackContext } from "../Utils/FeedbackContext";
 import SlideOver from "../CustomComponent/SlideOver";
@@ -59,6 +60,8 @@ function Events() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteDays, setDeleteDays] = useState<number>(30);
   const [pageInput, setPageInput] = useState("");
+  const [exporting, setExporting] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   const handleRowClick = (row: AuditEvent) => {
     setSelectedEvent(row);
@@ -246,6 +249,186 @@ function Events() {
     }
   };
 
+  // Export current page events (respects current filters and limit)
+  const getCurrentPageEvents = (): AuditEvent[] => {
+    // Use the events already loaded in the current view
+    return events;
+  };
+
+  const exportToCSV = () => {
+    try {
+      setExporting(true);
+
+      const eventsToExport = getCurrentPageEvents();
+
+      if (eventsToExport.length === 0) {
+        pushFeedback({
+          message: "No events to export",
+          type: "warning",
+        });
+        setExporting(false);
+        return;
+      }
+
+      // CSV Headers
+      const headers = [
+        "ID",
+        "Timestamp",
+        "Event Type",
+        "Endpoint Type",
+        "Method",
+        "Endpoint Path",
+        "Resource Type",
+        "Resource ID",
+        "Actor ID",
+        "IP Address",
+        "Status",
+        "Status Code",
+        "Status Message",
+        "Request ID",
+      ];
+
+      // Convert events to CSV rows
+      const csvRows = [
+        headers.join(","),
+        ...eventsToExport.map((event) => {
+          const row = [
+            event.id?.toString() || "",
+            event.timestamp ? new Date(event.timestamp).toISOString() : "",
+            event.eventType || "",
+            event.endpointType || "",
+            event.method || "",
+            `"${(event.endpointPath || "").replace(/"/g, '""')}"`, // Escape quotes in CSV
+            event.resourceType || "",
+            event.resourceId || "",
+            event.actorId || "",
+            event.ipAddress || "",
+            event.status || "",
+            event.statusCode?.toString() || "",
+            `"${(event.statusMessage || "").replace(/"/g, '""')}"`, // Escape quotes
+            event.requestId || "",
+          ];
+          return row.join(",");
+        }),
+      ];
+
+      const csvContent = csvRows.join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+
+      link.setAttribute("href", url);
+      link.setAttribute(
+        "download",
+        `events_export_${format(new Date(), "yyyy-MM-dd_HH-mm-ss")}.csv`,
+      );
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      pushFeedback({
+        message: `Successfully exported ${eventsToExport.length} events to CSV (current page)`,
+        type: "success",
+      });
+      setExporting(false);
+    } catch (e: any) {
+      pushFeedback({
+        message: e.message || "Error exporting events to CSV",
+        type: "error",
+      });
+      setExporting(false);
+    }
+  };
+
+  const exportToJSON = () => {
+    try {
+      setExporting(true);
+
+      const eventsToExport = getCurrentPageEvents();
+
+      if (eventsToExport.length === 0) {
+        pushFeedback({
+          message: "No events to export",
+          type: "warning",
+        });
+        setExporting(false);
+        return;
+      }
+
+      // Create export object with metadata
+      const exportData = {
+        exportDate: new Date().toISOString(),
+        exportedEvents: eventsToExport.length,
+        totalMatchingEvents: totalCount,
+        currentPage: currentPage,
+        pageSize: filters.limit || 50,
+        filters: {
+          eventType: filters.eventType,
+          endpointType: filters.endpointType,
+          status: filters.status,
+          method: filters.method,
+          resourceType: filters.resourceType,
+          actorId: filters.actorId,
+          startTime: filters.startTime
+            ? new Date(filters.startTime).toISOString()
+            : undefined,
+          endTime: filters.endTime
+            ? new Date(filters.endTime).toISOString()
+            : undefined,
+        },
+        events: eventsToExport.map((event) => ({
+          id: event.id,
+          timestamp: event.timestamp,
+          timestampISO: event.timestamp
+            ? new Date(event.timestamp).toISOString()
+            : null,
+          eventType: event.eventType,
+          endpointType: event.endpointType,
+          actorId: event.actorId,
+          method: event.method,
+          resourceType: event.resourceType,
+          resourceId: event.resourceId,
+          endpointPath: event.endpointPath,
+          ipAddress: event.ipAddress,
+          status: event.status,
+          statusCode: event.statusCode,
+          statusMessage: event.statusMessage,
+          requestId: event.requestId,
+        })),
+      };
+
+      const jsonContent = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([jsonContent], {
+        type: "application/json;charset=utf-8;",
+      });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+
+      link.setAttribute("href", url);
+      link.setAttribute(
+        "download",
+        `events_export_${format(new Date(), "yyyy-MM-dd_HH-mm-ss")}.json`,
+      );
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      pushFeedback({
+        message: `Successfully exported ${eventsToExport.length} events to JSON (current page)`,
+        type: "success",
+      });
+      setExporting(false);
+    } catch (e: any) {
+      pushFeedback({
+        message: e.message || "Error exporting events to JSON",
+        type: "error",
+      });
+      setExporting(false);
+    }
+  };
+
   const formatDateTimeLocal = (timestamp?: number): string => {
     if (!timestamp) return "";
     const date = new Date(timestamp);
@@ -354,23 +537,24 @@ function Events() {
     {
       key: "action",
       header: "Action",
-      width: "auto",
+      width: "400px",
       render: (row: AuditEvent) => (
-        <div>
+        <div className="min-w-0">
           <div className="font-medium text-white flex items-center gap-2 flex-wrap">
             <span className="text-blue-400 text-sm">
               {formatActionSummary(row)}
             </span>
             {row.resourceType && (
-              <span className="text-xs text-gray-300 bg-gray-700 px-1.5 py-0.5 rounded">
+              <span className="text-xs text-gray-300 bg-gray-700 px-1.5 py-0.5 rounded flex-shrink-0">
                 {row.resourceType}
               </span>
             )}
           </div>
           {row.endpointPath && (
             <div
-              className="text-xs text-gray-400 mt-1 truncate"
+              className="text-xs text-gray-400 mt-1 truncate max-w-full"
               title={row.endpointPath}
+              style={{ maxWidth: "380px" }}
             >
               {row.endpointPath}
             </div>
@@ -761,6 +945,49 @@ function Events() {
                   <RefreshIcon fontSize="small" />
                   Refresh
                 </button>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowExportMenu(!showExportMenu)}
+                    disabled={exporting}
+                    className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-500 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Export events"
+                  >
+                    <GetAppIcon fontSize="small" />
+                    Export
+                  </button>
+                  {showExportMenu && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setShowExportMenu(false)}
+                      />
+                      <div className="absolute left-0 mt-1 w-36 bg-gray-800 border border-gray-700 rounded shadow-lg z-20">
+                        <button
+                          onClick={() => {
+                            setShowExportMenu(false);
+                            exportToCSV();
+                          }}
+                          disabled={exporting}
+                          className="w-full px-3 py-2 text-left text-sm text-white hover:bg-gray-700 rounded-t disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                          <GetAppIcon fontSize="small" />
+                          Export CSV
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowExportMenu(false);
+                            exportToJSON();
+                          }}
+                          disabled={exporting}
+                          className="w-full px-3 py-2 text-left text-sm text-white hover:bg-gray-700 rounded-b disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 border-t border-gray-700"
+                        >
+                          <GetAppIcon fontSize="small" />
+                          Export JSON
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
                 <button
                   onClick={() => setShowDeleteModal(true)}
                   className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-500 transition"
