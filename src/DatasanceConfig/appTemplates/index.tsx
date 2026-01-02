@@ -15,6 +15,7 @@ import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
 import SlideOver from "../../CustomComponent/SlideOver";
 import { format, formatDistanceToNow } from "date-fns";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
+import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
 
 function AppTemplates() {
   const [fetching, setFetching] = React.useState(true);
@@ -36,6 +37,22 @@ function AppTemplates() {
     fetchCatalog();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Unified YAML upload hook
+  const refreshFunctions = React.useMemo(() => {
+    const map = new Map();
+    map.set("ApplicationTemplate", async () => {
+      await fetchCatalog();
+    });
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const { processYamlFile: processUnifiedYaml } = useUnifiedYamlUpload({
+    request,
+    pushFeedback,
+    refreshFunctions,
+  });
 
   const handleRowClick = (row: any) => {
     if (row.name) {
@@ -102,6 +119,21 @@ function AppTemplates() {
       setFetching(false);
     }
   }
+
+  const handleRefreshAppTemplate = async () => {
+    if (!selectedApplicationTemplate?.name) return;
+    try {
+      const catalogItemResponse = await request(
+        `/api/v3/applicationTemplate/${selectedApplicationTemplate.name}`,
+      );
+      if (catalogItemResponse.ok) {
+        const catalogItems = await catalogItemResponse.json();
+        setSelectedApplicationTemplate(catalogItems);
+      }
+    } catch (e) {
+      console.error("Error refreshing application template data:", e);
+    }
+  };
 
   const removeCatalogItem = async (item: any) => {
     try {
@@ -212,33 +244,6 @@ function AppTemplates() {
     };
 
     return [applicationTemplate];
-  };
-
-  const handleYamlUpload = async (item: any) => {
-    const file = item;
-    if (file) {
-      const reader = new window.FileReader();
-
-      reader.onload = async function (evt: any) {
-        try {
-          const doc = yaml.load(evt.target.result);
-          const [catalogItem, err] = await parseApplicationTemplate(doc);
-          if (err) {
-            return pushFeedback({ message: err, type: "error" });
-          }
-          addCatalogItem(catalogItem);
-        } catch (e) {
-          console.error({ e });
-          pushFeedback({ message: "Could not parse the file", type: "error" });
-        }
-      };
-
-      reader.onerror = function (evt) {
-        pushFeedback({ message: evt, type: "error" });
-      };
-
-      reader.readAsText(file, "UTF-8");
-    }
   };
 
   async function handleYamlUpdate(content: string) {
@@ -583,7 +588,7 @@ function AppTemplates() {
               data={catalog}
               getRowKey={(row: any) => row.id}
               uploadDropzone
-              uploadFunction={handleYamlUpload}
+              uploadFunction={processUnifiedYaml}
               closeMenuRowKey={selectedItem}
             />
           </div>
@@ -608,6 +613,8 @@ function AppTemplates() {
             data={selectedApplicationTemplate}
             fields={slideOverFields}
             customWidth={900}
+            enablePolling={true}
+            onRefresh={handleRefreshAppTemplate}
           />
           <UnsavedChangesModal
             open={showDeleteConfirmModal}

@@ -9,6 +9,7 @@ import StopOutlined from "@material-ui/icons/StopOutlined";
 import PublishOutlined from "@material-ui/icons/PublishOutlined";
 import DescriptionOutlined from "@material-ui/icons/DescriptionOutlined";
 import VpnKeyIcon from "@material-ui/icons/VpnKey";
+import { usePollingConfig } from "../providers/PollingConfig/PollingConfigProvider";
 
 type Field<T> = {
   label: string;
@@ -33,9 +34,12 @@ type SlideOverProps<T> = {
   onClean?: () => void;
   customWidth?: number;
   onTerminal?: () => void;
+  onLogs?: () => void;
   onAttach?: () => void;
   onDetach?: () => void;
   onProvisionKey?: () => void;
+  enablePolling?: boolean;
+  onRefresh?: () => void | Promise<void>;
 };
 
 const SlideOver = <T,>({
@@ -53,13 +57,57 @@ const SlideOver = <T,>({
   onDetails,
   onClean,
   onTerminal,
+  onLogs,
   onAttach,
   onDetach,
   onProvisionKey,
   customWidth,
+  enablePolling = false,
+  onRefresh,
 }: SlideOverProps<T>) => {
   const [width, setWidth] = useState(customWidth ? customWidth : 480);
   const isResizing = useRef(false);
+  const { getSlideoverInterval } = usePollingConfig();
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const onRefreshRef = useRef(onRefresh);
+
+  // Keep onRefresh ref up to date
+  useEffect(() => {
+    onRefreshRef.current = onRefresh;
+  }, [onRefresh]);
+
+  // Set up polling when slideover is open and polling is enabled
+  useEffect(() => {
+    // Clear any existing interval first
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    // Only set up polling if slideover is open, polling is enabled, and refresh callback exists
+    if (open && enablePolling && onRefreshRef.current) {
+      const interval = getSlideoverInterval();
+      intervalRef.current = setInterval(() => {
+        // Only call refresh if slideover is still open
+        if (onRefreshRef.current) {
+          const result = onRefreshRef.current();
+          if (result instanceof Promise) {
+            result.catch((error) => {
+              console.error("Error refreshing slideover data:", error);
+            });
+          }
+        }
+      }, interval);
+    }
+
+    // Cleanup on unmount or when dependencies change
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [open, enablePolling, getSlideoverInterval]);
 
   const startResizing = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -198,6 +246,31 @@ const SlideOver = <T,>({
                               fill="currentColor"
                               d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h16q.825 0 1.413.588T22 6v12q0 .825-.587 1.413T20 20zm0-2h16V8H4zm3.5-1l-1.4-1.4L8.675 13l-2.6-2.6L7.5 9l4 4zm4.5 0v-2h6v2z"
                             />
+                          </svg>
+                        </button>
+                      )}
+                      {onLogs && (
+                        <button
+                          onClick={onLogs}
+                          className="hover:text-white hover:bg-sky-500 rounded"
+                          title="Logs"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <path d="M14 2v6h6" />
+                            <path d="M16 13H8" />
+                            <path d="M16 17H8" />
+                            <path d="M10 9H8" />
                           </svg>
                         </button>
                       )}

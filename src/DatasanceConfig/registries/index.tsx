@@ -9,6 +9,7 @@ import { useLocation } from "react-router-dom";
 import yaml from "js-yaml";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 import { parseRegistries } from "../../Utils/parseRegistriesYaml";
+import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
 
 function Registries() {
   const [fetching, setFetching] = React.useState(true);
@@ -26,6 +27,24 @@ function Registries() {
   const handleRowClick = (row: any) => {
     setSelectedRegistry(row);
     setIsOpen(true);
+  };
+
+  const handleRefreshRegistry = async () => {
+    if (!selectedRegistry?.id) return;
+    try {
+      const registriesResponse = await request("/api/v3/registries");
+      if (registriesResponse.ok) {
+        const registries = (await registriesResponse.json()).registries;
+        const updatedRegistry = registries.find(
+          (r: any) => r.id === selectedRegistry.id,
+        );
+        if (updatedRegistry) {
+          setSelectedRegistry(updatedRegistry);
+        }
+      }
+    } catch (e) {
+      console.error("Error refreshing registry data:", e);
+    }
   };
 
   async function fetchRegistries() {
@@ -53,6 +72,22 @@ function Registries() {
     fetchRegistries();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Unified YAML upload hook
+  const refreshFunctions = React.useMemo(() => {
+    const map = new Map();
+    map.set("Registry", async () => {
+      await fetchRegistries();
+    });
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const { processYamlFile: processUnifiedYaml } = useUnifiedYamlUpload({
+    request,
+    pushFeedback,
+    refreshFunctions,
+  });
 
   useEffect(() => {
     if (registryId && registries) {
@@ -176,58 +211,6 @@ function Registries() {
     }
   };
 
-  const handleYamlParse = async (item: any) => {
-    const file = item;
-    if (file) {
-      const reader = new window.FileReader();
-
-      reader.onload = async function (evt: any) {
-        try {
-          const docs = yaml.loadAll(evt.target.result);
-
-          if (!Array.isArray(docs)) {
-            pushFeedback({
-              message: "Could not parse the file: Invalid YAML format",
-              type: "error",
-            });
-            return;
-          }
-
-          for (const doc of docs) {
-            if (!doc) {
-              continue;
-            }
-
-            const [registry, err] = await parseRegistries(doc);
-
-            if (err) {
-              console.error("Error parsing a document:", err);
-              pushFeedback({
-                message: `Error processing item: ${err}`,
-                type: "error",
-              });
-            } else {
-              try {
-                await handleYamlUpdate(registry, "POST");
-              } catch (e) {
-                console.error("Error updating a document:", e);
-              }
-            }
-          }
-        } catch (e) {
-          console.error({ e });
-          pushFeedback({ message: "Could not parse the file", type: "error" });
-        }
-      };
-
-      reader.onerror = function (evt) {
-        pushFeedback({ message: evt, type: "error" });
-      };
-
-      reader.readAsText(file, "UTF-8");
-    }
-  };
-
   const columns = [
     {
       key: "id",
@@ -300,7 +283,7 @@ function Registries() {
               data={registries}
               getRowKey={(row: any) => row.id}
               uploadDropzone
-              uploadFunction={handleYamlParse}
+              uploadFunction={processUnifiedYaml}
             />
           </div>
         </>
@@ -314,6 +297,8 @@ function Registries() {
         fields={slideOverFields}
         customWidth={600}
         onEditYaml={handleEditYaml}
+        enablePolling={true}
+        onRefresh={handleRefreshRegistry}
       />
 
       <UnsavedChangesModal

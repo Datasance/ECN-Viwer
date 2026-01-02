@@ -17,6 +17,7 @@ import Hub from "@material-ui/icons/DeviceHubRounded";
 import StorageRounded from "@material-ui/icons/StorageRounded";
 import LayersRounded from "@material-ui/icons/LayersRounded";
 import EventIcon from "@material-ui/icons/Event";
+import TuneIcon from "@material-ui/icons/Tune";
 
 import { useData } from "../providers/Data";
 import { useController } from "../ControllerProvider";
@@ -42,8 +43,10 @@ import VolumeMounts from "../DatasanceConfig/volumeMounts";
 import Secrets from "../DatasanceConfig/secret";
 import Certificates from "../DatasanceConfig/certificates";
 import Services from "../DatasanceConfig/services";
+import PollingSettings from "../DatasanceConfig/pollingSettings";
 import Map from "../ECNViewer/Map/Map";
 import GlobalTerminalDrawer from "../CustomComponent/GlobalTerminalDrawer";
+import LogViewerDrawer from "../CustomComponent/LogViewerDrawer";
 import Events from "../Events";
 
 const controllerJson = window.controllerConfig || null;
@@ -287,6 +290,14 @@ export default function Layout() {
                       )}
                     </NavLink>
 
+                    <NavLink to="/config/pollingSettings">
+                      {({ isActive }) => (
+                        <MenuItem icon={<TuneIcon />} active={isActive}>
+                          Viewer Config
+                        </MenuItem>
+                      )}
+                    </NavLink>
+
                     {auth && (
                       <MenuItem
                         icon={<AccountBoxIcon />}
@@ -436,12 +447,20 @@ export default function Layout() {
               <Route path="/config/VolumeMounts" Component={VolumeMounts} />
               <Route path="/config/certificates" Component={Certificates} />
               <Route path="/config/services" Component={Services} />
+              <Route
+                path="/config/pollingSettings"
+                Component={PollingSettings}
+              />
               <Route path="/events" Component={Events} />
               <Route Component={() => <Navigate to="/dashboard" />} />
             </Routes>
           </div>
         </div>
         <GlobalTerminalDrawer
+          sidebarCollapsed={collapsed}
+          sidebarWidth={sidebarWidth}
+        />
+        <LogViewerDrawer
           sidebarCollapsed={collapsed}
           sidebarWidth={sidebarWidth}
         />

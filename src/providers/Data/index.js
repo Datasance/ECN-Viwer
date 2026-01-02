@@ -3,6 +3,7 @@ import { useController } from "../../ControllerProvider";
 import { find, groupBy, get } from "lodash";
 import useRecursiveTimeout from "../../hooks/useInterval";
 import { useAuth } from "../../auth";
+import { usePollingConfig } from "../PollingConfig/PollingConfigProvider";
 
 import AgentManager from "./agent-manager";
 import ApplicationManager from "./application-manager";
@@ -143,9 +144,55 @@ export const DataProvider = ({ children }) => {
   const { request, refresh } = useController();
   const [state, dispatch] = React.useReducer(reducer, initState);
   const [loading, setLoading] = React.useState(true);
-  const timeout = +refresh || 3000;
+  const { getPollingInterval } = usePollingConfig();
   const [error, setError] = React.useState(false);
   const { keycloak, initialized } = useAuth();
+
+  // Get polling interval from config, fallback to controller config or default
+  const [timeout, setTimeout] = React.useState(() => {
+    try {
+      const configInterval = getPollingInterval();
+      if (configInterval) return configInterval;
+    } catch (e) {
+      // Fallback if provider not available
+    }
+    return +refresh || 3000;
+  });
+
+  // Listen for localStorage changes to update polling interval dynamically
+  React.useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === "ecn-viewer-polling-config" && e.newValue) {
+        try {
+          const newConfig = JSON.parse(e.newValue);
+          if (newConfig.mainPollingInterval) {
+            setTimeout(newConfig.mainPollingInterval);
+          }
+        } catch (error) {
+          console.error("Error parsing polling config change:", error);
+        }
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    // Poll for changes (since same-tab localStorage changes don't trigger storage event)
+    const intervalId = setInterval(() => {
+      try {
+        const configInterval = getPollingInterval();
+        if (configInterval && configInterval !== timeout) {
+          setTimeout(configInterval);
+        }
+      } catch (e) {
+        // Fallback if provider not available
+      }
+    }, 1000);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(intervalId);
+    };
+  }, [getPollingInterval, timeout]);
 
   const update = async () => {
     // Only update if we're initialized or not using auth

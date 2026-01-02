@@ -19,11 +19,16 @@ import { StatusColor, StatusType } from "../../Utils/Enums/StatusColor";
 import { getTextColor } from "../../ECNViewer/utils";
 import { NavLink } from "react-router-dom";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
+import { useLogViewer } from "../../providers/LogViewer/LogViewerProvider";
+import LogConfigModal, {
+  LogTailConfig,
+} from "../../CustomComponent/LogConfigModal";
 import { useAuth } from "react-oidc-context";
 import FileCopyIcon from "@material-ui/icons/FileCopy";
 import CheckIcon from "@material-ui/icons/Check";
 import VisibilityIcon from "@material-ui/icons/Visibility";
 import VisibilityOffIcon from "@material-ui/icons/VisibilityOff";
+import AgentManager from "../../providers/Data/agent-manager";
 
 interface CustomLeafletProps {
   collapsed: boolean;
@@ -69,7 +74,9 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
   const [loadingProvisionKey, setLoadingProvisionKey] = useState(false);
   const [commandsVisible, setCommandsVisible] = useState(false);
   const [editorDataChanged, setEditorDataChanged] = React.useState<any>();
+  const [showLogConfigModal, setShowLogConfigModal] = useState(false);
   const { addTerminalSession, addYamlSession } = useTerminal();
+  const { addLogSession } = useLogViewer();
   const auth = useAuth();
   const [selectedAgentItem, setSelectedAgentItem] = useState<any>(null);
   const markers = data?.reducedAgents?.byName
@@ -109,6 +116,21 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
       const selectedAgents = data.reducedAgents.byUUID[marker.id];
       setSelectedNode(selectedAgents);
       setIsOpen(true);
+    }
+  };
+
+  const handleRefreshAgent = async () => {
+    if (!selectedNode?.uuid) return;
+    try {
+      const agents = await AgentManager.listAgents(request)();
+      const updatedAgent = agents.find(
+        (a: any) => a.uuid === selectedNode.uuid,
+      );
+      if (updatedAgent) {
+        setSelectedNode(updatedAgent);
+      }
+    } catch (e) {
+      console.error("Error refreshing agent data:", e);
     }
   };
 
@@ -270,8 +292,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
       }
 
       pushFeedback?.({
-        message:
-          "Exec enabled for agent ${selectedNode?.name}, waiting for debug container...",
+        message: `Exec enabled for agent ${selectedNode?.name}, waiting for debug container...`,
         type: "success",
         agentName: selectedNode?.name,
       });
@@ -311,6 +332,57 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
     } catch (err: any) {
       pushFeedback?.({
         message: err.message || "Exec enable failed",
+        type: "error",
+      });
+    }
+  };
+
+  const handleOpenLogs = () => {
+    if (!selectedNode) return;
+    setShowLogConfigModal(true);
+  };
+
+  const handleLogConfigConfirm = (config: LogTailConfig) => {
+    if (!selectedNode) return;
+    setShowLogConfigModal(false);
+
+    try {
+      // Create websocket URL with tail config
+      const baseUrl = (() => {
+        if (!window.controllerConfig?.url) {
+          return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/iofog/${selectedNode.uuid}/logs`;
+        }
+        const u = new URL(window.controllerConfig.url);
+        const protocol = u.protocol === "https:" ? "wss:" : "ws:";
+        return `${protocol}//${u.host}/api/v3/iofog/${selectedNode.uuid}/logs`;
+      })();
+
+      const params = new URLSearchParams();
+      params.append("tail", config.tail.toString());
+      params.append("follow", config.follow.toString());
+      if (config.since) params.append("since", config.since);
+      if (config.until) params.append("until", config.until);
+
+      const socketUrl = `${baseUrl}?${params.toString()}`;
+
+      // Add log session
+      addLogSession({
+        title: `Logs: ${selectedNode.name}`,
+        socketUrl,
+        authToken: auth?.user?.access_token,
+        resourceUuid: selectedNode.uuid,
+        resourceName: selectedNode.name,
+        sourceType: "node",
+        tailConfig: config,
+      });
+
+      pushFeedback?.({
+        message: "Opening log viewer...",
+        type: "info",
+      });
+    } catch (err: any) {
+      pushFeedback?.({
+        message: err.message || "Failed to open logs",
         type: "error",
       });
     }
@@ -1201,7 +1273,10 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
         onClean={() => setShowCleanConfirmModal(true)}
         onEditYaml={handleEditYaml}
         onTerminal={() => enableExecAndOpenTerminal(selectedNode?.uuid!)}
+        onLogs={handleOpenLogs}
         onProvisionKey={handleProvisionKey}
+        enablePolling={true}
+        onRefresh={handleRefreshAgent}
       />
       <UnsavedChangesModal
         open={showResetConfirmModal}
@@ -1391,6 +1466,13 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
             </div>
           )
         }
+      />
+      <LogConfigModal
+        open={showLogConfigModal}
+        onClose={() => setShowLogConfigModal(false)}
+        onConfirm={handleLogConfigConfirm}
+        logSourceName={selectedNode?.name || "Node"}
+        logSourceType="node"
       />
     </div>
   );

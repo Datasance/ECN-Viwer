@@ -8,6 +8,7 @@ import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import { useLocation, NavLink } from "react-router-dom";
 import yaml from "js-yaml";
 import { parseCatalogMicroservice } from "../../Utils/parseCatalogMicroservice";
+import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 
 function CatalogMicroservices() {
@@ -81,10 +82,41 @@ function CatalogMicroservices() {
     }
   }
 
+  const handleRefreshCatalogMicroservice = async () => {
+    if (!selectedCatalogMicroservice?.id) return;
+    try {
+      const catalogItemResponse = await request(
+        `/api/v3/catalog/microservices/${selectedCatalogMicroservice.id}`,
+      );
+      if (catalogItemResponse.ok) {
+        const catalogItems = await catalogItemResponse.json();
+        setselectedCatalogMicroservice(catalogItems);
+      }
+    } catch (e) {
+      console.error("Error refreshing catalog microservice data:", e);
+    }
+  };
+
   useEffect(() => {
     fetchCatalog();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Unified YAML upload hook
+  const refreshFunctions = React.useMemo(() => {
+    const map = new Map();
+    map.set("CatalogItem", async () => {
+      await fetchCatalog();
+    });
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const { processYamlFile: processUnifiedYaml } = useUnifiedYamlUpload({
+    request,
+    pushFeedback,
+    refreshFunctions,
+  });
 
   useEffect(() => {
     if (catalogItemId && catalog) {
@@ -148,54 +180,6 @@ function CatalogMicroservices() {
         }
       },
     });
-  };
-
-  const handleYamlUpload = async (item: any) => {
-    const file = item;
-    if (file) {
-      const reader = new window.FileReader();
-
-      reader.onload = async function (evt: any) {
-        try {
-          const docs = yaml.loadAll(evt.target.result);
-
-          if (!Array.isArray(docs)) {
-            pushFeedback({
-              message: "Could not parse the file: Invalid YAML format",
-              type: "error",
-            });
-            return;
-          }
-
-          for (const doc of docs) {
-            if (!doc) {
-              continue;
-            }
-
-            const [catalogItem, err] = await parseCatalogMicroservice(doc);
-
-            if (err) {
-              console.error("Error parsing a document:", err);
-              pushFeedback({
-                message: `Error processing item: ${err}`,
-                type: "error",
-              });
-            } else {
-              await postCatalogItem(catalogItem, "POST");
-            }
-          }
-        } catch (e) {
-          console.error({ e });
-          pushFeedback({ message: "Could not parse the file", type: "error" });
-        }
-      };
-
-      reader.onerror = function (evt) {
-        pushFeedback({ message: evt, type: "error" });
-      };
-
-      reader.readAsText(file, "UTF-8");
-    }
   };
 
   const postCatalogItem = async (item: any, method?: string) => {
@@ -474,7 +458,7 @@ function CatalogMicroservices() {
               data={catalog}
               getRowKey={(row: any) => row.id}
               uploadDropzone
-              uploadFunction={handleYamlUpload}
+              uploadFunction={processUnifiedYaml}
             />
           </div>
         </>
@@ -490,6 +474,8 @@ function CatalogMicroservices() {
         data={selectedCatalogMicroservice}
         fields={slideOverFields}
         customWidth={600}
+        enablePolling={true}
+        onRefresh={handleRefreshCatalogMicroservice}
       />
       <CustomLoadingModal
         open={loading}

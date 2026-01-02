@@ -16,6 +16,8 @@ import { getTextColor } from "../../ECNViewer/utils";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "react-router-dom";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
+import ApplicationManager from "../../providers/Data/application-manager";
+import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
 
 function SystemApplicationList() {
   const { data } = useData();
@@ -51,6 +53,24 @@ function SystemApplicationList() {
   const handleRowClick = (row: any) => {
     setSelectedApplication(row);
     setIsOpen(true);
+  };
+
+  const handleRefreshSystemApplication = async () => {
+    if (!selectedApplication?.name) return;
+    try {
+      const systemApplications =
+        await ApplicationManager.listSystemApplications(request)();
+      const updatedApplication = systemApplications.find(
+        (a: any) =>
+          a.name === selectedApplication.name ||
+          a.id === selectedApplication.id,
+      );
+      if (updatedApplication) {
+        setSelectedApplication(updatedApplication);
+      }
+    } catch (e) {
+      console.error("Error refreshing system application data:", e);
+    }
   };
 
   async function restartFunction(type: boolean) {
@@ -206,49 +226,21 @@ function SystemApplicationList() {
     });
   };
 
-  const readApplicationFile = async (item: any) => {
-    const file = item;
-    if (file) {
-      const reader = new window.FileReader();
+  // Unified YAML upload hook
+  // System Applications are managed by Data provider which polls automatically
+  const refreshFunctions = React.useMemo(() => {
+    const map = new Map();
+    map.set("Application", async () => {
+      // Data provider will automatically refresh on next poll cycle
+    });
+    return map;
+  }, []);
 
-      reader.onload = async function (evt: any) {
-        try {
-          const doc = yaml.load(evt.target.result);
-          const [applicationData, err] = await parseApplicationFile(doc);
-          if (err) {
-            return pushFeedback({ message: err, type: "error" });
-          }
-          const newApplication = !data.applications?.find(
-            (a: any) => a.name === applicationData.name,
-          );
-          const res = await deployApplication(applicationData, newApplication);
-          if (!res.ok) {
-            try {
-              const error = await res.json();
-              pushFeedback({ message: error.message, type: "error" });
-            } catch (e) {
-              pushFeedback({ message: res.message, type: "error" });
-            }
-          } else {
-            pushFeedback({
-              message: newApplication
-                ? "Application deployed!"
-                : "Application updated!",
-              type: "success",
-            });
-          }
-        } catch (e: any) {
-          pushFeedback({ message: e.message, type: "error" });
-        }
-      };
-
-      reader.onerror = function (evt) {
-        pushFeedback({ message: evt, type: "error" });
-      };
-
-      reader.readAsText(file, "UTF-8");
-    }
-  };
+  const { processYamlFile: processUnifiedYaml } = useUnifiedYamlUpload({
+    request,
+    pushFeedback,
+    refreshFunctions,
+  });
 
   const columns = [
     {
@@ -533,7 +525,7 @@ function SystemApplicationList() {
         data={data.systemApplications}
         getRowKey={(row) => row.id}
         uploadDropzone
-        uploadFunction={readApplicationFile}
+        uploadFunction={processUnifiedYaml}
       />
       <SlideOver
         open={isOpen}
@@ -547,6 +539,8 @@ function SystemApplicationList() {
         customWidth={700}
         onStartStop={() => setShowStartStopConfirmModal(true)}
         startStopValue={selectedApplication?.isActivated}
+        enablePolling={true}
+        onRefresh={handleRefreshSystemApplication}
       />
 
       <UnsavedChangesModal

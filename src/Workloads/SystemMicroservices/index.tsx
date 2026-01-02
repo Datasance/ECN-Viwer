@@ -24,6 +24,10 @@ import { useLocation } from "react-router-dom";
 import { NavLink } from "react-router-dom";
 import EditOutlinedIcon from "@material-ui/icons/EditOutlined";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
+import { useLogViewer } from "../../providers/LogViewer/LogViewerProvider";
+import LogConfigModal, {
+  LogTailConfig,
+} from "../../CustomComponent/LogConfigModal";
 import { useAuth } from "react-oidc-context";
 
 function SystemMicroserviceList() {
@@ -57,7 +61,9 @@ function SystemMicroserviceList() {
   const [editorValues, setEditorValues] = React.useState<string>("");
   const [configData, setConfigData] = useState<any>();
   const [editorContent, setEditorContent] = useState<string>("");
+  const [showLogConfigModal, setShowLogConfigModal] = useState(false);
   const { addTerminalSession, addYamlSession } = useTerminal();
+  const { addLogSession } = useLogViewer();
   const auth = useAuth();
 
   useEffect(() => {
@@ -76,6 +82,36 @@ function SystemMicroserviceList() {
   const handleRowClick = (row: any) => {
     setSelectedMs(row);
     setIsOpen(true);
+  };
+
+  const handleRefreshSystemMicroservice = async () => {
+    if (!selectedMs?.uuid) return;
+    try {
+      const microserviceResponse = await request(
+        `/api/v3/microservices/system/${selectedMs.uuid}`,
+      );
+      if (microserviceResponse.ok) {
+        const microserviceData = await microserviceResponse.json();
+        // Find the system application this microservice belongs to
+        const app = data?.systemApplications?.find((a: any) =>
+          a.microservices?.some((m: any) => m.uuid === selectedMs.uuid),
+        );
+        if (app && microserviceData.microservice) {
+          const updatedMs = {
+            ...microserviceData.microservice,
+            agentName:
+              data.reducedAgents.byUUID[microserviceData.microservice.iofogUuid]
+                ?.name,
+            appName: app.name,
+            appDescription: app.description,
+            appCreatedAt: app.createdAt,
+          };
+          setSelectedMs(updatedMs);
+        }
+      }
+    } catch (e) {
+      console.error("Error refreshing system microservice data:", e);
+    }
   };
 
   const handleRestart = async () => {
@@ -448,6 +484,57 @@ function SystemMicroserviceList() {
     } catch (err: any) {
       pushFeedback?.({
         message: err.message || "Exec enable failed",
+        type: "error",
+      });
+    }
+  };
+
+  const handleOpenLogs = () => {
+    if (!selectedMs) return;
+    setShowLogConfigModal(true);
+  };
+
+  const handleLogConfigConfirm = (config: LogTailConfig) => {
+    if (!selectedMs) return;
+    setShowLogConfigModal(false);
+
+    try {
+      // Create websocket URL with tail config
+      const baseUrl = (() => {
+        if (!window.controllerConfig?.url) {
+          return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/microservices/system/${selectedMs.uuid}/logs`;
+        }
+        const u = new URL(window.controllerConfig.url);
+        const protocol = u.protocol === "https:" ? "wss:" : "ws:";
+        return `${protocol}//${u.host}/api/v3/microservices/${selectedMs.uuid}/logs`;
+      })();
+
+      const params = new URLSearchParams();
+      params.append("tail", config.tail.toString());
+      params.append("follow", config.follow.toString());
+      if (config.since) params.append("since", config.since);
+      if (config.until) params.append("until", config.until);
+
+      const socketUrl = `${baseUrl}?${params.toString()}`;
+
+      // Add log session
+      addLogSession({
+        title: `Logs: ${selectedMs.name}`,
+        socketUrl,
+        authToken: auth?.user?.access_token,
+        resourceUuid: selectedMs.uuid,
+        resourceName: selectedMs.name,
+        sourceType: "system-microservice",
+        tailConfig: config,
+      });
+
+      pushFeedback?.({
+        message: "Opening log viewer...",
+        type: "info",
+      });
+    } catch (err: any) {
+      pushFeedback?.({
+        message: err.message || "Failed to open logs",
         type: "error",
       });
     }
@@ -1143,7 +1230,10 @@ function SystemMicroserviceList() {
         onDelete={() => setShowDeleteConfirmModal(true)}
         onEditYaml={handleEditYaml}
         onTerminal={() => enableExecAndOpenTerminal(selectedMs?.uuid!)}
+        onLogs={handleOpenLogs}
         customWidth={750}
+        enablePolling={true}
+        onRefresh={handleRefreshSystemMicroservice}
       />
       <UnsavedChangesModal
         open={showResetConfirmModal}
@@ -1189,6 +1279,13 @@ function SystemMicroserviceList() {
         }
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
+      />
+      <LogConfigModal
+        open={showLogConfigModal}
+        onClose={() => setShowLogConfigModal(false)}
+        onConfirm={handleLogConfigConfirm}
+        logSourceName={selectedMs?.name || "System Microservice"}
+        logSourceType="system-microservice"
       />
     </div>
   );

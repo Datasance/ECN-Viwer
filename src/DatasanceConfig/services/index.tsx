@@ -11,6 +11,7 @@ import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import { parseService } from "../../Utils/parseServiceYaml";
 import yaml from "js-yaml";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
+import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
 
 function Services() {
   const [fetching, setFetching] = React.useState(true);
@@ -134,10 +135,41 @@ function Services() {
     }
   }
 
+  const handleRefreshService = async () => {
+    if (!selectedService?.name) return;
+    try {
+      const itemResponse = await request(
+        `/api/v3/services/${selectedService.name}`,
+      );
+      if (itemResponse.ok) {
+        const responseItem = await itemResponse.json();
+        setSelectedService(responseItem);
+      }
+    } catch (e) {
+      console.error("Error refreshing service data:", e);
+    }
+  };
+
   useEffect(() => {
     fetchServices();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Unified YAML upload hook - initialized after fetchServices is defined
+  const refreshFunctions = React.useMemo(() => {
+    const map = new Map();
+    map.set("Service", async () => {
+      await fetchServices();
+    });
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const { processYamlFile: processUnifiedYaml } = useUnifiedYamlUpload({
+    request,
+    pushFeedback,
+    refreshFunctions,
+  });
 
   const handleEditYaml = () => {
     if (!selectedService) return;
@@ -201,58 +233,6 @@ function Services() {
         }
       },
     });
-  };
-
-  const handleYamlParse = async (item: any) => {
-    const file = item;
-    if (file) {
-      const reader = new window.FileReader();
-
-      reader.onload = async function (evt: any) {
-        try {
-          const docs = yaml.loadAll(evt.target.result);
-
-          if (!Array.isArray(docs)) {
-            pushFeedback({
-              message: "Could not parse the file: Invalid YAML format",
-              type: "error",
-            });
-            return;
-          }
-
-          for (const doc of docs) {
-            if (!doc) {
-              continue;
-            }
-
-            const [service, err] = await parseService(doc);
-
-            if (err) {
-              console.error("Error parsing a document:", err);
-              pushFeedback({
-                message: `Error processing item: ${err}`,
-                type: "error",
-              });
-            } else {
-              try {
-                await handleYamlUpdate(service, "POST");
-              } catch (e) {
-                console.error("Error updating a document:", e);
-              }
-            }
-          }
-        } catch (e) {
-          console.error({ e });
-          pushFeedback({ message: "Could not parse the file", type: "error" });
-        }
-      };
-
-      reader.onerror = function (evt) {
-        pushFeedback({ message: evt, type: "error" });
-      };
-
-      reader.readAsText(file, "UTF-8");
-    }
   };
 
   async function handleYamlUpdate(service: any, method?: string) {
@@ -464,7 +444,7 @@ function Services() {
               data={services}
               getRowKey={(row: any) => row.id}
               uploadDropzone
-              uploadFunction={handleYamlParse}
+              uploadFunction={processUnifiedYaml}
             />
 
             <SlideOver
@@ -476,6 +456,8 @@ function Services() {
               data={selectedService}
               fields={slideOverFields}
               customWidth={600}
+              enablePolling={true}
+              onRefresh={handleRefreshService}
             />
 
             <UnsavedChangesModal

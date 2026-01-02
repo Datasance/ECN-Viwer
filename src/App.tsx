@@ -5,12 +5,14 @@ import React, { useEffect } from "react";
 import { ControllerProvider } from "./ControllerProvider";
 import { DataProvider } from "./providers/Data";
 import { TerminalProvider } from "./providers/Terminal/TerminalProvider";
+import { LogViewerProvider } from "./providers/LogViewer/LogViewerProvider";
 import Layout from "./Layout";
 import "./App.scss";
 
 import FeedbackContext from "./Utils/FeedbackContext";
 import ThemeContext from "./Theme/ThemeProvider";
 import { ConfigProvider } from "./providers/Config";
+import { PollingConfigProvider } from "./providers/PollingConfig/PollingConfigProvider";
 import "./styles/tailwind.css";
 import { KeycloakAuthProvider } from "./auth";
 import "immutable";
@@ -32,13 +34,17 @@ function App() {
         <DndProvider backend={HTML5Backend}>
           <ControllerProvider>
             <ConfigProvider>
-              <DataProvider>
-                <TerminalProvider>
-                  <FeedbackContext>
-                    <Layout />
-                  </FeedbackContext>
-                </TerminalProvider>
-              </DataProvider>
+              <PollingConfigProvider>
+                <DataProvider>
+                  <TerminalProvider>
+                    <LogViewerProvider>
+                      <FeedbackContext>
+                        <Layout />
+                      </FeedbackContext>
+                    </LogViewerProvider>
+                  </TerminalProvider>
+                </DataProvider>
+              </PollingConfigProvider>
             </ConfigProvider>
           </ControllerProvider>
         </DndProvider>

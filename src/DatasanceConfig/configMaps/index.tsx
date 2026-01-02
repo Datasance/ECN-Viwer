@@ -16,6 +16,7 @@ import EditOutlinedIcon from "@material-ui/icons/EditOutlined";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
 import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
+import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
 
 function ConfigMaps() {
   const [fetching, setFetching] = React.useState(true);
@@ -94,10 +95,41 @@ function ConfigMaps() {
     }
   }
 
+  const handleRefreshConfigMap = async () => {
+    if (!selectedConfigMap?.name) return;
+    try {
+      const itemResponse = await request(
+        `/api/v3/configmaps/${selectedConfigMap.name}`,
+      );
+      if (itemResponse.ok) {
+        const responseItem = await itemResponse.json();
+        setSelectedConfigMap(responseItem);
+      }
+    } catch (e) {
+      console.error("Error refreshing config map data:", e);
+    }
+  };
+
   useEffect(() => {
     fetchConfigMaps();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Unified YAML upload hook
+  const refreshFunctions = React.useMemo(() => {
+    const map = new Map();
+    map.set("ConfigMap", async () => {
+      await fetchConfigMaps();
+    });
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const { processYamlFile: processUnifiedYaml } = useUnifiedYamlUpload({
+    request,
+    pushFeedback,
+    refreshFunctions,
+  });
 
   const handleEditYaml = () => {
     const { name, immutable, data = {} } = selectedConfigMap || {};
@@ -150,56 +182,6 @@ function ConfigMaps() {
         }
       },
     });
-  };
-
-  const handleYamlParse = async (item: any) => {
-    const file = item;
-    if (file) {
-      const reader = new window.FileReader();
-
-      reader.onload = async function (evt: any) {
-        try {
-          const docs = yaml.loadAll(evt.target.result);
-
-          if (!Array.isArray(docs)) {
-            pushFeedback({
-              message: "Could not parse the file: Invalid YAML format",
-              type: "error",
-            });
-            return;
-          }
-
-          for (const doc of docs) {
-            if (!doc) {
-              continue;
-            }
-            const [configMap, err] = await parseConfigMap(doc);
-            if (err) {
-              console.error("Error parsing a document:", err);
-              pushFeedback({
-                message: `Error processing item: ${err}`,
-                type: "error",
-              });
-            } else {
-              try {
-                await handleYamlUpdate(configMap, "POST");
-              } catch (e) {
-                console.error("Error updating a document:", e);
-              }
-            }
-          }
-        } catch (e) {
-          console.error({ e });
-          pushFeedback({ message: "Could not parse the file", type: "error" });
-        }
-      };
-
-      reader.onerror = function (evt) {
-        pushFeedback({ message: evt, type: "error" });
-      };
-
-      reader.readAsText(file, "UTF-8");
-    }
   };
 
   async function handleYamlUpdate(configMap: any, method?: string) {
@@ -618,7 +600,7 @@ function ConfigMaps() {
               data={configMaps}
               getRowKey={(row: any) => row.id}
               uploadDropzone
-              uploadFunction={handleYamlParse}
+              uploadFunction={processUnifiedYaml}
             />
             <SlideOver
               open={isOpen}
@@ -629,6 +611,8 @@ function ConfigMaps() {
               data={selectedConfigMap}
               fields={slideOverFields}
               customWidth={600}
+              enablePolling={true}
+              onRefresh={handleRefreshConfigMap}
             />
 
             <UnsavedChangesModal

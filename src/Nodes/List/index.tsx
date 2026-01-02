@@ -18,11 +18,17 @@ import { StatusColor, StatusType } from "../../Utils/Enums/StatusColor";
 import { NavLink } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
+import { useLogViewer } from "../../providers/LogViewer/LogViewerProvider";
+import LogConfigModal, {
+  LogTailConfig,
+} from "../../CustomComponent/LogConfigModal";
 import { useAuth } from "react-oidc-context";
 import FileCopyIcon from "@material-ui/icons/FileCopy";
 import CheckIcon from "@material-ui/icons/Check";
 import VisibilityIcon from "@material-ui/icons/Visibility";
 import VisibilityOffIcon from "@material-ui/icons/VisibilityOff";
+import AgentManager from "../../providers/Data/agent-manager";
+import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
 
 const formatDuration = (milliseconds: number): string => {
   if (!milliseconds || milliseconds <= 0) return "N/A";
@@ -64,7 +70,9 @@ function NodesList() {
   const [loadingProvisionKey, setLoadingProvisionKey] = useState(false);
   const [commandsVisible, setCommandsVisible] = useState(false);
   const [editorDataChanged, setEditorDataChanged] = React.useState<any>();
+  const [showLogConfigModal, setShowLogConfigModal] = useState(false);
   const { addTerminalSession, addYamlSession } = useTerminal();
+  const { addLogSession } = useLogViewer();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const agentId = params.get("agentId");
@@ -104,6 +112,21 @@ function NodesList() {
   const handleRowClick = (row: any) => {
     setSelectedNode(row);
     setIsOpen(true);
+  };
+
+  const handleRefreshAgent = async () => {
+    if (!selectedNode?.uuid) return;
+    try {
+      const agents = await AgentManager.listAgents(request)();
+      const updatedAgent = agents.find(
+        (a: any) => a.uuid === selectedNode.uuid,
+      );
+      if (updatedAgent) {
+        setSelectedNode(updatedAgent);
+      }
+    } catch (e) {
+      console.error("Error refreshing agent data:", e);
+    }
   };
 
   const handleRestart = async () => {
@@ -310,8 +333,7 @@ function NodesList() {
         return;
       }
       pushFeedback?.({
-        message:
-          "Exec enabled for agent ${selectedNode?.name}, waiting for debug container...",
+        message: `Exec enabled for agent ${selectedNode?.name}, waiting for debug container...`,
         agentName: selectedNode?.name,
         type: "success",
       });
@@ -351,6 +373,57 @@ function NodesList() {
     } catch (err: any) {
       pushFeedback?.({
         message: err.message || "Exec enable failed",
+        type: "error",
+      });
+    }
+  };
+
+  const handleOpenLogs = () => {
+    if (!selectedNode) return;
+    setShowLogConfigModal(true);
+  };
+
+  const handleLogConfigConfirm = (config: LogTailConfig) => {
+    if (!selectedNode) return;
+    setShowLogConfigModal(false);
+
+    try {
+      // Create websocket URL with tail config
+      const baseUrl = (() => {
+        if (!window.controllerConfig?.url) {
+          return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/iofog/${selectedNode.uuid}/logs`;
+        }
+        const u = new URL(window.controllerConfig.url);
+        const protocol = u.protocol === "https:" ? "wss:" : "ws:";
+        return `${protocol}//${u.host}/api/v3/iofog/${selectedNode.uuid}/logs`;
+      })();
+
+      const params = new URLSearchParams();
+      params.append("tail", config.tail.toString());
+      params.append("follow", config.follow.toString());
+      if (config.since) params.append("since", config.since);
+      if (config.until) params.append("until", config.until);
+
+      const socketUrl = `${baseUrl}?${params.toString()}`;
+
+      // Add log session
+      addLogSession({
+        title: `Logs: ${selectedNode.name}`,
+        socketUrl,
+        authToken: auth?.user?.access_token,
+        resourceUuid: selectedNode.uuid,
+        resourceName: selectedNode.name,
+        sourceType: "node",
+        tailConfig: config,
+      });
+
+      pushFeedback?.({
+        message: "Opening log viewer...",
+        type: "info",
+      });
+    } catch (err: any) {
+      pushFeedback?.({
+        message: err.message || "Failed to open logs",
         type: "error",
       });
     }
@@ -479,83 +552,21 @@ function NodesList() {
     return [agentData, null];
   };
 
-  const handleYamlParse = async (item: any) => {
-    const file = item;
-    if (file) {
-      const reader = new window.FileReader();
+  // Unified YAML upload hook
+  // Agents are managed by Data provider which polls automatically
+  const refreshFunctions = React.useMemo(() => {
+    const map = new Map();
+    map.set("Agent", async () => {
+      // Data provider will automatically refresh on next poll cycle
+    });
+    return map;
+  }, []);
 
-      reader.onload = async function (evt: any) {
-        try {
-          const docs = yaml.loadAll(evt.target.result);
-
-          if (!Array.isArray(docs)) {
-            pushFeedback({
-              message: "Could not parse the file: Invalid YAML format",
-              type: "error",
-            });
-            return;
-          }
-
-          for (const doc of docs) {
-            if (!doc) {
-              continue;
-            }
-
-            const [agentData, err] = await parseAgentYaml(doc);
-
-            if (err) {
-              console.error("Error parsing a document:", err);
-              pushFeedback({
-                message: `Error processing item: ${err}`,
-                type: "error",
-              });
-            } else {
-              try {
-                await handleYamlPost(agentData);
-              } catch (e) {
-                console.error("Error posting a document:", e);
-              }
-            }
-          }
-        } catch (e) {
-          console.error({ e });
-          pushFeedback({
-            message: "Could not parse the file. Check YAML syntax.",
-            type: "error",
-          });
-        }
-      };
-
-      reader.onerror = function (evt) {
-        pushFeedback({ message: evt, type: "error" });
-      };
-
-      reader.readAsText(file, "UTF-8");
-    }
-  };
-
-  const handleYamlPost = async (agentData: any) => {
-    try {
-      const res = await request(`/api/v3/iofog`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify(agentData),
-      });
-
-      if (!res.ok) {
-        pushFeedback({ message: res.message, type: "error" });
-      } else {
-        pushFeedback({
-          message: `Agent ${agentData.name || "Added"} Added`,
-          type: "success",
-        });
-      }
-    } catch (e: any) {
-      pushFeedback({ message: e.message, type: "error", uuid: "error" });
-    }
-  };
+  const { processYamlFile: processUnifiedYaml } = useUnifiedYamlUpload({
+    request,
+    pushFeedback,
+    refreshFunctions,
+  });
 
   async function handleYamlUpdate(content?: string) {
     try {
@@ -1357,7 +1368,7 @@ function NodesList() {
         data={Object.values(data?.reducedAgents?.byName || [])}
         getRowKey={(row: any) => row.uuid}
         uploadDropzone
-        uploadFunction={handleYamlParse}
+        uploadFunction={processUnifiedYaml}
       />
 
       <SlideOver
@@ -1371,8 +1382,11 @@ function NodesList() {
         onClean={() => setShowCleanConfirmModal(true)}
         onEditYaml={handleEditYaml}
         onTerminal={() => enableExecAndOpenTerminal(selectedNode?.uuid!)}
+        onLogs={handleOpenLogs}
         onProvisionKey={handleProvisionKey}
         customWidth={750}
+        enablePolling={true}
+        onRefresh={handleRefreshAgent}
       />
 
       <UnsavedChangesModal
@@ -1562,6 +1576,13 @@ function NodesList() {
             </div>
           )
         }
+      />
+      <LogConfigModal
+        open={showLogConfigModal}
+        onClose={() => setShowLogConfigModal(false)}
+        onConfirm={handleLogConfigConfirm}
+        logSourceName={selectedNode?.name || "Node"}
+        logSourceType="node"
       />
     </div>
   );
