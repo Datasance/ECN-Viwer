@@ -1,4 +1,5 @@
 import React from "react";
+import { Cpu } from "lucide-react";
 import ApexCharts from "react-apexcharts";
 import { StatusColor, StatusType } from "../../Utils/Enums/StatusColor";
 import { MiBFactor, prettyBytes } from "../../ECNViewer/utils";
@@ -36,13 +37,10 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({ agentData }) => {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="mb-4">
-              <svg
+              <Cpu
                 className="w-16 h-16 text-gray-400 mx-auto"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-              </svg>
+                strokeWidth={1.5}
+              />
             </div>
             <p className="text-gray-400 text-lg mb-2">No agents found</p>
             <p className="text-gray-500 text-sm">
@@ -335,13 +333,7 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({ agentData }) => {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-            <svg
-              className="w-6 h-6 text-white"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-            </svg>
+            <Cpu className="w-6 h-6 text-white" strokeWidth={2} />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-white">Edge Nodes</h1>

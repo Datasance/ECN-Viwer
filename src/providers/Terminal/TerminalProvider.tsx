@@ -18,6 +18,9 @@ export interface TerminalSession {
   onClose?: () => void;
   isActive: boolean;
   createdAt: number;
+  nodeUuid?: string; // For node exec sessions
+  waitingForDebugger?: boolean; // Indicates we're waiting for debug microservice
+  debuggerStatus?: "waiting" | "starting" | "running" | "error";
 }
 
 export interface YamlEditorSession {

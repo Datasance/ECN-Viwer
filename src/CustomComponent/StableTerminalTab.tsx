@@ -7,6 +7,8 @@ interface StableTerminalTabProps {
   authToken?: string;
   microserviceUuid: string;
   execId?: string;
+  nodeUuid?: string;
+  waitingForDebugger?: boolean;
   onClose: () => void;
 }
 
@@ -16,6 +18,8 @@ const StableTerminalTab: React.FC<StableTerminalTabProps> = ({
   authToken,
   microserviceUuid,
   execId,
+  nodeUuid,
+  waitingForDebugger,
   onClose,
 }) => {
   const [isReady, setIsReady] = useState(false);
@@ -61,6 +65,8 @@ const StableTerminalTab: React.FC<StableTerminalTabProps> = ({
       authToken={authToken}
       microserviceUuid={microserviceUuid}
       execId={execId}
+      nodeUuid={nodeUuid}
+      waitingForDebugger={waitingForDebugger}
       className="h-full w-full"
       onClose={onClose}
     />

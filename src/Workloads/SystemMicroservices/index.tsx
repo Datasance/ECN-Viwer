@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useData } from "../../providers/Data";
+import ApplicationManager from "../../providers/Data/application-manager";
 import CustomDataTable from "../../CustomComponent/CustomDataTable";
 import CustomProgressBar from "../../CustomComponent/CustomProgressBar";
 import SlideOver from "../../CustomComponent/SlideOver";
@@ -7,7 +8,7 @@ import { format, formatDistanceToNow } from "date-fns";
 import { useController } from "../../ControllerProvider";
 import { useFeedback } from "../../Utils/FeedbackContext";
 import { dumpMicroserviceYAML } from "../../Utils/microserviceYAML";
-import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
+import { Trash2 as DeleteOutlineIcon } from "lucide-react";
 import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/ace";
@@ -22,7 +23,7 @@ import { getTextColor, prettyBytes } from "../../ECNViewer/utils";
 import { StatusColor, StatusType } from "../../Utils/Enums/StatusColor";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "react-router-dom";
-import EditOutlinedIcon from "@material-ui/icons/EditOutlined";
+import { Pencil as EditOutlinedIcon } from "lucide-react";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 import { useLogViewer } from "../../providers/LogViewer/LogViewerProvider";
 import LogConfigModal, {
@@ -87,27 +88,25 @@ function SystemMicroserviceList() {
   const handleRefreshSystemMicroservice = async () => {
     if (!selectedMs?.uuid) return;
     try {
-      const microserviceResponse = await request(
-        `/api/v3/microservices/system/${selectedMs.uuid}`,
+      const systemApplications =
+        await ApplicationManager.listSystemApplicationsWithMicroservices(
+          request,
+        )();
+      const reducedAgents = data?.reducedAgents?.byUUID ?? {};
+      const flattened = systemApplications.flatMap((app: any) =>
+        (app.microservices || []).map((ms: any) => ({
+          ...ms,
+          agentName: reducedAgents[ms.iofogUuid]?.name,
+          appName: app.name,
+          appDescription: app.description,
+          appCreatedAt: app.createdAt,
+        })),
       );
-      if (microserviceResponse.ok) {
-        const microserviceData = await microserviceResponse.json();
-        // Find the system application this microservice belongs to
-        const app = data?.systemApplications?.find((a: any) =>
-          a.microservices?.some((m: any) => m.uuid === selectedMs.uuid),
-        );
-        if (app && microserviceData.microservice) {
-          const updatedMs = {
-            ...microserviceData.microservice,
-            agentName:
-              data.reducedAgents.byUUID[microserviceData.microservice.iofogUuid]
-                ?.name,
-            appName: app.name,
-            appDescription: app.description,
-            appCreatedAt: app.createdAt,
-          };
-          setSelectedMs(updatedMs);
-        }
+      const updatedMs = flattened.find(
+        (m: any) => m.uuid === selectedMs.uuid,
+      );
+      if (updatedMs) {
+        setSelectedMs(updatedMs);
       }
     } catch (e) {
       console.error("Error refreshing system microservice data:", e);
@@ -467,11 +466,11 @@ function SystemMicroserviceList() {
       // Create socket URL
       const socketUrl = (() => {
         if (!window.controllerConfig?.url) {
-          return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/microservices/exec/${microserviceUuid}`;
+          return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/microservices/system/exec/${microserviceUuid}`;
         }
         const u = new URL(window.controllerConfig.url);
         const protocol = u.protocol === "https:" ? "wss:" : "ws:";
-        return `${protocol}//${u.host}/api/v3/microservices/exec/${microserviceUuid}`;
+        return `${protocol}//${u.host}/api/v3/microservices/system/exec/${microserviceUuid}`;
       })();
 
       // Add terminal session to global state
@@ -506,7 +505,7 @@ function SystemMicroserviceList() {
         }
         const u = new URL(window.controllerConfig.url);
         const protocol = u.protocol === "https:" ? "wss:" : "ws:";
-        return `${protocol}//${u.host}/api/v3/microservices/${selectedMs.uuid}/logs`;
+        return `${protocol}//${u.host}/api/v3/microservices/system/${selectedMs.uuid}/logs`;
       })();
 
       const params = new URLSearchParams();

@@ -160,30 +160,30 @@ function AppTemplates() {
     }
   };
 
-  const addCatalogItem = async (item: any) => {
-    const newItem = { ...item };
-    setLoadingMessage("Catalog Adding...");
-    setLoading(true);
-    const response = await request(
-      `/api/v3/applicationTemplate/${newItem.name}`,
-      {
-        method: "PUT",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newItem),
-      },
-    );
-    if (response.ok) {
-      pushFeedback({ message: "Catalog Updated!", type: "success" });
-      fetchCatalog();
-      setLoading(false);
-    } else {
-      pushFeedback({ message: response.statusText, type: "error" });
-      setLoading(false);
-    }
-  };
+  // const addCatalogItem = async (item: any) => {
+  //   const newItem = { ...item };
+  //   setLoadingMessage("Catalog Adding...");
+  //   setLoading(true);
+  //   const response = await request(
+  //     `/api/v3/applicationTemplate/${newItem.name}`,
+  //     {
+  //       method: "PUT",
+  //       headers: {
+  //         Accept: "application/json",
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify(newItem),
+  //     },
+  //   );
+  //   if (response.ok) {
+  //     pushFeedback({ message: "Catalog Updated!", type: "success" });
+  //     fetchCatalog();
+  //     setLoading(false);
+  //   } else {
+  //     pushFeedback({ message: response.statusText, type: "error" });
+  //     setLoading(false);
+  //   }
+  // };
 
   const updateCatalogItem = async (item: any) => {
     const newItem = { ...item };

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useData } from "../../providers/Data";
+import ApplicationManager from "../../providers/Data/application-manager";
 import CustomDataTable from "../../CustomComponent/CustomDataTable";
 import CustomProgressBar from "../../CustomComponent/CustomProgressBar";
 import SlideOver from "../../CustomComponent/SlideOver";
@@ -11,7 +12,7 @@ import "ace-builds/src-noconflict/ace";
 import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/mode-yaml";
 import { dumpMicroserviceYAML } from "../../Utils/microserviceYAML";
-import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
+import { Trash2 as DeleteOutlineIcon } from "lucide-react";
 import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import yaml from "js-yaml";
 import { API_VERSIONS } from "../../Utils/constants";
@@ -22,7 +23,7 @@ import { getTextColor, prettyBytes } from "../../ECNViewer/utils";
 import { StatusColor, StatusType } from "../../Utils/Enums/StatusColor";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "react-router-dom";
-import EditOutlinedIcon from "@material-ui/icons/EditOutlined";
+import { Pencil as EditOutlinedIcon } from "lucide-react";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 import { useLogViewer } from "../../providers/LogViewer/LogViewerProvider";
 import LogConfigModal, {
@@ -90,27 +91,23 @@ function MicroservicesList() {
   const handleRefreshMicroservice = async () => {
     if (!selectedMs?.uuid) return;
     try {
-      const microserviceResponse = await request(
-        `/api/v3/microservices/${selectedMs.uuid}`,
+      const applications =
+        await ApplicationManager.listApplicationsWithMicroservices(request)();
+      const reducedAgents = data?.reducedAgents?.byUUID ?? {};
+      const flattened = applications.flatMap((app: any) =>
+        (app.microservices || []).map((ms: any) => ({
+          ...ms,
+          agentName: reducedAgents[ms.iofogUuid]?.name,
+          appName: app.name,
+          appDescription: app.description,
+          appCreatedAt: app.createdAt,
+        })),
       );
-      if (microserviceResponse.ok) {
-        const microserviceData = await microserviceResponse.json();
-        // Find the application this microservice belongs to
-        const app = data?.applications?.find((a: any) =>
-          a.microservices?.some((m: any) => m.uuid === selectedMs.uuid),
-        );
-        if (app && microserviceData.microservice) {
-          const updatedMs = {
-            ...microserviceData.microservice,
-            agentName:
-              data.reducedAgents.byUUID[microserviceData.microservice.iofogUuid]
-                ?.name,
-            appName: app.name,
-            appDescription: app.description,
-            appCreatedAt: app.createdAt,
-          };
-          setSelectedMs(updatedMs);
-        }
+      const updatedMs = flattened.find(
+        (m: any) => m.uuid === selectedMs.uuid,
+      );
+      if (updatedMs) {
+        setSelectedMs(updatedMs);
       }
     } catch (e) {
       console.error("Error refreshing microservice data:", e);

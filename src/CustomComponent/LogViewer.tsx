@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import * as msgpack from "@msgpack/msgpack";
-import DownloadIcon from "@material-ui/icons/GetApp";
+import { Download as DownloadIcon } from "lucide-react";
 
 type LogViewerProps = {
   socketUrl: string;

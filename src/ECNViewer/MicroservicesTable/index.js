@@ -1,22 +1,16 @@
 import React from "react";
-
 import {
   Table,
   TableHead,
   TableRow,
   TableBody,
   TableCell,
-  makeStyles,
-} from "@material-ui/core";
+  useTheme,
+} from "@mui/material";
 
 import getSharedStyle from "../sharedStyles";
-
 import Status, { MsvcStatus } from "../../Utils/Status";
 import { useData } from "../../providers/Data";
-
-const useStyles = makeStyles((theme) => ({
-  ...getSharedStyle(theme),
-}));
 
 export default function MicroservicesTable({
   application,
@@ -26,7 +20,8 @@ export default function MicroservicesTable({
   showVolumes,
   filter = "",
 }) {
-  const classes = useStyles();
+  const theme = useTheme();
+  const sx = getSharedStyle(theme);
   const { data } = useData();
 
   const { reducedAgents } = data;
@@ -44,46 +39,28 @@ export default function MicroservicesTable({
     microservices?.push({ uuid: "filler" });
   }
 
+  const headerCellSx = { ...sx.tableTitle, ...sx.stickyHeaderCell };
+
   return (
     <Table stickyHeader>
       <TableHead>
         <TableRow>
-          <TableCell
-            className={classes.tableTitle}
-            classes={{ stickyHeader: classes.stickyHeaderCell }}
-            style={{ top: "54px" }}
-          >
+          <TableCell sx={headerCellSx} style={{ top: "54px" }}>
             {nameTitle || "Name"}
           </TableCell>
-          <TableCell
-            className={classes.tableTitle}
-            classes={{ stickyHeader: classes.stickyHeaderCell }}
-            style={{ top: "54px" }}
-          >
+          <TableCell sx={headerCellSx} style={{ top: "54px" }}>
             Status
           </TableCell>
           {selectAgent && (
-            <TableCell
-              className={classes.tableTitle}
-              classes={{ stickyHeader: classes.stickyHeaderCell }}
-              style={{ top: "54px" }}
-            >
+            <TableCell sx={headerCellSx} style={{ top: "54px" }}>
               Agent
             </TableCell>
           )}
-          <TableCell
-            className={classes.tableTitle}
-            classes={{ stickyHeader: classes.stickyHeaderCell }}
-            style={{ top: "54px" }}
-          >
+          <TableCell sx={headerCellSx} style={{ top: "54px" }}>
             Ports
           </TableCell>
           {showVolumes && (
-            <TableCell
-              className={classes.tableTitle}
-              classes={{ stickyHeader: classes.stickyHeaderCell }}
-              style={{ top: "54px" }}
-            >
+            <TableCell sx={headerCellSx} style={{ top: "54px" }}>
               Volumes
             </TableCell>
           )}
@@ -104,12 +81,16 @@ export default function MicroservicesTable({
               key={row.uuid}
               style={{ verticalAlign: "baseline" }}
               hover
-              classes={{ hover: classes.tableRowHover }}
+              sx={{
+                "&:hover": {
+                  backgroundColor: "#f4f5f6!important",
+                },
+              }}
             >
               <TableCell
                 component="th"
                 scope="row"
-                className={classes.action}
+                sx={sx.action}
                 onClick={() => selectMicroservice(row)}
                 style={{ width: "200px" }}
               >
@@ -137,7 +118,7 @@ export default function MicroservicesTable({
               </TableCell>
               {selectAgent && (
                 <TableCell
-                  className={classes.action}
+                  sx={sx.action}
                   onClick={() => (agent ? selectAgent(agent) : null)}
                   style={{ width: "200px" }}
                 >

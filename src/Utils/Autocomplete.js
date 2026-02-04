@@ -2,84 +2,9 @@ import React from "react";
 import Downshift from "downshift";
 import deburr from "lodash/deburr";
 import get from "lodash/get";
-import { MenuItem, Paper, TextField } from "@material-ui/core";
-import { makeStyles } from "@material-ui/core/styles";
-
-const useStyles = makeStyles((theme) => ({
-  root: {
-    flexGrow: 1,
-    height: 250,
-  },
-  container: {
-    flexGrow: 1,
-    position: "relative",
-  },
-  paper: {
-    position: "absolute",
-    zIndex: 1,
-    marginTop: theme.spacing(1),
-    marginBot: theme.spacing(2),
-    left: 0,
-    right: 0,
-    maxHeight: "250px",
-    overflowY: "scroll",
-  },
-  chip: {
-    margin: theme.spacing(0.5, 0.25),
-  },
-  inputRoot: {
-    flexWrap: "wrap",
-  },
-  inputInput: {
-    width: "auto",
-    flexGrow: 1,
-  },
-  divider: {
-    height: theme.spacing(2),
-  },
-}));
-
-function renderInput(inputProps) {
-  const { InputProps, classes, ref, ...others } = inputProps;
-  return (
-    <TextField
-      InputProps={{
-        inputRef: ref,
-        classes: {
-          root: classes.inputRoot,
-          input: classes.inputInput,
-        },
-        ...InputProps,
-      }}
-      {...others}
-    />
-  );
-}
-
-function renderSuggestion(suggestionProps) {
-  const { suggestion, index, itemProps, highlightedIndex, selectedItem } =
-    suggestionProps;
-  const isHighlighted = highlightedIndex === index;
-  const isSelected = (selectedItem || {}).label === suggestion.label;
-
-  return (
-    <MenuItem
-      {...itemProps}
-      key={suggestion.label}
-      selected={isHighlighted}
-      component="div"
-      style={{
-        fontWeight: isSelected ? 500 : 400,
-      }}
-    >
-      {suggestion.label}
-    </MenuItem>
-  );
-}
+import { MenuItem, Paper, TextField, Box } from "@mui/material";
 
 export default function Autocomplete(props) {
-  const classes = useStyles();
-
   const getSuggestions = (value, { showEmpty = false } = {}) => {
     const inputValue = deburr(value.trim()).toLowerCase();
     const inputLength = inputValue.length;
@@ -97,6 +22,40 @@ export default function Autocomplete(props) {
           return keep;
         });
   };
+
+  function renderInput(inputProps) {
+    const { InputProps, ref, ...others } = inputProps;
+    return (
+      <TextField
+        InputProps={{
+          inputRef: ref,
+          ...InputProps,
+        }}
+        {...others}
+      />
+    );
+  }
+
+  function renderSuggestion(suggestionProps) {
+    const { suggestion, index, itemProps, highlightedIndex, selectedItem } =
+      suggestionProps;
+    const isHighlighted = highlightedIndex === index;
+    const isSelected = (selectedItem || {}).label === suggestion.label;
+
+    return (
+      <MenuItem
+        {...itemProps}
+        key={suggestion.label}
+        selected={isHighlighted}
+        component="div"
+        style={{
+          fontWeight: isSelected ? 500 : 400,
+        }}
+      >
+        {suggestion.label}
+      </MenuItem>
+    );
+  }
 
   return (
     <Downshift
@@ -130,10 +89,14 @@ export default function Autocomplete(props) {
         });
 
         return (
-          <div className={classes.container}>
+          <Box
+            sx={{
+              flexGrow: 1,
+              position: "relative",
+            }}
+          >
             {renderInput({
               fullWidth: true,
-              classes,
               label: props.label,
               InputLabelProps: getLabelProps({ shrink: true }),
               InputProps: { onBlur, onChange, onFocus },
@@ -142,7 +105,18 @@ export default function Autocomplete(props) {
 
             <div {...getMenuProps()}>
               {isOpen ? (
-                <Paper className={classes.paper} square>
+                <Paper
+                  square
+                  sx={{
+                    position: "absolute",
+                    zIndex: 1,
+                    marginTop: 1,
+                    left: 0,
+                    right: 0,
+                    maxHeight: "250px",
+                    overflowY: "scroll",
+                  }}
+                >
                   {getSuggestions(inputValue, { showEmpty: true }).map(
                     (suggestion, index) =>
                       renderSuggestion({
@@ -156,7 +130,7 @@ export default function Autocomplete(props) {
                 </Paper>
               ) : null}
             </div>
-          </div>
+          </Box>
         );
       }}
     </Downshift>

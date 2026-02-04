@@ -1,29 +1,13 @@
 import React from "react";
 import { map as lmap } from "lodash";
-import {
-  TextField,
-  Typography,
-  Button,
-  Icon,
-  InputAdornment,
-} from "@material-ui/core";
-import { makeStyles } from "@material-ui/styles";
+import { TextField, Typography, Button, InputAdornment } from "@mui/material";
+import { Search, ExternalLink } from "lucide-react";
 import { theme } from "../Theme/ThemeProvider";
 
 import { useConfig } from "../providers/Config";
 import { useFeedback } from "../Utils/FeedbackContext";
 
-const useStyles = makeStyles({
-  skeleton: {
-    minHeight: "55px",
-  },
-  link: {
-    color: theme.colors.cobalt,
-  },
-});
-
 export default function Config(props) {
-  const classes = useStyles();
   const { config, saveConfig } = useConfig();
   const { pushFeedback } = useFeedback();
   const [tags, setTags] = React.useState(config.tags || {});
@@ -71,12 +55,11 @@ export default function Config(props) {
             label="Search"
             onChange={(e) => setFilter(e.target.value)}
             value={filter}
-            className={classes.textField}
             margin="normal"
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <Icon>search</Icon>
+                  <Search size={20} />
                 </InputAdornment>
               ),
             }}
@@ -84,12 +67,13 @@ export default function Config(props) {
         </div>
         <Typography variant="subtitle2">
           <a
-            className={classes.link}
             href="https://material.io/resources/icons/?style=baseline"
             rel="noopener noreferrer"
             target="_blank"
+            style={{ color: theme.colors.cobalt, textDecoration: "none" }}
           >
-            Available Icons <Icon style={{ fontSize: 12 }}>open_in_new</Icon>
+            Available Icons{" "}
+            <ExternalLink size={12} style={{ verticalAlign: "middle" }} />
           </a>
         </Typography>
       </div>
@@ -116,7 +100,6 @@ export default function Config(props) {
                 onChange={handleChange(name, "color")}
                 value={tag.color}
                 fullWidth
-                className={classes.textField}
                 margin="normal"
                 variant="outlined"
                 type="color"
@@ -127,7 +110,6 @@ export default function Config(props) {
                 onChange={handleChange(name, "icon")}
                 value={tag.icon}
                 fullWidth
-                className={classes.textField}
                 margin="normal"
                 variant="outlined"
               />

@@ -206,10 +206,13 @@ export const DataProvider = ({ children }) => {
         return;
       }
 
-      // List applications
+      // List applications with microservices (same as AgentManager pattern)
       let applications = [];
       try {
-        applications = await ApplicationManager.listApplications(request)();
+        applications =
+          await ApplicationManager.listApplicationsWithMicroservices(
+            request,
+          )();
       } catch (e) {
         setError(e);
         return;
@@ -218,27 +221,17 @@ export const DataProvider = ({ children }) => {
       let systemApplications = [];
       try {
         systemApplications =
-          await ApplicationManager.listSystemApplications(request)();
+          await ApplicationManager.listSystemApplicationsWithMicroservices(
+            request,
+          )();
       } catch (e) {
         setError(e);
         return;
       }
 
-      let microservices = [];
-      for (const application of applications) {
-        // We need this to get microservice details like Status
-        const microservicesResponse = await request(
-          `/api/v3/microservices?application=${application.name}`,
-        );
-        if (!microservicesResponse?.ok) {
-          setError({ message: microservicesResponse?.statusText || "" });
-          return;
-        }
-        const newMicroservices = (await microservicesResponse.json())
-          .microservices;
-        microservices = microservices.concat(newMicroservices);
-        application.microservices = newMicroservices;
-      }
+      const microservices = applications.flatMap(
+        (app) => app.microservices || [],
+      );
       if (error) {
         setError(false);
       }

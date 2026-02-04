@@ -109,6 +109,33 @@ export async function fetchExistingResources(
         }
         return [];
       }
+      case "Role": {
+        const response = await request("/api/v3/roles");
+        if (response?.ok) {
+          const data = await response.json();
+          const roles = data.roles || data;
+          return Array.isArray(roles) ? roles : [];
+        }
+        return [];
+      }
+      case "RoleBinding": {
+        const response = await request("/api/v3/rolebindings");
+        if (response?.ok) {
+          const data = await response.json();
+          const bindings = data.bindings || data;
+          return Array.isArray(bindings) ? bindings : [];
+        }
+        return [];
+      }
+      case "ServiceAccount": {
+        const response = await request("/api/v3/serviceaccounts");
+        if (response?.ok) {
+          const data = await response.json();
+          const serviceAccounts = data.serviceAccounts || data;
+          return Array.isArray(serviceAccounts) ? serviceAccounts : [];
+        }
+        return [];
+      }
       default:
         return [];
     }
@@ -140,6 +167,9 @@ function resourceExists(
     case "ApplicationTemplate":
     case "Application":
     case "VolumeMount":
+    case "Role":
+    case "RoleBinding":
+    case "ServiceAccount":
       return existingResources.some((r) => r.name === identifier);
     case "Registry":
       return existingResources.some(
@@ -243,6 +273,16 @@ export function getResourceEndpoint(
       return `/api/v3/microservices`;
     case "Agent":
       return `/api/v3/iofog`;
+    case "Role":
+      return exists ? `/api/v3/roles/${identifier}` : `/api/v3/roles`;
+    case "RoleBinding":
+      return exists
+        ? `/api/v3/rolebindings/${identifier}`
+        : `/api/v3/rolebindings`;
+    case "ServiceAccount":
+      return exists
+        ? `/api/v3/serviceaccounts/${identifier}`
+        : `/api/v3/serviceaccounts`;
     default:
       return "";
   }
@@ -269,6 +309,9 @@ export function getResourceMethod(
     case "CertificateAuthority":
     case "Registry":
     case "VolumeMount":
+    case "Role":
+    case "RoleBinding":
+    case "ServiceAccount":
       return "PATCH";
     case "CatalogItem":
     case "ApplicationTemplate":
@@ -319,6 +362,9 @@ export async function preloadResourceCache(
         case "ApplicationTemplate":
         case "Application":
         case "VolumeMount":
+        case "Role":
+        case "RoleBinding":
+        case "ServiceAccount":
           identifier = resource.name;
           break;
         case "Registry":

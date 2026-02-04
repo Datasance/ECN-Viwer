@@ -9,6 +9,9 @@ import {
 import { parseRegistries } from "./parseRegistriesYaml";
 import { parseVolumeMount } from "./parseVolumeMountsYaml";
 import { parseCatalogMicroservice } from "./parseCatalogMicroservice";
+import { parseRole } from "./parseRoleYaml";
+import { parseRoleBinding } from "./parseRoleBindingYaml";
+import { parseServiceAccount } from "./parseServiceAccountYaml";
 import lget from "lodash/get";
 import { API_VERSIONS } from "./constants";
 import { parseMicroservice } from "./ApplicationParser";
@@ -25,7 +28,10 @@ export type ResourceKind =
   | "ApplicationTemplate"
   | "Application"
   | "Microservice"
-  | "Agent";
+  | "Agent"
+  | "Role"
+  | "RoleBinding"
+  | "ServiceAccount";
 
 export interface ParsedResource {
   kind: ResourceKind;
@@ -66,6 +72,9 @@ export function getResourceKind(doc: any): ResourceKind | null {
     "Application",
     "Microservice",
     "Agent",
+    "Role",
+    "RoleBinding",
+    "ServiceAccount",
   ];
 
   if (validKinds.includes(kind as ResourceKind)) {
@@ -92,6 +101,9 @@ export function getResourceIdentifier(
     case "CatalogItem":
     case "ApplicationTemplate":
     case "Application":
+    case "Role":
+    case "RoleBinding":
+    case "ServiceAccount":
       return parsedResource?.name || originalDoc?.metadata?.name || null;
     case "Registry":
       return parsedResource?.url || originalDoc?.spec?.url || null;
@@ -276,6 +288,15 @@ async function routeToParser(
 
         return [agentData, null] as [any, string | null];
       }
+      case "Role":
+        result = await parseRole(doc);
+        break;
+      case "RoleBinding":
+        result = await parseRoleBinding(doc);
+        break;
+      case "ServiceAccount":
+        result = await parseServiceAccount(doc);
+        break;
       default:
         return [null, `Unsupported resource kind: ${kind}`] as [
           any,
@@ -306,6 +327,7 @@ async function routeToParser(
  */
 function sortByDependencies(docs: any[]): any[] {
   // Define the order of resource kinds (matching CLI tool order)
+  // RBAC resources should come after VolumeMount, before Registry
   const kindOrder: ResourceKind[] = [
     "Agent",
     "Secret",
@@ -313,6 +335,9 @@ function sortByDependencies(docs: any[]): any[] {
     "Certificate",
     "ConfigMap",
     "VolumeMount",
+    "Role",
+    "RoleBinding",
+    "ServiceAccount",
     "Registry",
     "CatalogItem",
     "Application",

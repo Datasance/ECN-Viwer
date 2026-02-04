@@ -1,40 +1,6 @@
 import React from "react";
-
-import { TextField, InputAdornment, makeStyles } from "@material-ui/core";
-import { Search as SearchIcon } from "@material-ui/icons";
-
-const useStyle = makeStyles((theme) => ({
-  searchBar: {
-    boxShadow:
-      "inset 0px 1px 3px rgba(0,0,0,.2), inset 0px 1px 8px rgba(0,0,0,.1)",
-    border: "none!important",
-    borderColor: theme.colors.neutral_2,
-    color: theme.colors.neutral_2,
-    borderRadius: "4px",
-    "&:focus": {
-      borderColor: theme.colors.neutral_2,
-    },
-    maxWidth: "150px",
-    "@media screen and (min-width: 768px)": {
-      maxWidth: "unset",
-    },
-    // boxShadow: 'inset 0 0 8px 0px rgba(0, 0, 0, 0.19)'
-  },
-}));
-const useSearchBarStyle = makeStyles((theme) => ({
-  input: {
-    paddingTop: "10px",
-    color: theme.colors.neutral_3,
-    paddingBottom: "10px",
-  },
-  adornedStart: {
-    color: theme.colors.neutral_3,
-    paddingLeft: "5px",
-  },
-  adornedEnd: {
-    paddingRight: "5px",
-  },
-}));
+import { TextField, InputAdornment, useTheme } from "@mui/material";
+import { Search as SearchIcon } from "lucide-react";
 
 export default function SearchBar({
   style,
@@ -42,9 +8,8 @@ export default function SearchBar({
   classes: _classes,
   inputClasses,
 }) {
+  const theme = useTheme();
   const [value, setValue] = React.useState("");
-  const classes = useSearchBarStyle();
-  const customClasses = useStyle();
 
   const handleChange = (e) => {
     const newValue = e.target.value.toLowerCase();
@@ -52,34 +17,50 @@ export default function SearchBar({
     setValue(newValue);
   };
 
-  const ornaments = {
-    startAdornment: (
-      <InputAdornment position="start">
-        <SearchIcon />
-      </InputAdornment>
-    ),
-    // endAdornment: value ? (
-    //   <InputAdornment style={{ cursor: 'pointer' }} position='end'>
-    //     <ClearIcon onClick={() => handleChange({ target: { value: '' } })} />
-    //   </InputAdornment>
-    // ) : undefined
-  };
+  const neutral2 = theme.colors?.neutral_2 ?? "#D0D6DD";
+  const neutral3 = theme.colors?.neutral_3 ?? "#7d90a9";
 
   return (
     <TextField
-      style={{
-        ...style,
-      }}
+      style={style}
       id="searchBar"
       value={value}
       onChange={handleChange}
       variant="outlined"
-      className={customClasses.searchBar}
-      classes={_classes}
-      InputProps={{
-        classes: { ...classes, ...inputClasses },
-        ...ornaments,
+      size="small"
+      sx={{
+        maxWidth: "150px",
+        "@media screen and (min-width: 768px)": { maxWidth: "unset" },
+        "& .MuiOutlinedInput-root": {
+          boxShadow:
+            "inset 0px 1px 3px rgba(0,0,0,.2), inset 0px 1px 8px rgba(0,0,0,.1)",
+          border: "none",
+          borderColor: neutral2,
+          color: neutral2,
+          borderRadius: "4px",
+          "& fieldset": { borderColor: neutral2 },
+          "&:hover fieldset": { borderColor: neutral2 },
+          "&.Mui-focused fieldset": { borderColor: neutral2 },
+        },
+        "& .MuiInputBase-input": {
+          paddingTop: "10px",
+          paddingBottom: "10px",
+          color: neutral3,
+          ...inputClasses,
+        },
+        "& .MuiInputAdornment-root": {
+          color: neutral3,
+          paddingLeft: "5px",
+        },
       }}
+      InputProps={{
+        startAdornment: (
+          <InputAdornment position="start">
+            <SearchIcon size={20} style={{ color: neutral3 }} />
+          </InputAdornment>
+        ),
+      }}
+      {...(_classes ? { className: _classes.root } : {})}
     />
   );
 }

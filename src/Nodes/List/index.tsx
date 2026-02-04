@@ -22,11 +22,16 @@ import { useLogViewer } from "../../providers/LogViewer/LogViewerProvider";
 import LogConfigModal, {
   LogTailConfig,
 } from "../../CustomComponent/LogConfigModal";
+import ExecConfigModal, {
+  ExecConfig,
+} from "../../CustomComponent/ExecConfigModal";
 import { useAuth } from "react-oidc-context";
-import FileCopyIcon from "@material-ui/icons/FileCopy";
-import CheckIcon from "@material-ui/icons/Check";
-import VisibilityIcon from "@material-ui/icons/Visibility";
-import VisibilityOffIcon from "@material-ui/icons/VisibilityOff";
+import {
+  Copy as FileCopyIcon,
+  Check as CheckIcon,
+  Eye as VisibilityIcon,
+  EyeOff as VisibilityOffIcon,
+} from "lucide-react";
 import AgentManager from "../../providers/Data/agent-manager";
 import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
 
@@ -71,6 +76,7 @@ function NodesList() {
   const [commandsVisible, setCommandsVisible] = useState(false);
   const [editorDataChanged, setEditorDataChanged] = React.useState<any>();
   const [showLogConfigModal, setShowLogConfigModal] = useState(false);
+  const [showExecConfigModal, setShowExecConfigModal] = useState(false);
   const { addTerminalSession, addYamlSession } = useTerminal();
   const { addLogSession } = useLogViewer();
   const location = useLocation();
@@ -186,52 +192,6 @@ function NodesList() {
     }
   };
 
-  const findDebugMicroservice = (nodeUuid: string): string | null => {
-    const debugName = `debug-${nodeUuid}`;
-
-    // Search in system applications for debug microservice
-    const systemApps = data?.systemApplications || [];
-    for (const app of systemApps) {
-      const microservices = app.microservices || [];
-      for (const ms of microservices) {
-        if (ms.name === debugName) {
-          return ms.uuid;
-        }
-      }
-    }
-    return null;
-  };
-
-  const waitForDebugMicroservice = async (
-    nodeUuid: string,
-    maxAttempts: number = 30,
-  ): Promise<string | null> => {
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const debugUuid = findDebugMicroservice(nodeUuid);
-
-      if (debugUuid) {
-        // Check if the debug microservice is running
-        const systemApps = data?.systemApplications || [];
-        for (const app of systemApps) {
-          const microservices = app.microservices || [];
-          for (const ms of microservices) {
-            if (
-              ms.uuid === debugUuid &&
-              ms.status?.status?.toLowerCase() === "running"
-            ) {
-              return debugUuid;
-            }
-          }
-        }
-      }
-
-      // Wait 2 seconds before next attempt
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-    }
-
-    return null;
-  };
-
   const handleProvisionKey = async () => {
     if (!selectedNode?.uuid) {
       pushFeedback({ message: "No agent selected", type: "error" });
@@ -307,72 +267,115 @@ function NodesList() {
     return commands;
   };
 
-  const enableExecAndOpenTerminal = async (nodeUuid: string) => {
-    try {
-      // Check if node is running
-      if (selectedNode?.daemonStatus?.toLowerCase() !== "running") {
-        pushFeedback?.({
-          message: "Node must be running to enable exec session",
-          type: "error",
-        });
-        return;
-      }
-
-      pushFeedback?.({ message: "Enabling exec session...", type: "info" });
-
-      // Send POST request to enable exec
-      const res = await request(`/api/v3/iofog/${nodeUuid}/exec`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-      });
-
-      if (!res.ok) {
-        pushFeedback?.({ message: res.statusText, type: "error" });
-        return;
-      }
+  const handleOpenTerminal = () => {
+    if (!selectedNode) return;
+    // Check if node is running
+    if (selectedNode?.daemonStatus?.toLowerCase() !== "running") {
       pushFeedback?.({
-        message: `Exec enabled for agent ${selectedNode?.name}, waiting for debug container...`,
-        agentName: selectedNode?.name,
-        type: "success",
+        message: "Node must be running to enable exec session",
+        type: "error",
       });
+      return;
+    }
+    setShowExecConfigModal(true);
+  };
 
-      // Wait for debug microservice to be running
-      const debugUuid = await waitForDebugMicroservice(nodeUuid);
+  const handleExecConfigConfirm = async (config: ExecConfig) => {
+    if (!selectedNode?.uuid) return;
+    setShowExecConfigModal(false);
 
-      if (debugUuid) {
-        // Create socket URL
+    try {
+      if (config.action === "enable") {
+        // Check if node is running
+        if (selectedNode?.daemonStatus?.toLowerCase() !== "running") {
+          pushFeedback?.({
+            message: "Node must be running to enable exec session",
+            type: "error",
+          });
+          return;
+        }
+
+        pushFeedback?.({ message: "Enabling exec session...", type: "info" });
+
+        // Prepare request body
+        const body: { uuid: string; image?: string } = {
+          uuid: selectedNode.uuid,
+        };
+        if (config.image) {
+          body.image = config.image;
+        }
+
+        // Send POST request to enable exec
+        const res = await request(`/api/v3/iofog/${selectedNode.uuid}/exec`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify(body),
+        });
+
+        if (!res.ok) {
+          pushFeedback?.({
+            message: res.message || res.statusText,
+            type: "error",
+          });
+          return;
+        }
+
+        pushFeedback?.({
+          message: `Exec enabled for agent ${selectedNode?.name}`,
+          type: "success",
+          agentName: selectedNode?.name,
+        });
+
+        // Create a placeholder socket URL (will be updated when debugger is ready)
         const socketUrl = (() => {
           if (!window.controllerConfig?.url) {
-            return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/microservices/exec/${debugUuid}`;
+            return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/microservices/system/exec/placeholder`;
           }
           const u = new URL(window.controllerConfig.url);
           const protocol = u.protocol === "https:" ? "wss:" : "ws:";
-          return `${protocol}//${u.host}/api/v3/microservices/exec/${debugUuid}`;
+          return `${protocol}//${u.host}/api/v3/microservices/system/exec/placeholder`;
         })();
 
-        // Add terminal session to global state
+        // Add terminal session to global state with waitingForDebugger flag
         addTerminalSession({
           title: `Agent Shell: ${selectedNode?.name}`,
           socketUrl,
           authToken: auth?.user?.access_token,
-          microserviceUuid: debugUuid,
-        });
-
-        pushFeedback?.({
-          message: "Debug container ready, connecting to terminal...",
-          type: "success",
+          microserviceUuid: "placeholder", // Will be updated when debugger is ready
+          nodeUuid: selectedNode.uuid,
+          waitingForDebugger: true,
+          debuggerStatus: "waiting",
         });
       } else {
+        // Disable exec
+        pushFeedback?.({ message: "Disabling exec session...", type: "info" });
+
+        const res = await request(`/api/v3/iofog/${selectedNode.uuid}/exec`, {
+          method: "DELETE",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({ uuid: selectedNode.uuid }),
+        });
+
+        if (!res.ok) {
+          pushFeedback?.({
+            message: res.message || res.statusText,
+            type: "error",
+          });
+          return;
+        }
+
         pushFeedback?.({
-          message: "Timeout waiting for debug container to start",
-          type: "error",
+          message: `Exec disabled for agent ${selectedNode?.name}`,
+          type: "success",
         });
       }
     } catch (err: any) {
       pushFeedback?.({
-        message: err.message || "Exec enable failed",
+        message: err.message || "Exec operation failed",
         type: "error",
       });
     }
@@ -636,8 +639,8 @@ function NodesList() {
       ),
     },
     {
-      key: "ipAddress",
-      header: "IP Address",
+      key: "host",
+      header: "Host",
     },
     {
       key: "deploymentType",
@@ -675,6 +678,10 @@ function NodesList() {
           unit="agent"
         />
       ),
+    },
+    {
+      key: "version",
+      header: "Version",
     },
     {
       key: "daemonStatus",
@@ -1381,7 +1388,7 @@ function NodesList() {
         onDelete={() => setShowDeleteConfirmModal(true)}
         onClean={() => setShowCleanConfirmModal(true)}
         onEditYaml={handleEditYaml}
-        onTerminal={() => enableExecAndOpenTerminal(selectedNode?.uuid!)}
+        onTerminal={handleOpenTerminal}
         onLogs={handleOpenLogs}
         onProvisionKey={handleProvisionKey}
         customWidth={750}
@@ -1583,6 +1590,12 @@ function NodesList() {
         onConfirm={handleLogConfigConfirm}
         logSourceName={selectedNode?.name || "Node"}
         logSourceType="node"
+      />
+      <ExecConfigModal
+        open={showExecConfigModal}
+        onClose={() => setShowExecConfigModal(false)}
+        onConfirm={handleExecConfigConfirm}
+        nodeName={selectedNode?.name || "Node"}
       />
     </div>
   );

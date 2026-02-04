@@ -1,5 +1,6 @@
 import React from "react";
 import { useAuth } from "../auth";
+import { useFeedback } from "../Utils/FeedbackContext";
 
 const controllerJson = window.controllerConfig;
 const IPLookUp = "http://ip-api.com/json/";
@@ -67,6 +68,8 @@ const getControllerStatus = async () => {
 export const ControllerProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initState);
   const auth = useAuth();
+  const feedbackContext = useFeedback();
+  const pushFeedback = feedbackContext?.pushFeedback;
 
   const updateController = (data) => {
     dispatch({ type: "UPDATE", data });
@@ -88,9 +91,39 @@ export const ControllerProvider = ({ children }) => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error(`HTTP error! status: ${errorData.message}`);
-        return errorData;
+        const status = response.status;
+        let errorData;
+
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          // If response is not JSON, create a basic error object
+          errorData = {
+            message: response.statusText || "An error occurred",
+          };
+        }
+
+        // Check for authorization errors (401 Unauthorized or 403 Forbidden)
+        if ((status === 401 || status === 403) && pushFeedback) {
+          const errorMessage =
+            errorData.message ||
+            (status === 401
+              ? "Unauthorized: You don't have permission to access this resource"
+              : "Forbidden: Access to this resource is denied");
+
+          pushFeedback({
+            message: errorMessage,
+            type: "error",
+          });
+        }
+
+        // Return error object with status and ok properties for backward compatibility
+        return {
+          ...errorData,
+          ok: false,
+          status: status,
+          statusText: response.statusText,
+        };
       }
 
       return response;

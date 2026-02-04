@@ -1,4 +1,4 @@
-import CssBaseline from "@material-ui/core/CssBaseline";
+import CssBaseline from "@mui/material/CssBaseline";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { DndProvider } from "react-dnd";
 import React, { useEffect } from "react";
@@ -32,21 +32,21 @@ function App() {
       <CssBaseline />
       <ThemeContext>
         <DndProvider backend={HTML5Backend}>
-          <ControllerProvider>
-            <ConfigProvider>
-              <PollingConfigProvider>
-                <DataProvider>
-                  <TerminalProvider>
-                    <LogViewerProvider>
-                      <FeedbackContext>
+          <FeedbackContext>
+            <ControllerProvider>
+              <ConfigProvider>
+                <PollingConfigProvider>
+                  <DataProvider>
+                    <TerminalProvider>
+                      <LogViewerProvider>
                         <Layout />
-                      </FeedbackContext>
-                    </LogViewerProvider>
-                  </TerminalProvider>
-                </DataProvider>
-              </PollingConfigProvider>
-            </ConfigProvider>
-          </ControllerProvider>
+                      </LogViewerProvider>
+                    </TerminalProvider>
+                  </DataProvider>
+                </PollingConfigProvider>
+              </ConfigProvider>
+            </ControllerProvider>
+          </FeedbackContext>
         </DndProvider>
       </ThemeContext>
     </KeycloakAuthProvider>

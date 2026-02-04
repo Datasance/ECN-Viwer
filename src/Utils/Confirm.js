@@ -1,12 +1,12 @@
 import React from "react";
 import {
   Button,
+  Dialog,
   DialogTitle,
   DialogContent,
   DialogContentText,
   DialogActions,
-  Dialog,
-} from "@material-ui/core";
+} from "@mui/material";
 
 export default function Confirm(props) {
   const { open, onClose, title, onConfirm, description } = props;

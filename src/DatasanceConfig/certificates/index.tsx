@@ -8,11 +8,11 @@ import CryptoTextBox from "../../CustomComponent/CustomCryptoTextBox";
 import { NavLink, useLocation } from "react-router-dom";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
 import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
-import {
-  parseCertificate,
-  parseCertificateAuthority,
-} from "../../Utils/parseCertificateYaml";
-import yaml from "js-yaml";
+// import {
+//   parseCertificate,
+//   parseCertificateAuthority,
+// } from "../../Utils/parseCertificateYaml";
+// import yaml from "js-yaml";
 import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
 
 function Certificates() {

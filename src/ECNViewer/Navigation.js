@@ -1,9 +1,6 @@
 import React from "react";
-
-import { Typography, Chip, Tooltip, Input, colors } from "@material-ui/core";
-import ArrowBackIcon from "@material-ui/icons/ArrowBack";
-
-import { makeStyles, useTheme } from "@material-ui/styles";
+import { Typography, Chip, Tooltip, Input, Box, useTheme } from "@mui/material";
+import { ArrowLeft as ArrowBackIcon } from "lucide-react";
 
 import { ControllerContext } from "../ControllerProvider";
 import { useData } from "../providers/Data";
@@ -11,61 +8,7 @@ import { useData } from "../providers/Data";
 const CONTROLLER_NAME_KEY = "ControllerName";
 const DEFAULT_CONTROLLER_NAME = "Controller";
 
-const useStyles = makeStyles((theme) => ({
-  controllerInfo: {
-    paddingTop: "0px",
-    "& .paper": {
-      padding: "5px",
-    },
-  },
-  controllerName: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-    fontSize: "24px",
-    fontWeight: "700",
-    width: "100%",
-    "&::before": {
-      borderBottom: "none !important",
-    },
-  },
-  warningChip: {
-    backgroundColor: `var(--color, ${theme.colors.danger})`,
-    color: "white",
-  },
-  controllerTitle: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    textEmphasis: "bold",
-    height: "60px",
-    "& input": {
-      textTransform: "uppercase !important",
-      // color: 'white'
-    },
-    paddingLeft: "5px",
-    backgroundColor: "white",
-    borderRadius: "4px",
-    color: "#506279",
-  },
-  navArrow: {
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-  },
-  navBar: {
-    display: "flex",
-    alignItems: "center",
-    fontSize: "24px",
-    fontWeight: "700",
-    width: "100%",
-    "& span": {
-      marginLeft: "5px",
-      textTransform: "uppercase",
-    },
-  },
-}));
-
 export default function Navigation({ view, selectedElement, views, back }) {
-  const classes = useStyles();
   const theme = useTheme();
   const { error } = useData();
   const { error: controllerContextError } = React.useContext(ControllerContext);
@@ -96,8 +39,9 @@ export default function Navigation({ view, selectedElement, views, back }) {
       window.document.title = "ECN Viewer";
       return;
     }
-    // window.document.title = controllerName
   }, [controllerName]);
+
+  const dangerColor = theme.colors?.danger ?? theme.colors?.gold ?? "#F5A623";
 
   const _getContent = (view) => {
     switch (view) {
@@ -105,10 +49,24 @@ export default function Navigation({ view, selectedElement, views, back }) {
       case views.APPLICATION_DETAILS:
       case views.MICROSERVICE_DETAILS:
         return (
-          <Typography className={classes.navBar} variant="h5">
-            <div onClick={back} className={classes.navArrow}>
-              <ArrowBackIcon />
-            </div>
+          <Typography
+            variant="h5"
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              fontSize: "24px",
+              fontWeight: "700",
+              width: "100%",
+              "& span": { marginLeft: "5px", textTransform: "uppercase" },
+            }}
+          >
+            <Box
+              component="span"
+              onClick={back}
+              sx={{ cursor: "pointer", display: "flex", alignItems: "center" }}
+            >
+              <ArrowBackIcon size={24} />
+            </Box>
             <span>{selectedElement && selectedElement.name}</span>
           </Typography>
         );
@@ -116,15 +74,27 @@ export default function Navigation({ view, selectedElement, views, back }) {
       default:
         return (
           <Typography
-            className={classes.navBar}
-            style={{ width: "100%" }}
             variant="h5"
+            sx={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              fontSize: "24px",
+              fontWeight: "700",
+              "& span": { marginLeft: "5px", textTransform: "uppercase" },
+            }}
           >
             <Input
-              className={classes.controllerName}
               value={controllerName}
               onChange={updateControllerName}
               onKeyDown={loseFocus}
+              sx={{
+                fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+                fontSize: "24px",
+                fontWeight: "700",
+                width: "100%",
+                "&::before": { borderBottom: "none !important" },
+              }}
             />
           </Typography>
         );
@@ -132,19 +102,33 @@ export default function Navigation({ view, selectedElement, views, back }) {
   };
 
   return (
-    <div className={classes.controllerInfo}>
-      <div className={classes.controllerTitle}>
+    <Box sx={{ paddingTop: "0px", "& .paper": { padding: "5px" } }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          height: "60px",
+          paddingLeft: "5px",
+          backgroundColor: "white",
+          borderRadius: "4px",
+          color: "#506279",
+          "& input": { textTransform: "uppercase !important" },
+        }}
+      >
         {_getContent(view)}
         {controllerError && (
           <Tooltip title={controllerError.message} aria-label="Error">
             <Chip
               label="The controller is not reachable"
-              style={{ "--color": theme.colors.gold }}
-              className={classes.warningChip}
+              sx={{
+                backgroundColor: dangerColor,
+                color: "white",
+              }}
             />
           </Tooltip>
         )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }

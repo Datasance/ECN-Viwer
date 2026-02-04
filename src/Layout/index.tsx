@@ -7,17 +7,19 @@ import {
   Routes,
   Navigate,
 } from "react-router-dom";
-import MiscellaneousServicesIcon from "@material-ui/icons/Settings";
-import ExitToAppIcon from "@material-ui/icons/ExitToApp";
-import AccountBoxIcon from "@material-ui/icons/AccountBox";
-import DashboardIcon from "@material-ui/icons/Dashboard";
-import ChevronLeftSharp from "@material-ui/icons/ChevronLeftSharp";
-import ChevronRightSharp from "@material-ui/icons/ChevronRightSharp";
-import Hub from "@material-ui/icons/DeviceHubRounded";
-import StorageRounded from "@material-ui/icons/StorageRounded";
-import LayersRounded from "@material-ui/icons/LayersRounded";
-import EventIcon from "@material-ui/icons/Event";
-import TuneIcon from "@material-ui/icons/Tune";
+import {
+  Settings as MiscellaneousServicesIcon,
+  LogOut as ExitToAppIcon,
+  LayoutDashboard as DashboardIcon,
+  ChevronLeft as ChevronLeftSharp,
+  ChevronRight as ChevronRightSharp,
+  Network as Hub,
+  Database as StorageRounded,
+  Layers as LayersRounded,
+  Calendar as EventIcon,
+  SlidersHorizontal as TuneIcon,
+  ShieldCheck as AccessControlIcon,
+} from "lucide-react";
 
 import { useData } from "../providers/Data";
 import { useController } from "../ControllerProvider";
@@ -46,8 +48,10 @@ import Services from "../DatasanceConfig/services";
 import PollingSettings from "../DatasanceConfig/pollingSettings";
 import Map from "../ECNViewer/Map/Map";
 import GlobalTerminalDrawer from "../CustomComponent/GlobalTerminalDrawer";
-import LogViewerDrawer from "../CustomComponent/LogViewerDrawer";
 import Events from "../Events";
+import Roles from "../AccessControl/roles";
+import RoleBindings from "../AccessControl/rolebindings";
+import ServiceAccounts from "../AccessControl/serviceaccounts";
 
 const controllerJson = window.controllerConfig || null;
 
@@ -166,6 +170,7 @@ export default function Layout() {
                             ? "#ffffff"
                             : "#d1d5db",
                         cursor: disabled ? "not-allowed" : "pointer",
+                        fontSize: "14px",
                         "&:hover": {
                           backgroundColor: disabled ? "#111827" : "#1a2633",
                           color: disabled ? "#9ca3af" : "#ffffff",
@@ -177,9 +182,14 @@ export default function Layout() {
                           : active
                             ? "#ffffff"
                             : "#95a5a6",
+                        fontSize: "18px",
                       }),
                       label: ({ active, disabled }) => ({
                         fontWeight: active && !disabled ? 600 : 400,
+                        fontSize: "14px",
+                      }),
+                      subMenuContent: () => ({
+                        fontSize: "14px",
                       }),
                     }}
                   >
@@ -191,7 +201,7 @@ export default function Layout() {
                       )}
                     </NavLink>
 
-                    <SubMenu label="Nodes" icon={<StorageRounded />}>
+                    <SubMenu label="Nodes" icon={<StorageRounded size={18} />}>
                       <NavLink to="/nodes/list">
                         {({ isActive }) => (
                           <MenuItem active={isActive}>List</MenuItem>
@@ -233,7 +243,7 @@ export default function Layout() {
 
                     <SubMenu
                       label="Config"
-                      icon={<MiscellaneousServicesIcon />}
+                      icon={<MiscellaneousServicesIcon size={18} />}
                     >
                       <NavLink to="/config/AppTemplates">
                         {({ isActive }) => (
@@ -282,6 +292,41 @@ export default function Layout() {
                       </NavLink>
                     </SubMenu>
 
+                    <SubMenu
+                      label="Access Control"
+                      icon={<AccessControlIcon size={18} />}
+                    >
+                      <NavLink to="/access-control/roles">
+                        {({ isActive }) => (
+                          <MenuItem active={isActive}>Roles</MenuItem>
+                        )}
+                      </NavLink>
+                      <NavLink to="/access-control/rolebindings">
+                        {({ isActive }) => (
+                          <MenuItem active={isActive}>Role Bindings</MenuItem>
+                        )}
+                      </NavLink>
+                      <NavLink to="/access-control/serviceaccounts">
+                        {({ isActive }) => (
+                          <MenuItem active={isActive}>
+                            Service Accounts
+                          </MenuItem>
+                        )}
+                      </NavLink>
+                      {auth && (
+                        <MenuItem
+                          onClick={() =>
+                            window.open(
+                              `${controllerJson?.keycloakURL}admin/${controllerJson?.keycloakRealm}/console`,
+                              "_blank",
+                            )
+                          }
+                        >
+                          IAM
+                        </MenuItem>
+                      )}
+                    </SubMenu>
+
                     <NavLink to="/events">
                       {({ isActive }) => (
                         <MenuItem icon={<EventIcon />} active={isActive}>
@@ -292,27 +337,19 @@ export default function Layout() {
 
                     <NavLink to="/config/pollingSettings">
                       {({ isActive }) => (
-                        <MenuItem icon={<TuneIcon />} active={isActive}>
+                        <MenuItem
+                          icon={<TuneIcon size={18} />}
+                          active={isActive}
+                        >
                           Viewer Config
                         </MenuItem>
                       )}
                     </NavLink>
 
-                    {auth && (
-                      <MenuItem
-                        icon={<AccountBoxIcon />}
-                        onClick={() =>
-                          window.open(
-                            `${controllerJson?.keycloakURL}admin/${controllerJson?.keycloakRealm}/console`,
-                            "_blank",
-                          )
-                        }
-                      >
-                        IAM
-                      </MenuItem>
-                    )}
-
-                    <MenuItem icon={<ExitToAppIcon />} onClick={handleLogout}>
+                    <MenuItem
+                      icon={<ExitToAppIcon size={18} />}
+                      onClick={handleLogout}
+                    >
                       Logout
                     </MenuItem>
                   </Menu>
@@ -331,7 +368,11 @@ export default function Layout() {
                         {isPinned ? "Unpin Sidebar" : "Pin Sidebar"}
                       </span>
                     )}
-                    {isPinned ? <ChevronLeftSharp /> : <ChevronRightSharp />}
+                    {isPinned ? (
+                      <ChevronLeftSharp size={18} />
+                    ) : (
+                      <ChevronRightSharp size={18} />
+                    )}
                   </button>
 
                   {!collapsed ? (
@@ -452,15 +493,20 @@ export default function Layout() {
                 Component={PollingSettings}
               />
               <Route path="/events" Component={Events} />
+              <Route path="/access-control/roles" Component={Roles} />
+              <Route
+                path="/access-control/rolebindings"
+                Component={RoleBindings}
+              />
+              <Route
+                path="/access-control/serviceaccounts"
+                Component={ServiceAccounts}
+              />
               <Route Component={() => <Navigate to="/dashboard" />} />
             </Routes>
           </div>
         </div>
         <GlobalTerminalDrawer
-          sidebarCollapsed={collapsed}
-          sidebarWidth={sidebarWidth}
-        />
-        <LogViewerDrawer
           sidebarCollapsed={collapsed}
           sidebarWidth={sidebarWidth}
         />

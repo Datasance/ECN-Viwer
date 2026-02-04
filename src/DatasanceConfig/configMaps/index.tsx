@@ -11,8 +11,10 @@ import "ace-builds/src-noconflict/mode-yaml";
 import yaml from "js-yaml";
 import { useLocation } from "react-router-dom";
 import lget from "lodash/get";
-import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
-import EditOutlinedIcon from "@material-ui/icons/EditOutlined";
+import {
+  Trash2 as DeleteOutlineIcon,
+  Pencil as EditOutlinedIcon,
+} from "lucide-react";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
 import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";

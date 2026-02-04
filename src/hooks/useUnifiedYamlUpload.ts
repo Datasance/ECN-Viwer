@@ -166,6 +166,17 @@ export function useUnifiedYamlUpload({
         finalBody = parsed;
       }
 
+      // Handle RBAC resources - use JSON endpoints (not YAML multipart endpoints)
+      // The YAML multipart endpoints are for direct file uploads, not parsed YAML
+      if (
+        kind === "Role" ||
+        kind === "RoleBinding" ||
+        kind === "ServiceAccount"
+      ) {
+        // Use standard JSON endpoints - body is already correctly formatted by parser
+        finalBody = parsed;
+      }
+
       const response = await request(finalEndpoint, {
         method: finalMethod as "POST" | "PATCH" | "PUT",
         headers: {

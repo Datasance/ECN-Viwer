@@ -1,7 +1,6 @@
 import React, { useEffect, useState, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import RefreshIcon from "@material-ui/icons/Refresh";
-import GetAppIcon from "@material-ui/icons/GetApp";
+import { RefreshCw as RefreshIcon, Download as GetAppIcon } from "lucide-react";
 import { ControllerContext } from "../ControllerProvider";
 import { FeedbackContext } from "../Utils/FeedbackContext";
 import SlideOver from "../CustomComponent/SlideOver";

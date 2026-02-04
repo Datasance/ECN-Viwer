@@ -1,14 +1,16 @@
 import React, { Fragment, useState, useRef, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import XMarkIcon from "@material-ui/icons/CloseOutlined";
-import RestartAltIcon from "@material-ui/icons/ReplayOutlined";
-import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
-import EditOutlinedIcon from "@material-ui/icons/EditOutlined";
-import PlayCircleFilledOutlined from "@material-ui/icons/PlayCircleFilledOutlined";
-import StopOutlined from "@material-ui/icons/StopOutlined";
-import PublishOutlined from "@material-ui/icons/PublishOutlined";
-import DescriptionOutlined from "@material-ui/icons/DescriptionOutlined";
-import VpnKeyIcon from "@material-ui/icons/VpnKey";
+import {
+  X as XMarkIcon,
+  RotateCcw as RestartAltIcon,
+  Trash2 as DeleteOutlineIcon,
+  Pencil as EditOutlinedIcon,
+  PlayCircle as PlayCircleFilledOutlined,
+  StopCircle as StopOutlined,
+  Upload as PublishOutlined,
+  FileText as DescriptionOutlined,
+  Key as VpnKeyIcon,
+} from "lucide-react";
 import { usePollingConfig } from "../providers/PollingConfig/PollingConfigProvider";
 
 type Field<T> = {
@@ -195,8 +197,8 @@ const SlideOver = <T,>({
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
+                            width="20"
+                            height="20"
                             viewBox="0 0 24 24"
                           >
                             <path
@@ -217,8 +219,8 @@ const SlideOver = <T,>({
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
+                            width="20"
+                            height="20"
                             viewBox="0 0 24 24"
                           >
                             <path
@@ -280,7 +282,7 @@ const SlideOver = <T,>({
                           className="hover:text-white hover:bg-sky-500 rounded"
                           title="Provision Key"
                         >
-                          <VpnKeyIcon fontSize="small" />
+                          <VpnKeyIcon size={20} />
                         </button>
                       )}
                       {onClean && (
@@ -314,7 +316,7 @@ const SlideOver = <T,>({
                           className="hover:text-white hover:bg-sky-500 rounded"
                           title="Publish"
                         >
-                          <PublishOutlined fontSize="small" />
+                          <PublishOutlined size={20} />
                         </button>
                       )}
                       {onDetails && (
@@ -323,7 +325,7 @@ const SlideOver = <T,>({
                           className="hover:text-white hover:bg-sky-500 rounded"
                           title="Details"
                         >
-                          <DescriptionOutlined fontSize="small" />
+                          <DescriptionOutlined size={20} />
                         </button>
                       )}
                       {onEditYaml && (
@@ -332,7 +334,7 @@ const SlideOver = <T,>({
                           className="hover:text-white hover:bg-sky-500 rounded"
                           title="Edit"
                         >
-                          <EditOutlinedIcon fontSize="small" />
+                          <EditOutlinedIcon size={20} />
                         </button>
                       )}
                       {onStartStop &&
@@ -342,14 +344,15 @@ const SlideOver = <T,>({
                             className="hover:text-white hover:bg-sky-500 rounded"
                             title="Start"
                           >
-                            <PlayCircleFilledOutlined fontSize="small" />
+                            <PlayCircleFilledOutlined size={20} />
                           </button>
                         ) : (
                           <button
                             onClick={onStartStop}
                             className="hover:text-red-600 hover:bg-sky-500 rounded"
+                            title="Stop"
                           >
-                            <StopOutlined fontSize="medium" />
+                            <StopOutlined size={20} />
                           </button>
                         ))}
                       {onRestart && (
@@ -358,7 +361,7 @@ const SlideOver = <T,>({
                           className="hover:text-white hover:bg-sky-500 rounded"
                           title="Restart"
                         >
-                          <RestartAltIcon fontSize="small" />
+                          <RestartAltIcon size={20} />
                         </button>
                       )}
                       {onDelete && (
@@ -367,14 +370,14 @@ const SlideOver = <T,>({
                           className="hover:text-red-600 hover:bg-sky-500 rounded"
                           title="Delete"
                         >
-                          <DeleteOutlineIcon fontSize="small" />
+                          <DeleteOutlineIcon size={20} />
                         </button>
                       )}
                       <button
                         onClick={onClose}
                         className="hover:text-black hover:bg-sky-500 rounded"
                       >
-                        <XMarkIcon fontSize="small" />
+                        <XMarkIcon size={20} />
                       </button>
                     </div>
                   </div>

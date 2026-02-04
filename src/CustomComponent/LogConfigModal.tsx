@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import CloseOutlinedIcon from "@material-ui/icons/CloseOutlined";
+import { X as CloseOutlinedIcon } from "lucide-react";
 
 export type LogTailConfig = {
   tail: number;
