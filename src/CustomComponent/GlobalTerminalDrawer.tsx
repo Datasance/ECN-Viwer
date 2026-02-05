@@ -1,9 +1,11 @@
 import React, { useMemo, useCallback, useRef } from "react";
 import { useTerminal } from "../providers/Terminal/TerminalProvider";
+import { useLogViewer } from "../providers/LogViewer/LogViewerProvider";
 import ResizableBottomDrawer from "./ResizableBottomDrawer";
 import StableTerminalTab from "./StableTerminalTab";
 import StableYamlTab from "./StableYamlTab";
 import StableDeployTab from "./StableDeployTab";
+import LogViewer from "./LogViewer";
 import UnsavedChangesModal from "./UnsavedChangesModal";
 
 type GlobalTerminalDrawerProps = {
@@ -28,15 +30,61 @@ const GlobalTerminalDrawer = ({
     updateDeploySession,
   } = useTerminal();
 
-  const activeYamlSession = yamlSessions.find((s) => s.id === activeSessionId);
+  const {
+    sessions: logSessions,
+    activeSessionId: logActiveSessionId,
+    isDrawerOpen: isLogDrawerOpen,
+    removeSession: removeLogSession,
+    setActiveSession: setActiveLogSession,
+    closeDrawer: closeLogDrawer,
+    updateLogs,
+  } = useLogViewer();
+
+  // Combine drawer open state - open if any drawer should be open
+  const combinedIsDrawerOpen = isDrawerOpen || isLogDrawerOpen;
+
+  // Track the last clicked tab to ensure correct tab switching
+  const [lastClickedTabId, setLastClickedTabId] = React.useState<string | null>(
+    null,
+  );
+
+  // Combined active session ID - use the one that matches the clicked tab
+  const combinedActiveSessionId = React.useMemo(() => {
+    // If we have a last clicked tab, use it if it still exists
+    if (lastClickedTabId) {
+      const exists =
+        sessions.some((s) => s.id === lastClickedTabId) ||
+        yamlSessions.some((s) => s.id === lastClickedTabId) ||
+        deploySessions.some((s) => s.id === lastClickedTabId) ||
+        logSessions.some((s) => s.id === lastClickedTabId);
+      if (exists) {
+        return lastClickedTabId;
+      }
+    }
+    // Fallback to original logic
+    return activeSessionId || logActiveSessionId;
+  }, [
+    lastClickedTabId,
+    activeSessionId,
+    logActiveSessionId,
+    sessions,
+    yamlSessions,
+    deploySessions,
+    logSessions,
+  ]);
+
+  const activeYamlSession = yamlSessions.find(
+    (s) => s.id === combinedActiveSessionId,
+  );
   const activeDeploySession = deploySessions.find(
-    (s) => s.id === activeSessionId,
+    (s) => s.id === combinedActiveSessionId,
   );
 
   // Use refs to store stable tab components
   const terminalTabsRef = useRef(new Map());
   const yamlTabsRef = useRef(new Map());
   const deployTabsRef = useRef(new Map());
+  const logTabsRef = useRef(new Map());
 
   // State to track deploy function for header button
   const [deployFunction, setDeployFunction] = React.useState<any>(null);
@@ -65,9 +113,26 @@ const GlobalTerminalDrawer = ({
   // Create stable callback functions
   const handleRemoveSession = useCallback(
     (sessionId: string) => {
-      removeSession(sessionId);
+      // Try removing from terminal sessions first
+      const terminalSession = sessions.find((s) => s.id === sessionId);
+      const yamlSession = yamlSessions.find((s) => s.id === sessionId);
+      const deploySession = deploySessions.find((s) => s.id === sessionId);
+      const logSession = logSessions.find((s) => s.id === sessionId);
+
+      if (terminalSession || yamlSession || deploySession) {
+        removeSession(sessionId);
+      } else if (logSession) {
+        removeLogSession(sessionId);
+      }
     },
-    [removeSession],
+    [
+      sessions,
+      yamlSessions,
+      deploySessions,
+      logSessions,
+      removeSession,
+      removeLogSession,
+    ],
   );
 
   // Build tabs with useMemo to avoid unnecessary recreation
@@ -84,6 +149,8 @@ const GlobalTerminalDrawer = ({
             authToken={session.authToken}
             microserviceUuid={session.microserviceUuid}
             execId={session.execId}
+            nodeUuid={session.nodeUuid}
+            waitingForDebugger={session.waitingForDebugger}
             onClose={() => {
               handleRemoveSession(session.id);
             }}
@@ -157,11 +224,43 @@ const GlobalTerminalDrawer = ({
       }
     });
 
+    // Add log tabs
+    logSessions.forEach((session) => {
+      if (!logTabsRef.current.has(session.id)) {
+        const logElement = (
+          <LogViewer
+            socketUrl={session.socketUrl}
+            authToken={session.authToken}
+            resourceName={session.resourceName}
+            resourceUuid={session.resourceUuid}
+            sourceType={session.sourceType}
+            onClose={() => {
+              handleRemoveSession(session.id);
+            }}
+            onLogsUpdate={(logs) => {
+              updateLogs(session.id, logs);
+            }}
+          />
+        );
+
+        logTabsRef.current.set(session.id, {
+          id: session.id,
+          title: session.title,
+          content: logElement,
+        });
+      }
+      const tab = logTabsRef.current.get(session.id);
+      if (tab) {
+        allTabs.push(tab);
+      }
+    });
+
     // Clean up removed sessions
     const currentSessionIds = new Set([
       ...sessions.map((s) => s.id),
       ...yamlSessions.map((s) => s.id),
       ...deploySessions.map((s) => s.id),
+      ...logSessions.map((s) => s.id),
     ]);
     terminalTabsRef.current.forEach((_, sessionId) => {
       if (!currentSessionIds.has(sessionId)) {
@@ -178,30 +277,52 @@ const GlobalTerminalDrawer = ({
         deployTabsRef.current.delete(sessionId);
       }
     });
+    logTabsRef.current.forEach((_, sessionId) => {
+      if (!currentSessionIds.has(sessionId)) {
+        logTabsRef.current.delete(sessionId);
+      }
+    });
 
     return allTabs;
   }, [
     sessions,
     yamlSessions,
     deploySessions,
+    logSessions,
     handleRemoveSession,
     updateYamlContent,
     updateDeploySession,
+    updateLogs,
   ]);
 
   const handleTabChange = (tabId: string) => {
-    setActiveSession(tabId);
+    setLastClickedTabId(tabId); // Track which tab was clicked
+
+    // Check which type of session this is
+    const terminalSession = sessions.find((s) => s.id === tabId);
+    const yamlSession = yamlSessions.find((s) => s.id === tabId);
+    const deploySession = deploySessions.find((s) => s.id === tabId);
+    const logSession = logSessions.find((s) => s.id === tabId);
+
+    if (terminalSession || yamlSession || deploySession) {
+      setActiveSession(tabId);
+    } else if (logSession) {
+      setActiveLogSession(tabId);
+    }
   };
 
   const handleTabClose = useCallback(
     (tabId: string) => {
-      removeSession(tabId);
+      handleRemoveSession(tabId);
     },
-    [removeSession],
+    [handleRemoveSession],
   );
 
   const handleClose = () => {
     closeDrawer();
+    if (isLogDrawerOpen) {
+      closeLogDrawer();
+    }
   };
 
   const handleSave = async () => {
@@ -224,34 +345,41 @@ const GlobalTerminalDrawer = ({
     }
   };
 
-  // Get active session content from the stable tabs - use activeSessionId instead of objects
+  // Get active session content from the stable tabs - use combinedActiveSessionId instead of objects
   const activeSessionContent = useMemo(() => {
-    if (activeSessionId) {
+    if (combinedActiveSessionId) {
       // Try terminal tabs first
-      const terminalTab = terminalTabsRef.current.get(activeSessionId);
+      const terminalTab = terminalTabsRef.current.get(combinedActiveSessionId);
       if (terminalTab) {
         return terminalTab.content;
       }
 
       // Try YAML tabs
-      const yamlTab = yamlTabsRef.current.get(activeSessionId);
+      const yamlTab = yamlTabsRef.current.get(combinedActiveSessionId);
       if (yamlTab) {
         return yamlTab.content;
       }
 
       // Try deploy tabs
-      const deployTab = deployTabsRef.current.get(activeSessionId);
+      const deployTab = deployTabsRef.current.get(combinedActiveSessionId);
       if (deployTab) {
         return deployTab.content;
       }
+
+      // Try log tabs
+      const logTab = logTabsRef.current.get(combinedActiveSessionId);
+      if (logTab) {
+        return logTab.content;
+      }
     }
     return null;
-  }, [activeSessionId]); // Only depend on activeSessionId, not the session objects
+  }, [combinedActiveSessionId]); // Only depend on combinedActiveSessionId, not the session objects
 
   if (
     sessions.length === 0 &&
     yamlSessions.length === 0 &&
-    deploySessions.length === 0
+    deploySessions.length === 0 &&
+    logSessions.length === 0
   ) {
     return null;
   }
@@ -268,6 +396,13 @@ const GlobalTerminalDrawer = ({
     if (activeYamlSession) {
       return `Editing ${activeYamlSession.title}`;
     }
+    // Check if active session is a log session
+    const activeLogSession = logSessions.find(
+      (s) => s.id === combinedActiveSessionId,
+    );
+    if (activeLogSession) {
+      return activeLogSession.title;
+    }
     return "Sessions";
   };
 
@@ -276,13 +411,13 @@ const GlobalTerminalDrawer = ({
   return (
     <>
       <ResizableBottomDrawer
-        open={isDrawerOpen}
+        open={combinedIsDrawerOpen}
         isEdit={isActiveTabDirty}
         onClose={handleClose}
         onSave={handleSave}
         title={getTitle()}
         tabs={tabs}
-        activeTabId={activeSessionId || undefined}
+        activeTabId={combinedActiveSessionId || undefined}
         onTabChange={handleTabChange}
         onTabClose={handleTabClose}
         showUnsavedChangesModal={isActiveTabDirty}

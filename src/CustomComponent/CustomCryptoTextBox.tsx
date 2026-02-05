@@ -1,8 +1,10 @@
 import React, { useState, useMemo, useRef, useLayoutEffect } from "react";
-import VisibilityIcon from "@material-ui/icons/Visibility";
-import VisibilityOffIcon from "@material-ui/icons/VisibilityOff";
-import FileCopyIcon from "@material-ui/icons/FileCopy";
-import CheckIcon from "@material-ui/icons/Check";
+import {
+  Eye as VisibilityIcon,
+  EyeOff as VisibilityOffIcon,
+  Copy as FileCopyIcon,
+  Check as CheckIcon,
+} from "lucide-react";
 
 type Props = {
   data: string;

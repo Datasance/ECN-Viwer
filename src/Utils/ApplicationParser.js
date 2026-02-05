@@ -46,6 +46,30 @@ export const parseMicroservice = async (microservice) => {
   const { registryId, catalogItemId, images } = await parseMicroserviceImages(
     microservice.images,
   );
+  // Parse serviceAccount.roleRef if present
+  let serviceAccount;
+  if (microservice.serviceAccount) {
+    const roleRef = microservice.serviceAccount.roleRef;
+    if (roleRef) {
+      // Validate required fields
+      if (!roleRef.kind || !roleRef.name) {
+        throw new Error(
+          "serviceAccount.roleRef requires both 'kind' and 'name' fields",
+        );
+      }
+      serviceAccount = {
+        roleRef: {
+          kind: roleRef.kind,
+          name: roleRef.name,
+          ...(roleRef.apiGroup && { apiGroup: roleRef.apiGroup }),
+        },
+      };
+    } else {
+      // If serviceAccount exists but has no roleRef, set to empty object
+      serviceAccount = {};
+    }
+  }
+
   const microserviceData = {
     config: microservice.config
       ? JSON.stringify(microservice.config)
@@ -152,6 +176,7 @@ export const parseMicroservice = async (microservice) => {
           ? microservice.subTags
           : microservice?.msRoutes?.subTags
         : "",
+    ...(serviceAccount !== undefined && { serviceAccount }),
   };
   _deleteUndefinedFields(microserviceData);
   return microserviceData;

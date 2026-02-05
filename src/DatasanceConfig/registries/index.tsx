@@ -3,16 +3,18 @@ import CustomDataTable from "../../CustomComponent/CustomDataTable";
 import { ControllerContext } from "../../ControllerProvider";
 import { FeedbackContext } from "../../Utils/FeedbackContext";
 import SlideOver from "../../CustomComponent/SlideOver";
+import CryptoTextBox from "../../CustomComponent/CustomCryptoTextBox";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
 import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import { useLocation } from "react-router-dom";
 import yaml from "js-yaml";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 import { parseRegistries } from "../../Utils/parseRegistriesYaml";
+import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
 
 function Registries() {
   const [fetching, setFetching] = React.useState(true);
-  const [registries, setRegistries] = React.useState([]);
+  const [registries, setRegistries] = React.useState<any[]>([]);
   const { request } = React.useContext(ControllerContext);
   const { pushFeedback } = React.useContext(FeedbackContext);
   const [isOpen, setIsOpen] = useState(false);
@@ -24,8 +26,43 @@ function Registries() {
   const { addYamlSession } = useTerminal();
 
   const handleRowClick = (row: any) => {
-    setSelectedRegistry(row);
-    setIsOpen(true);
+    if (row?.id != null) {
+      fetchRegistryItem(row.id);
+    }
+  };
+
+  async function fetchRegistryItem(id: number | string) {
+    try {
+      setFetching(true);
+      const itemResponse = await request(`/api/v3/registries/${id}`);
+      if (!itemResponse.ok) {
+        pushFeedback({ message: itemResponse.message, type: "error" });
+        setFetching(false);
+        return;
+      }
+      const responseItem = await itemResponse.json();
+      setSelectedRegistry(responseItem);
+      setIsOpen(true);
+      setFetching(false);
+    } catch (e: any) {
+      pushFeedback({ message: e.message, type: "error" });
+      setFetching(false);
+    }
+  }
+
+  const handleRefreshRegistry = async () => {
+    if (!selectedRegistry?.id) return;
+    try {
+      const itemResponse = await request(
+        `/api/v3/registries/${selectedRegistry.id}`,
+      );
+      if (itemResponse.ok) {
+        const responseItem = await itemResponse.json();
+        setSelectedRegistry(responseItem);
+      }
+    } catch (e) {
+      console.error("Error refreshing registry data:", e);
+    }
   };
 
   async function fetchRegistries() {
@@ -54,13 +91,29 @@ function Registries() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Unified YAML upload hook
+  const refreshFunctions = React.useMemo(() => {
+    const map = new Map();
+    map.set("Registry", async () => {
+      await fetchRegistries();
+    });
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const { processYamlFile: processUnifiedYaml } = useUnifiedYamlUpload({
+    request,
+    pushFeedback,
+    refreshFunctions,
+  });
+
   useEffect(() => {
-    if (registryId && registries) {
+    if (registryId && registries.length > 0) {
       const found = registries.find(
         (item: any) => item.id.toString() === registryId,
       );
       if (found) {
-        handleRowClick(found);
+        fetchRegistryItem(found.id);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -176,58 +229,6 @@ function Registries() {
     }
   };
 
-  const handleYamlParse = async (item: any) => {
-    const file = item;
-    if (file) {
-      const reader = new window.FileReader();
-
-      reader.onload = async function (evt: any) {
-        try {
-          const docs = yaml.loadAll(evt.target.result);
-
-          if (!Array.isArray(docs)) {
-            pushFeedback({
-              message: "Could not parse the file: Invalid YAML format",
-              type: "error",
-            });
-            return;
-          }
-
-          for (const doc of docs) {
-            if (!doc) {
-              continue;
-            }
-
-            const [registry, err] = await parseRegistries(doc);
-
-            if (err) {
-              console.error("Error parsing a document:", err);
-              pushFeedback({
-                message: `Error processing item: ${err}`,
-                type: "error",
-              });
-            } else {
-              try {
-                await handleYamlUpdate(registry, "POST");
-              } catch (e) {
-                console.error("Error updating a document:", e);
-              }
-            }
-          }
-        } catch (e) {
-          console.error({ e });
-          pushFeedback({ message: "Could not parse the file", type: "error" });
-        }
-      };
-
-      reader.onerror = function (evt) {
-        pushFeedback({ message: evt, type: "error" });
-      };
-
-      reader.readAsText(file, "UTF-8");
-    }
-  };
-
   const columns = [
     {
       key: "id",
@@ -256,7 +257,7 @@ function Registries() {
   const slideOverFields = [
     {
       label: "ID",
-      render: (row: any) => row.id || "N/A",
+      render: (row: any) => row.id ?? "N/A",
     },
     {
       label: "URL",
@@ -269,6 +270,18 @@ function Registries() {
     {
       label: "User Email",
       render: (row: any) => row.userEmail || "N/A",
+    },
+    {
+      label: "Password",
+      isFullSection: true,
+      render: (row: any) => (
+        <div className="py-3 flex flex-col">
+          <div className="text-sm font-medium text-gray-300 mb-1">Password</div>
+          <div className="text-sm text-white break-all bg-gray-800 rounded px-2 py-1">
+            <CryptoTextBox data={row?.password ?? ""} mode="plain" />
+          </div>
+        </div>
+      ),
     },
     {
       label: "Private",
@@ -300,7 +313,7 @@ function Registries() {
               data={registries}
               getRowKey={(row: any) => row.id}
               uploadDropzone
-              uploadFunction={handleYamlParse}
+              uploadFunction={processUnifiedYaml}
             />
           </div>
         </>
@@ -314,6 +327,8 @@ function Registries() {
         fields={slideOverFields}
         customWidth={600}
         onEditYaml={handleEditYaml}
+        enablePolling={true}
+        onRefresh={handleRefreshRegistry}
       />
 
       <UnsavedChangesModal

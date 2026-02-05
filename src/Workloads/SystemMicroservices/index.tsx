@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useData } from "../../providers/Data";
+import ApplicationManager from "../../providers/Data/application-manager";
 import CustomDataTable from "../../CustomComponent/CustomDataTable";
 import CustomProgressBar from "../../CustomComponent/CustomProgressBar";
 import SlideOver from "../../CustomComponent/SlideOver";
@@ -7,7 +8,7 @@ import { format, formatDistanceToNow } from "date-fns";
 import { useController } from "../../ControllerProvider";
 import { useFeedback } from "../../Utils/FeedbackContext";
 import { dumpMicroserviceYAML } from "../../Utils/microserviceYAML";
-import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
+import { Trash2 as DeleteOutlineIcon } from "lucide-react";
 import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/ace";
@@ -22,8 +23,12 @@ import { getTextColor, prettyBytes } from "../../ECNViewer/utils";
 import { StatusColor, StatusType } from "../../Utils/Enums/StatusColor";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "react-router-dom";
-import EditOutlinedIcon from "@material-ui/icons/EditOutlined";
+import { Pencil as EditOutlinedIcon } from "lucide-react";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
+import { useLogViewer } from "../../providers/LogViewer/LogViewerProvider";
+import LogConfigModal, {
+  LogTailConfig,
+} from "../../CustomComponent/LogConfigModal";
 import { useAuth } from "react-oidc-context";
 
 function SystemMicroserviceList() {
@@ -57,7 +62,9 @@ function SystemMicroserviceList() {
   const [editorValues, setEditorValues] = React.useState<string>("");
   const [configData, setConfigData] = useState<any>();
   const [editorContent, setEditorContent] = useState<string>("");
+  const [showLogConfigModal, setShowLogConfigModal] = useState(false);
   const { addTerminalSession, addYamlSession } = useTerminal();
+  const { addLogSession } = useLogViewer();
   const auth = useAuth();
 
   useEffect(() => {
@@ -76,6 +83,34 @@ function SystemMicroserviceList() {
   const handleRowClick = (row: any) => {
     setSelectedMs(row);
     setIsOpen(true);
+  };
+
+  const handleRefreshSystemMicroservice = async () => {
+    if (!selectedMs?.uuid) return;
+    try {
+      const systemApplications =
+        await ApplicationManager.listSystemApplicationsWithMicroservices(
+          request,
+        )();
+      const reducedAgents = data?.reducedAgents?.byUUID ?? {};
+      const flattened = systemApplications.flatMap((app: any) =>
+        (app.microservices || []).map((ms: any) => ({
+          ...ms,
+          agentName: reducedAgents[ms.iofogUuid]?.name,
+          appName: app.name,
+          appDescription: app.description,
+          appCreatedAt: app.createdAt,
+        })),
+      );
+      const updatedMs = flattened.find(
+        (m: any) => m.uuid === selectedMs.uuid,
+      );
+      if (updatedMs) {
+        setSelectedMs(updatedMs);
+      }
+    } catch (e) {
+      console.error("Error refreshing system microservice data:", e);
+    }
   };
 
   const handleRestart = async () => {
@@ -431,11 +466,11 @@ function SystemMicroserviceList() {
       // Create socket URL
       const socketUrl = (() => {
         if (!window.controllerConfig?.url) {
-          return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/microservices/exec/${microserviceUuid}`;
+          return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/microservices/system/exec/${microserviceUuid}`;
         }
         const u = new URL(window.controllerConfig.url);
         const protocol = u.protocol === "https:" ? "wss:" : "ws:";
-        return `${protocol}//${u.host}/api/v3/microservices/exec/${microserviceUuid}`;
+        return `${protocol}//${u.host}/api/v3/microservices/system/exec/${microserviceUuid}`;
       })();
 
       // Add terminal session to global state
@@ -448,6 +483,57 @@ function SystemMicroserviceList() {
     } catch (err: any) {
       pushFeedback?.({
         message: err.message || "Exec enable failed",
+        type: "error",
+      });
+    }
+  };
+
+  const handleOpenLogs = () => {
+    if (!selectedMs) return;
+    setShowLogConfigModal(true);
+  };
+
+  const handleLogConfigConfirm = (config: LogTailConfig) => {
+    if (!selectedMs) return;
+    setShowLogConfigModal(false);
+
+    try {
+      // Create websocket URL with tail config
+      const baseUrl = (() => {
+        if (!window.controllerConfig?.url) {
+          return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/microservices/system/${selectedMs.uuid}/logs`;
+        }
+        const u = new URL(window.controllerConfig.url);
+        const protocol = u.protocol === "https:" ? "wss:" : "ws:";
+        return `${protocol}//${u.host}/api/v3/microservices/system/${selectedMs.uuid}/logs`;
+      })();
+
+      const params = new URLSearchParams();
+      params.append("tail", config.tail.toString());
+      params.append("follow", config.follow.toString());
+      if (config.since) params.append("since", config.since);
+      if (config.until) params.append("until", config.until);
+
+      const socketUrl = `${baseUrl}?${params.toString()}`;
+
+      // Add log session
+      addLogSession({
+        title: `Logs: ${selectedMs.name}`,
+        socketUrl,
+        authToken: auth?.user?.access_token,
+        resourceUuid: selectedMs.uuid,
+        resourceName: selectedMs.name,
+        sourceType: "system-microservice",
+        tailConfig: config,
+      });
+
+      pushFeedback?.({
+        message: "Opening log viewer...",
+        type: "info",
+      });
+    } catch (err: any) {
+      pushFeedback?.({
+        message: err.message || "Failed to open logs",
         type: "error",
       });
     }
@@ -1143,7 +1229,10 @@ function SystemMicroserviceList() {
         onDelete={() => setShowDeleteConfirmModal(true)}
         onEditYaml={handleEditYaml}
         onTerminal={() => enableExecAndOpenTerminal(selectedMs?.uuid!)}
+        onLogs={handleOpenLogs}
         customWidth={750}
+        enablePolling={true}
+        onRefresh={handleRefreshSystemMicroservice}
       />
       <UnsavedChangesModal
         open={showResetConfirmModal}
@@ -1189,6 +1278,13 @@ function SystemMicroserviceList() {
         }
         cancelLabel={"Cancel"}
         confirmLabel={"Delete"}
+      />
+      <LogConfigModal
+        open={showLogConfigModal}
+        onClose={() => setShowLogConfigModal(false)}
+        onConfirm={handleLogConfigConfirm}
+        logSourceName={selectedMs?.name || "System Microservice"}
+        logSourceType="system-microservice"
       />
     </div>
   );

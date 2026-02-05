@@ -1,19 +1,8 @@
-import { Button } from "@material-ui/core";
-import { makeStyles } from "@material-ui/styles";
+import { Button, Box } from "@mui/material";
 import React from "react";
-import getSharedStyle from "../ECNViewer/sharedStyles/";
 import ReactJSONView from "react-json-view";
 
-const useStyles = makeStyles((theme) => ({
-  ...getSharedStyle(theme),
-  container: {
-    display: "flex",
-    justifyContent: "end",
-  },
-}));
-
 export default function ReactJson(props) {
-  const classes = useStyles();
   const [copyText, setcopyText] = React.useState("Copy All");
 
   function unsecuredCopyFunction(textToCopy) {
@@ -21,15 +10,14 @@ export default function ReactJson(props) {
     textarea.value = textToCopy;
     const presentationArea = document.getElementsByClassName("MuiDialog-root");
 
-    // Move the textarea outside the viewport to make it invisible
-    textarea.style.position = "absolute";
-    textarea.style.zIndex = "9999";
-    textarea.style.left = "-99999999px";
-    presentationArea[0].prepend(textarea);
-
-    // highlight the content of the textarea element
-    textarea.select();
-    textarea.focus();
+    if (presentationArea?.[0]) {
+      textarea.style.position = "absolute";
+      textarea.style.zIndex = "9999";
+      textarea.style.left = "-99999999px";
+      presentationArea[0].prepend(textarea);
+      textarea.select();
+      textarea.focus();
+    }
 
     try {
       document.execCommand("copy");
@@ -44,19 +32,17 @@ export default function ReactJson(props) {
   return (
     <>
       {props?.copyButtonEnable ? (
-        <div className={classes.container}>
-          <div className={classes.copyButton}>
-            <Button
-              autoFocus
-              onClick={() => {
-                setcopyText("Copied");
-                unsecuredCopyFunction(JSON.stringify(props?.src));
-              }}
-            >
-              {copyText}
-            </Button>
-          </div>
-        </div>
+        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+          <Button
+            autoFocus
+            onClick={() => {
+              setcopyText("Copied");
+              unsecuredCopyFunction(JSON.stringify(props?.src));
+            }}
+          >
+            {copyText}
+          </Button>
+        </Box>
       ) : null}
       <ReactJSONView
         {...props}

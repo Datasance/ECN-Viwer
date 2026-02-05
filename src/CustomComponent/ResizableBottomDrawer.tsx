@@ -1,11 +1,14 @@
 import React, { Fragment, useState, useRef, useEffect } from "react";
 import { Transition } from "@headlessui/react";
-import XMarkIcon from "@material-ui/icons/CloseOutlined";
-import MinimizeIcon from "@material-ui/icons/Minimize";
-import MaximizeIcon from "@material-ui/icons/CheckBoxOutlineBlank";
-import CloseIcon from "@material-ui/icons/Close";
-import TerminalIcon from "@material-ui/icons/Computer";
-import CodeIcon from "@material-ui/icons/Description";
+import {
+  X as XMarkIcon,
+  X as CloseIcon,
+  Minus as MinimizeIcon,
+  Square as MaximizeIcon,
+  Monitor as TerminalIcon,
+  FileText as CodeIcon,
+  List as ListAltIcon,
+} from "lucide-react";
 
 import UnsavedChangesModal from "./UnsavedChangesModal";
 
@@ -214,6 +217,11 @@ const ResizableBottomDrawer = ({
                                   className="mr-2 text-blue-400 flex-shrink-0"
                                   fontSize="small"
                                 />
+                              ) : tab.title.includes("Logs:") ? (
+                                <ListAltIcon
+                                  className="mr-2 text-green-400 flex-shrink-0"
+                                  fontSize="small"
+                                />
                               ) : null}
                               <span className="text-sm font-medium whitespace-nowrap">
                                 {tab.title}
@@ -226,7 +234,7 @@ const ResizableBottomDrawer = ({
                                   }}
                                   className="ml-2 text-gray-400 hover:text-white rounded p-0.5 flex-shrink-0"
                                 >
-                                  <CloseIcon fontSize="small" />
+                                  <CloseIcon size={18} />
                                 </button>
                               )}
                             </div>
@@ -251,9 +259,9 @@ const ResizableBottomDrawer = ({
                       className="flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 rounded p-1 w-6 h-6"
                     >
                       {minimized ? (
-                        <MaximizeIcon fontSize="small" />
+                        <MaximizeIcon size={18} />
                       ) : (
-                        <MinimizeIcon fontSize="small" />
+                        <MinimizeIcon size={18} />
                       )}
                     </button>
 
@@ -261,7 +269,7 @@ const ResizableBottomDrawer = ({
                       onClick={handleCloseClick}
                       className="text-gray-400 hover:text-white hover:bg-gray-700 rounded p-1"
                     >
-                      <XMarkIcon fontSize="small" />
+                      <XMarkIcon size={18} />
                     </button>
                   </div>
                 </div>

@@ -1,3 +1,4 @@
+/** Returns sx-compatible style objects for use with MUI Box/sx prop. Pass theme from useTheme(). */
 export default function getStyle(theme) {
   return {
     title: {
@@ -74,7 +75,7 @@ export default function getStyle(theme) {
       minWidth: "150px",
       direction: "rtl",
       color: theme.colors.neutral_2,
-      "& .MuiSvgIcon-root:hover": {
+      "& [data-lucide], & .MuiSvgIcon-root:hover": {
         color: theme.colors.neutral,
       },
     },

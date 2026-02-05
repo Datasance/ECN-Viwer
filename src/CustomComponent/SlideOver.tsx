@@ -1,14 +1,17 @@
 import React, { Fragment, useState, useRef, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import XMarkIcon from "@material-ui/icons/CloseOutlined";
-import RestartAltIcon from "@material-ui/icons/ReplayOutlined";
-import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
-import EditOutlinedIcon from "@material-ui/icons/EditOutlined";
-import PlayCircleFilledOutlined from "@material-ui/icons/PlayCircleFilledOutlined";
-import StopOutlined from "@material-ui/icons/StopOutlined";
-import PublishOutlined from "@material-ui/icons/PublishOutlined";
-import DescriptionOutlined from "@material-ui/icons/DescriptionOutlined";
-import VpnKeyIcon from "@material-ui/icons/VpnKey";
+import {
+  X as XMarkIcon,
+  RotateCcw as RestartAltIcon,
+  Trash2 as DeleteOutlineIcon,
+  Pencil as EditOutlinedIcon,
+  PlayCircle as PlayCircleFilledOutlined,
+  StopCircle as StopOutlined,
+  Upload as PublishOutlined,
+  FileText as DescriptionOutlined,
+  Key as VpnKeyIcon,
+} from "lucide-react";
+import { usePollingConfig } from "../providers/PollingConfig/PollingConfigProvider";
 
 type Field<T> = {
   label: string;
@@ -33,9 +36,12 @@ type SlideOverProps<T> = {
   onClean?: () => void;
   customWidth?: number;
   onTerminal?: () => void;
+  onLogs?: () => void;
   onAttach?: () => void;
   onDetach?: () => void;
   onProvisionKey?: () => void;
+  enablePolling?: boolean;
+  onRefresh?: () => void | Promise<void>;
 };
 
 const SlideOver = <T,>({
@@ -53,13 +59,57 @@ const SlideOver = <T,>({
   onDetails,
   onClean,
   onTerminal,
+  onLogs,
   onAttach,
   onDetach,
   onProvisionKey,
   customWidth,
+  enablePolling = false,
+  onRefresh,
 }: SlideOverProps<T>) => {
   const [width, setWidth] = useState(customWidth ? customWidth : 480);
   const isResizing = useRef(false);
+  const { getSlideoverInterval } = usePollingConfig();
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const onRefreshRef = useRef(onRefresh);
+
+  // Keep onRefresh ref up to date
+  useEffect(() => {
+    onRefreshRef.current = onRefresh;
+  }, [onRefresh]);
+
+  // Set up polling when slideover is open and polling is enabled
+  useEffect(() => {
+    // Clear any existing interval first
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    // Only set up polling if slideover is open, polling is enabled, and refresh callback exists
+    if (open && enablePolling && onRefreshRef.current) {
+      const interval = getSlideoverInterval();
+      intervalRef.current = setInterval(() => {
+        // Only call refresh if slideover is still open
+        if (onRefreshRef.current) {
+          const result = onRefreshRef.current();
+          if (result instanceof Promise) {
+            result.catch((error) => {
+              console.error("Error refreshing slideover data:", error);
+            });
+          }
+        }
+      }, interval);
+    }
+
+    // Cleanup on unmount or when dependencies change
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [open, enablePolling, getSlideoverInterval]);
 
   const startResizing = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -147,8 +197,8 @@ const SlideOver = <T,>({
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
+                            width="20"
+                            height="20"
                             viewBox="0 0 24 24"
                           >
                             <path
@@ -169,8 +219,8 @@ const SlideOver = <T,>({
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
+                            width="20"
+                            height="20"
                             viewBox="0 0 24 24"
                           >
                             <path
@@ -201,13 +251,38 @@ const SlideOver = <T,>({
                           </svg>
                         </button>
                       )}
+                      {onLogs && (
+                        <button
+                          onClick={onLogs}
+                          className="hover:text-white hover:bg-sky-500 rounded"
+                          title="Logs"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <path d="M14 2v6h6" />
+                            <path d="M16 13H8" />
+                            <path d="M16 17H8" />
+                            <path d="M10 9H8" />
+                          </svg>
+                        </button>
+                      )}
                       {onProvisionKey && (
                         <button
                           onClick={onProvisionKey}
                           className="hover:text-white hover:bg-sky-500 rounded"
                           title="Provision Key"
                         >
-                          <VpnKeyIcon fontSize="small" />
+                          <VpnKeyIcon size={20} />
                         </button>
                       )}
                       {onClean && (
@@ -241,7 +316,7 @@ const SlideOver = <T,>({
                           className="hover:text-white hover:bg-sky-500 rounded"
                           title="Publish"
                         >
-                          <PublishOutlined fontSize="small" />
+                          <PublishOutlined size={20} />
                         </button>
                       )}
                       {onDetails && (
@@ -250,7 +325,7 @@ const SlideOver = <T,>({
                           className="hover:text-white hover:bg-sky-500 rounded"
                           title="Details"
                         >
-                          <DescriptionOutlined fontSize="small" />
+                          <DescriptionOutlined size={20} />
                         </button>
                       )}
                       {onEditYaml && (
@@ -259,7 +334,7 @@ const SlideOver = <T,>({
                           className="hover:text-white hover:bg-sky-500 rounded"
                           title="Edit"
                         >
-                          <EditOutlinedIcon fontSize="small" />
+                          <EditOutlinedIcon size={20} />
                         </button>
                       )}
                       {onStartStop &&
@@ -269,14 +344,15 @@ const SlideOver = <T,>({
                             className="hover:text-white hover:bg-sky-500 rounded"
                             title="Start"
                           >
-                            <PlayCircleFilledOutlined fontSize="small" />
+                            <PlayCircleFilledOutlined size={20} />
                           </button>
                         ) : (
                           <button
                             onClick={onStartStop}
                             className="hover:text-red-600 hover:bg-sky-500 rounded"
+                            title="Stop"
                           >
-                            <StopOutlined fontSize="medium" />
+                            <StopOutlined size={20} />
                           </button>
                         ))}
                       {onRestart && (
@@ -285,7 +361,7 @@ const SlideOver = <T,>({
                           className="hover:text-white hover:bg-sky-500 rounded"
                           title="Restart"
                         >
-                          <RestartAltIcon fontSize="small" />
+                          <RestartAltIcon size={20} />
                         </button>
                       )}
                       {onDelete && (
@@ -294,14 +370,14 @@ const SlideOver = <T,>({
                           className="hover:text-red-600 hover:bg-sky-500 rounded"
                           title="Delete"
                         >
-                          <DeleteOutlineIcon fontSize="small" />
+                          <DeleteOutlineIcon size={20} />
                         </button>
                       )}
                       <button
                         onClick={onClose}
                         className="hover:text-black hover:bg-sky-500 rounded"
                       >
-                        <XMarkIcon fontSize="small" />
+                        <XMarkIcon size={20} />
                       </button>
                     </div>
                   </div>

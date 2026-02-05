@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
-import KeyboardArrowDown from "@material-ui/icons/KeyboardArrowDownOutlined";
-import KeyboardArrowUpOutlined from "@material-ui/icons/KeyboardArrowUpOutlined";
-import MoreVertIcon from "@material-ui/icons/MoreVert";
+import {
+  ChevronDown as KeyboardArrowDown,
+  ChevronUp as KeyboardArrowUpOutlined,
+  MoreVertical as MoreVertIcon,
+} from "lucide-react";
 import YamlUploadDropzone from "./YamlUploadDropzone";
 
 type Column<T> = {

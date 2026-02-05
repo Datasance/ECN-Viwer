@@ -1,13 +1,15 @@
 import { theme } from "../Theme/ThemeProvider";
 
-import PlayIcon from "@material-ui/icons/PlayArrow";
-import StopIcon from "@material-ui/icons/Stop";
-import RestartIcon from "@material-ui/icons/Replay";
-import DetailsIcon from "@material-ui/icons/ArrowForward";
-import DeleteIcon from "@material-ui/icons/Delete";
-import CodeIcon from "@material-ui/icons/Code";
-import SettingsBackupRestoreIcon from "@material-ui/icons/SettingsBackupRestore";
-import ReplayIcon from "@material-ui/icons/Replay";
+import {
+  Play as PlayIcon,
+  StopCircle as StopIcon,
+  RotateCcw as RestartIcon,
+  ArrowRight as DetailsIcon,
+  Trash2 as DeleteIcon,
+  Code as CodeIcon,
+  RotateCcw as SettingsBackupRestoreIcon,
+  RotateCcw as ReplayIcon,
+} from "lucide-react";
 
 import _prettyBytes from "pretty-bytes";
 import {

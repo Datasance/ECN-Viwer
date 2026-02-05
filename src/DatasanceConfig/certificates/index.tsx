@@ -8,11 +8,12 @@ import CryptoTextBox from "../../CustomComponent/CustomCryptoTextBox";
 import { NavLink, useLocation } from "react-router-dom";
 import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
 import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
-import {
-  parseCertificate,
-  parseCertificateAuthority,
-} from "../../Utils/parseCertificateYaml";
-import yaml from "js-yaml";
+// import {
+//   parseCertificate,
+//   parseCertificateAuthority,
+// } from "../../Utils/parseCertificateYaml";
+// import yaml from "js-yaml";
+import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
 
 function Certificates() {
   const [fetching, setFetching] = React.useState(true);
@@ -94,154 +95,44 @@ function Certificates() {
     }
   }
 
+  const handleRefreshCertificate = async () => {
+    if (!selectedCertificate?.name) return;
+    try {
+      const itemResponse = await request(
+        `/api/v3/certificates/${selectedCertificate.name}`,
+      );
+      if (itemResponse.ok) {
+        const responseItem = await itemResponse.json();
+        setSelectedCertificate(responseItem);
+      }
+    } catch (e) {
+      console.error("Error refreshing certificate data:", e);
+    }
+  };
+
   useEffect(() => {
     fetchCertificates();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleYamlUpload = async (item: any) => {
-    const file = item;
-    if (file) {
-      const reader = new window.FileReader();
-
-      reader.onload = async function (evt: any) {
-        try {
-          const docs = yaml.loadAll(evt.target.result);
-
-          if (!Array.isArray(docs)) {
-            pushFeedback({
-              message: "Could not parse the file: Invalid YAML format",
-              type: "error",
-            });
-            return;
-          }
-
-          // Sort documents: CertificateAuthority first, then Certificate
-          // This ensures CAs are deployed before certificates that depend on them
-          const sortedDocs = docs
-            .filter((doc) => doc !== null && doc !== undefined)
-            .sort((a, b) => {
-              const kindA = (a as any).kind;
-              const kindB = (b as any).kind;
-
-              // CertificateAuthority should come before Certificate
-              if (kindA === "CertificateAuthority" && kindB === "Certificate") {
-                return -1;
-              }
-              if (kindA === "Certificate" && kindB === "CertificateAuthority") {
-                return 1;
-              }
-              // If same kind or unknown, maintain original order
-              return 0;
-            });
-
-          // Process documents sequentially to ensure CAs are created before certificates
-          for (const doc of sortedDocs) {
-            let parsedItem;
-            let err;
-            const docKind = (doc as any).kind;
-
-            if (docKind === "Certificate") {
-              [parsedItem, err] = await parseCertificate(doc);
-            } else if (docKind === "CertificateAuthority") {
-              [parsedItem, err] = await parseCertificateAuthority(doc);
-            } else {
-              err = `Invalid kind ${docKind}, expected Certificate or CertificateAuthority`;
-            }
-
-            if (err) {
-              console.error("Error parsing a document:", err);
-              pushFeedback({
-                message: `Error processing item: ${err}`,
-                type: "error",
-              });
-            } else {
-              // Await to ensure sequential processing
-              await postCertificateItem(parsedItem, "POST", docKind);
-            }
-          }
-        } catch (e) {
-          console.error({ e });
-          pushFeedback({
-            message: "Could not parse the file. Check YAML syntax.",
-            type: "error",
-          });
-        }
-      };
-
-      reader.onerror = function (evt) {
-        pushFeedback({ message: evt, type: "error" });
-      };
-
-      reader.readAsText(file, "UTF-8");
-    }
-  };
-
-  const postCertificateItem = async (
-    item: any,
-    method?: string,
-    kind?: string,
-  ) => {
-    let newItem;
-
-    if (typeof item === "object" && item !== null) {
-      newItem = { ...item };
-    } else {
-      console.error(
-        "Invalid data type passed to postCertificateItem:",
-        typeof item,
-      );
-      pushFeedback({ message: "Invalid data.", type: "error" });
-      setLoading(false);
-      return;
-    }
-
-    setLoadingMessage(
-      kind === "CertificateAuthority"
-        ? "Certificate Authority Adding..."
-        : "Certificate Adding...",
-    );
-    setLoading(true);
-
-    // Determine the endpoint based on kind
-    let endpoint = "/api/v3/certificates";
-    if (kind === "CertificateAuthority") {
-      endpoint = "/api/v3/certificates/ca";
-      // For PATCH, append the name to the CA endpoint
-      if (method === "PATCH" && newItem.name) {
-        endpoint = `/api/v3/certificates/ca/${newItem.name}`;
-      }
-    } else {
-      // For regular Certificate, append name for PATCH
-      if (method === "PATCH" && newItem.name) {
-        endpoint = `/api/v3/certificates/${newItem.name}`;
-      }
-    }
-
-    const response = await request(endpoint, {
-      method: method,
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(newItem),
+  // Unified YAML upload hook
+  const refreshFunctions = React.useMemo(() => {
+    const map = new Map();
+    map.set("Certificate", async () => {
+      await fetchCertificates();
     });
-    if (response?.ok) {
-      const itemType =
-        kind === "CertificateAuthority"
-          ? "Certificate Authority"
-          : "Certificate";
-      pushFeedback({
-        message: `${itemType} ${method === "POST" ? "Added" : "Updated"}!`,
-        type: "success",
-      });
-      fetchCertificates();
-      setLoading(false);
-    } else {
-      pushFeedback({ message: response?.message, type: "error" });
-      setLoading(false);
-    }
-  };
+    map.set("CertificateAuthority", async () => {
+      await fetchCertificates();
+    });
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const { processYamlFile: processUnifiedYaml } = useUnifiedYamlUpload({
+    request,
+    pushFeedback,
+    refreshFunctions,
+  });
 
   const handleDeleteCertificate = async () => {
     try {
@@ -458,7 +349,7 @@ function Certificates() {
               data={certificates}
               getRowKey={(row: any) => row.name}
               uploadDropzone
-              uploadFunction={handleYamlUpload}
+              uploadFunction={processUnifiedYaml}
             />
 
             <SlideOver
@@ -469,6 +360,8 @@ function Certificates() {
               data={selectedCertificate}
               fields={slideOverFields}
               customWidth={600}
+              enablePolling={true}
+              onRefresh={handleRefreshCertificate}
             />
             <CustomLoadingModal
               open={loading}

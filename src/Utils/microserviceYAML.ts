@@ -111,7 +111,11 @@ export const getMicroserviceYAMLFromJSON = ({
         commands: Array.isArray(microservice.cmd) ? [...microservice.cmd] : [],
         healthCheck: microservice?.healthCheck ?? {},
       },
-      schedule: microservice?.schedule ?? 50,
+      ...(microservice?.serviceAccount?.roleRef && {
+        serviceAccount: {
+          roleRef: microservice.serviceAccount.roleRef,
+        },
+      }),
       msRoutes: {
         pubTags: microservice?.pubTags ?? [],
         subTags: microservice?.subTags ?? [],

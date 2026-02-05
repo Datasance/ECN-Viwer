@@ -1,6 +1,6 @@
 import { Dialog, Transition } from "@headlessui/react";
 import React, { Fragment } from "react";
-import CloseOutlinedIcon from "@material-ui/icons/CloseOutlined";
+import { X as CloseOutlinedIcon } from "lucide-react";
 
 type CustomActionModalProps = {
   open: boolean;

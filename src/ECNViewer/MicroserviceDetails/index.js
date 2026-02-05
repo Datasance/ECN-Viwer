@@ -6,7 +6,6 @@ import ReactJson from "../../Utils/ReactJson";
 import {
   Paper,
   Typography,
-  makeStyles,
   Dialog,
   DialogActions,
   DialogContent,
@@ -20,7 +19,9 @@ import {
   TableCell,
   useMediaQuery,
   CircularProgress,
-} from "@material-ui/core";
+  useTheme,
+  Box,
+} from "@mui/material";
 
 import { useData } from "../../providers/Data";
 import getSharedStyle from "../sharedStyles";
@@ -42,29 +43,6 @@ import yaml from "js-yaml";
 import { API_VERSIONS } from "../../Utils/constants";
 import { parseMicroservice } from "../../Utils/ApplicationParser";
 
-const useStyles = makeStyles((theme) => ({
-  ...getSharedStyle(theme),
-  containerWithButtons: {
-    display: "flex",
-    "place-content": "space-between",
-  },
-  addnewButtonArea: {
-    display: "flex",
-  },
-  volumesArea: {
-    display: "flex",
-    alignItems: "center",
-  },
-  container: {
-    display: "flex",
-    justifyContent: "end",
-  },
-  rebootAndDeleteArea: {
-    display: "flex",
-    justifyContent: "end",
-  },
-}));
-
 export default function MicroserviceDetails({
   microservice: selectedMicroservice,
   selectApplication,
@@ -72,7 +50,20 @@ export default function MicroserviceDetails({
   back,
 }) {
   const { data } = useData();
-  const classes = useStyles();
+  const theme = useTheme();
+  const sharedSx = getSharedStyle(theme);
+  const sx = {
+    ...sharedSx,
+    containerWithButtons: {
+      display: "flex",
+      placeContent: "space-between",
+    },
+    addnewButtonArea: { display: "flex" },
+    volumesArea: { display: "flex", alignItems: "center" },
+    container: { display: "flex", justifyContent: "end" },
+    rebootAndDeleteArea: { display: "flex", justifyContent: "end" },
+    copyButton: { display: "inline-block" },
+  };
   const [openDeleteMicroserviceDialog, setOpenDeleteMicroserviceDialog] =
     React.useState(false);
   const [openDetailsModal, setOpenDetailsModal] = React.useState(false);
@@ -156,23 +147,29 @@ export default function MicroserviceDetails({
   const application = reducedApplications.byName[microservice.application];
 
   const mainActions = (
-    <div className={classes.actions} style={{ minWidth: 0 }}>
-      <icons.DeleteIcon
+    <Box sx={sx.actions} style={{ minWidth: 0 }}>
+      <Box
+        component="span"
+        sx={sx.action}
         onClick={() => setOpenDeleteMicroserviceDialog(true)}
-        className={classes.action}
         title="Delete application"
-      />
-    </div>
+      >
+        <icons.DeleteIcon size={20} />
+      </Box>
+    </Box>
   );
 
   const detailActions = (
-    <div className={classes.actions} style={{ minWidth: 0 }}>
-      <icons.CodeIcon
+    <Box sx={sx.actions} style={{ minWidth: 0 }}>
+      <Box
+        component="span"
+        sx={sx.action}
         onClick={() => setOpenDetailsModal(true)}
-        className={classes.action}
         title="Details"
-      />
-    </div>
+      >
+        <icons.CodeIcon size={20} />
+      </Box>
+    </Box>
   );
 
   const { request } = useController();
@@ -525,16 +522,16 @@ export default function MicroserviceDetails({
   };
 
   const rebootActions = (
-    <div
-      className={classes.actions}
-      style={{ minWidth: "unset", marginRight: "0.3rem" }}
-    >
-      <icons.ReplayIcon
+    <Box sx={sx.actions} style={{ minWidth: "unset", marginRight: "0.3rem" }}>
+      <Box
+        component="span"
+        sx={sx.action}
         onClick={() => setOpenRebootAgentDialog(true)}
-        className={classes.action}
         title="Reboot Agent"
-      />
-    </div>
+      >
+        <icons.ReplayIcon size={20} />
+      </Box>
+    </Box>
   );
 
   async function rebootAgent() {
@@ -568,20 +565,15 @@ export default function MicroserviceDetails({
 
   return (
     <>
-      <Paper className={`section first ${classes.multiSections}`}>
-        <div
-          className={[
-            classes.section,
-            "paper-container-left",
-            classes.bottomPad,
-          ].join(" ")}
-        >
-          <Typography variant="subtitle2" className={classes.title}>
+      <Paper className="section first" sx={sx.multiSections}>
+        <Box className="paper-container-left" sx={[sx.section, sx.bottomPad]}>
+          <Typography variant="subtitle2" sx={sx.title}>
             <span>Status</span>
             {!isMediumScreen && mainActions}
           </Typography>
-          <span
-            className={classes.text}
+          <Box
+            component="span"
+            sx={sx.text}
             style={{ display: "flex", alignItems: "center" }}
           >
             <MsvcStatus
@@ -591,47 +583,55 @@ export default function MicroserviceDetails({
             {microservice.status.status}
             {microservice.status.status === "PULLING" &&
               ` (${microservice.status.percentage.toFixed(2)}%)`}
-          </span>
+          </Box>
           {microservice.status.errorMessage && (
-            <span className={classes.subTitle}>
+            <Box component="span" sx={sx.subTitle}>
               Error:{" "}
-              <span className={classes.text}>
+              <Box component="span" sx={sx.text}>
                 {microservice.status.errorMessage}
-              </span>
-            </span>
+              </Box>
+            </Box>
           )}
-        </div>
-        <div className={classes.sectionDivider} />
-        <div
-          className={[classes.section, "paper-container-right"].join(" ")}
+        </Box>
+        <Box sx={sx.sectionDivider} />
+        <Box
+          className="paper-container-right"
+          sx={sx.section}
           style={{ paddingBottom: "15px" }}
         >
-          <Typography variant="subtitle2" className={classes.title}>
+          <Typography variant="subtitle2" sx={sx.title}>
             <span>Description</span>
-            <div className={classes.rebootAndDeleteArea}>
+            <Box sx={sx.rebootAndDeleteArea}>
               {isMediumScreen && rebootActions}
               {isMediumScreen && mainActions}
-            </div>
+            </Box>
           </Typography>
-          <span className={classes.text}>{microservice.description}</span>
-        </div>
+          <Box component="span" sx={sx.text}>
+            {microservice.description}
+          </Box>
+        </Box>
       </Paper>
-      <Paper className={`section ${classes.multiSections}`}>
-        <div className={[classes.section, "paper-container-left"].join(" ")}>
-          <Typography variant="subtitle2" className={classes.title}>
+      <Paper className="section" sx={sx.multiSections}>
+        <Box className="paper-container-left" sx={sx.section}>
+          <Typography variant="subtitle2" sx={sx.title}>
             <span>Microservices Details</span>
             {!isMediumScreen && detailActions}
           </Typography>
-          <div className={classes.subSection}>
-            <span className={classes.subTitle}>Image</span>
-            <span className={classes.text}>
+          <Box sx={sx.subSection}>
+            <Box component="span" sx={sx.subTitle}>
+              Image
+            </Box>
+            <Box component="span" sx={sx.text}>
               {_getMicroserviceImage(microservice)}
-            </span>
-          </div>
-          <div className={classes.subSection}>
-            <span className={classes.subTitle}>Application</span>
-            <span
-              className={`${classes.text} ${classes.action}`}
+            </Box>
+          </Box>
+          <Box sx={sx.subSection}>
+            <Box component="span" sx={sx.subTitle}>
+              Application
+            </Box>
+            <Box
+              component="span"
+              sx={[sx.text, sx.action]}
               onClick={() => selectApplication(application)}
             >
               <span style={{ display: "flex", alignItems: "center" }}>
@@ -643,13 +643,16 @@ export default function MicroserviceDetails({
                 <span />
                 {application.name}
               </span>
-            </span>
-          </div>
-          <div className={classes.subSection}>
-            <span className={classes.subTitle}>Agent</span>
+            </Box>
+          </Box>
+          <Box sx={sx.subSection}>
+            <Box component="span" sx={sx.subTitle}>
+              Agent
+            </Box>
             {agent ? (
-              <span
-                className={`${classes.text} ${classes.action}`}
+              <Box
+                component="span"
+                sx={[sx.text, sx.action]}
                 onClick={() => selectAgent(agent)}
               >
                 <span style={{ display: "flex", alignItems: "center" }}>
@@ -661,102 +664,102 @@ export default function MicroserviceDetails({
                   <span />
                   {agent.name}
                 </span>
-              </span>
+              </Box>
             ) : (
               ""
             )}
-          </div>
-          <div className={classes.subSection}>
-            <span className={classes.subTitle}>Created at</span>
-            <span className={classes.text}>
+          </Box>
+          <Box sx={sx.subSection}>
+            <Box component="span" sx={sx.subTitle}>
+              Created at
+            </Box>
+            <Box component="span" sx={sx.text}>
               {moment(microservice.createdAt).format(dateFormat)}
-            </span>
-          </div>
-        </div>
-        <div className={classes.sectionDivider} />
-        <div
-          className={[classes.section, "paper-container-right"].join(" ")}
+            </Box>
+          </Box>
+        </Box>
+        <Box sx={sx.sectionDivider} />
+        <Box
+          className="paper-container-right"
+          sx={sx.section}
           style={{ paddingBottom: "15px" }}
         >
-          <Typography variant="subtitle2" className={classes.title}>
+          <Typography variant="subtitle2" sx={sx.title}>
             <span>Resources Utilization</span>
             {isMediumScreen && detailActions}
           </Typography>
-          <div className={classes.subSection}>
-            <span className={classes.subTitle}>CPU Usage</span>
-            <span className={classes.text}>
+          <Box sx={sx.subSection}>
+            <Box component="span" sx={sx.subTitle}>
+              CPU Usage
+            </Box>
+            <Box component="span" sx={sx.text}>
               {(microservice.status.cpuUsage * 1).toFixed(2) + "%"}
-            </span>
-          </div>
-          <div className={classes.subSection}>
-            <span className={classes.subTitle}>Memory Usage</span>
-            <span className={classes.text}>{`${prettyBytes(
+            </Box>
+          </Box>
+          <Box sx={sx.subSection}>
+            <Box component="span" sx={sx.subTitle}>
+              Memory Usage
+            </Box>
+            <Box component="span" sx={sx.text}>{`${prettyBytes(
               microservice.status.memoryUsage || 0 * MiBFactor,
             )} / ${prettyBytes(agent.systemAvailableMemory || 0)} (${(
               (microservice.status.memoryUsage / agent.systemAvailableMemory) *
                 100 || 0
-            ).toFixed(2)}%)`}</span>
-          </div>
-        </div>
+            ).toFixed(2)}%)`}</Box>
+          </Box>
+        </Box>
       </Paper>
       <Paper className="section">
         <div className="section-container">
           <div
-            className={[
-              classes.section,
-              classes.cardTitle,
-              "paper-container-left",
-              "paper-container-right",
-            ].join(" ")}
+            className="paper-container-left paper-container-right"
+            sx={[sx.section, sx.cardTitle]}
           >
-            <div className={classes.containerWithButtons}>
-              <Typography variant="subtitle2" className={classes.title}>
-                <span className={classes.stickyLeft}>Ports</span>
+            <Box sx={sx.containerWithButtons}>
+              <Typography variant="subtitle2" sx={sx.title}>
+                <Box component="span" sx={sx.stickyLeft}>
+                  Ports
+                </Box>
               </Typography>
-              <div className={classes.addnewButtonArea}>
+              <Box sx={sx.addnewButtonArea}>
                 <Button
                   color="primary"
                   onClick={() => setOpenAddPortMicroserviceDialog(true)}
                 >
                   {`Add New`}
                 </Button>
-              </div>
-            </div>
+              </Box>
+            </Box>
           </div>
           <Table stickyHeader>
             <TableHead>
               <TableRow>
                 <TableCell
-                  className={classes.tableTitle}
-                  classes={{ stickyHeader: classes.stickyHeaderCell }}
+                  sx={[sx.tableTitle, sx.stickyHeaderCell]}
                   style={{ top: "54px" }}
                 >
                   Internal
                 </TableCell>
                 <TableCell
-                  className={classes.tableTitle}
-                  classes={{ stickyHeader: classes.stickyHeaderCell }}
+                  sx={[sx.tableTitle, sx.stickyHeaderCell]}
                   style={{ top: "54px" }}
                 >
                   External
                 </TableCell>
                 <TableCell
-                  className={classes.tableTitle}
-                  classes={{ stickyHeader: classes.stickyHeaderCell }}
+                  sx={[sx.tableTitle, sx.stickyHeaderCell]}
                   style={{ top: "54px" }}
                 >
                   Protocol
                 </TableCell>
                 <TableCell
-                  className={classes.tableTitle}
-                  classes={{ stickyHeader: classes.stickyHeaderCell }}
+                  sx={[sx.tableTitle, sx.stickyHeaderCell]}
                   style={{ top: "54px" }}
                 >
                   PublicLink
                 </TableCell>
                 <TableCell
-                  className={classes.tableTitle}
-                  classes={{ stickyHeader: classes.stickyHeaderCell }}
+                  sx={[sx.tableTitle, sx.stickyHeaderCell]}
                   style={{ top: "54px" }}
                 >
                   Action
@@ -766,11 +769,7 @@ export default function MicroserviceDetails({
             <TableBody>
               {ports.length > 0
                 ? ports.map((p) => (
-                    <TableRow
-                      key={p.external}
-                      hover
-                      classes={{ hover: classes.tableRowHover }}
-                    >
+                    <TableRow key={p.external} hover sx={sx.tableRowHover}>
                       <TableCell component="th" scope="row">
                         {p.internal}
                       </TableCell>
@@ -784,7 +783,7 @@ export default function MicroserviceDetails({
                       </TableCell>
                       <TableCell>
                         <a
-                          className={classes.link}
+                          sx={sx.link}
                           href={p.public?.links?.join(",")}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -798,7 +797,7 @@ export default function MicroserviceDetails({
                             setselectedPortObject(p);
                             setOpenDeletePortDialog(true);
                           }}
-                          className={classes.action}
+                          sx={sx.action}
                           title="Delete application"
                         />
                       </TableCell>
@@ -812,20 +811,18 @@ export default function MicroserviceDetails({
       <Paper className="section">
         <div className="section-container">
           <div
-            className={[
-              classes.section,
-              classes.cardTitle,
-              "paper-container-left",
-              "paper-container-right",
-            ].join(" ")}
+            className="paper-container-left paper-container-right"
+            sx={[sx.section, sx.cardTitle]}
           >
-            <Typography variant="subtitle2" className={classes.title}>
-              <span className={classes.stickyLeft}>Volumes</span>
-              <div className={classes.volumesArea}>
+            <Typography variant="subtitle2" sx={sx.title}>
+              <Box component="span" sx={sx.stickyLeft}>
+                Volumes
+              </Box>
+              <Box sx={sx.volumesArea}>
                 <SearchBar
                   onSearch={setVolumeFilter}
-                  inputClasses={{ root: classes.narrowSearchBar }}
-                  classes={{ root: classes.stickyRight }}
+                  inputClasses={{ root: sx.narrowSearchBar }}
+                  classes={{ root: sx.stickyRight }}
                 />
                 <Button
                   color="primary"
@@ -835,43 +832,38 @@ export default function MicroserviceDetails({
                 >
                   {`Add New`}
                 </Button>
-              </div>
+              </Box>
             </Typography>
           </div>
           <Table stickyHeader>
             <TableHead>
               <TableRow>
                 <TableCell
-                  className={classes.tableTitle}
-                  classes={{ stickyHeader: classes.stickyHeaderCell }}
+                  sx={[sx.tableTitle, sx.stickyHeaderCell]}
                   style={{ top: "54px" }}
                 >
                   Host
                 </TableCell>
                 <TableCell
-                  className={classes.tableTitle}
-                  classes={{ stickyHeader: classes.stickyHeaderCell }}
+                  sx={[sx.tableTitle, sx.stickyHeaderCell]}
                   style={{ top: "54px" }}
                 >
                   Container
                 </TableCell>
                 <TableCell
-                  className={classes.tableTitle}
-                  classes={{ stickyHeader: classes.stickyHeaderCell }}
+                  sx={[sx.tableTitle, sx.stickyHeaderCell]}
                   style={{ top: "54px" }}
                 >
                   Acces Mode
                 </TableCell>
                 <TableCell
-                  className={classes.tableTitle}
-                  classes={{ stickyHeader: classes.stickyHeaderCell }}
+                  sx={[sx.tableTitle, sx.stickyHeaderCell]}
                   style={{ top: "54px" }}
                 >
                   Type
                 </TableCell>
                 <TableCell
-                  className={classes.tableTitle}
-                  classes={{ stickyHeader: classes.stickyHeaderCell }}
+                  sx={[sx.tableTitle, sx.stickyHeaderCell]}
                   style={{ top: "54px" }}
                 >
                   Action
@@ -884,7 +876,7 @@ export default function MicroserviceDetails({
                     <TableRow
                       key={p.containerDestination}
                       hover
-                      classes={{ hover: classes.tableRowHover }}
+                      sx={sx.tableRowHover}
                     >
                       <TableCell component="th" scope="row">
                         {p.hostDestination}
@@ -898,7 +890,7 @@ export default function MicroserviceDetails({
                             setselectedVolumeMappingObject(p);
                             setOpenDeleteVolumeMappingDialog(true);
                           }}
-                          className={classes.action}
+                          sx={sx.action}
                           title="Delete volume"
                         />
                       </TableCell>
@@ -912,19 +904,17 @@ export default function MicroserviceDetails({
       <Paper className="section">
         <div className="section-container">
           <div
-            className={[
-              classes.section,
-              classes.cardTitle,
-              "paper-container-left",
-              "paper-container-right",
-            ].join(" ")}
+            className="paper-container-left paper-container-right"
+            sx={[sx.section, sx.cardTitle]}
           >
-            <Typography variant="subtitle2" className={classes.title}>
-              <span className={classes.stickyLeft}>Environment variables</span>
+            <Typography variant="subtitle2" sx={sx.title}>
+              <Box component="span" sx={sx.stickyLeft}>
+                Environment variables
+              </Box>
               <SearchBar
                 onSearch={setEnvFilter}
-                inputClasses={{ root: classes.narrowSearchBar }}
-                classes={{ root: classes.stickyRight }}
+                inputClasses={{ root: sx.narrowSearchBar }}
+                classes={{ root: sx.stickyRight }}
               />
             </Typography>
           </div>
@@ -932,15 +922,13 @@ export default function MicroserviceDetails({
             <TableHead>
               <TableRow>
                 <TableCell
-                  className={classes.tableTitle}
-                  classes={{ stickyHeader: classes.stickyHeaderCell }}
+                  sx={[sx.tableTitle, sx.stickyHeaderCell]}
                   style={{ top: "54px", maxWidth: "200px" }}
                 >
                   Key
                 </TableCell>
                 <TableCell
-                  className={classes.tableTitle}
-                  classes={{ stickyHeader: classes.stickyHeaderCell }}
+                  sx={[sx.tableTitle, sx.stickyHeaderCell]}
                   style={{ top: "54px", maxWidth: "200px" }}
                 >
                   Value
@@ -949,11 +937,7 @@ export default function MicroserviceDetails({
             </TableHead>
             <TableBody>
               {env.map((p) => (
-                <TableRow
-                  key={p.key}
-                  hover
-                  classes={{ hover: classes.tableRowHover }}
-                >
+                <TableRow key={p.key} hover sx={sx.tableRowHover}>
                   <TableCell
                     component="th"
                     scope="row"
@@ -975,19 +959,17 @@ export default function MicroserviceDetails({
       <Paper className="section">
         <div className="section-container">
           <div
-            className={[
-              classes.section,
-              classes.cardTitle,
-              "paper-container-left",
-              "paper-container-right",
-            ].join(" ")}
+            className="paper-container-left paper-container-right"
+            sx={[sx.section, sx.cardTitle]}
           >
-            <Typography variant="subtitle2" className={classes.title}>
-              <span className={classes.stickyLeft}>Extra hosts</span>
+            <Typography variant="subtitle2" sx={sx.title}>
+              <Box component="span" sx={sx.stickyLeft}>
+                Extra hosts
+              </Box>
               <SearchBar
                 onSearch={sethostFilter}
-                inputClasses={{ root: classes.narrowSearchBar }}
-                classes={{ root: classes.stickyRight }}
+                inputClasses={{ root: sx.narrowSearchBar }}
+                classes={{ root: sx.stickyRight }}
               />
             </Typography>
           </div>
@@ -995,22 +977,19 @@ export default function MicroserviceDetails({
             <TableHead>
               <TableRow>
                 <TableCell
-                  className={classes.tableTitle}
-                  classes={{ stickyHeader: classes.stickyHeaderCell }}
+                  sx={[sx.tableTitle, sx.stickyHeaderCell]}
                   style={{ top: "54px" }}
                 >
                   Name
                 </TableCell>
                 <TableCell
-                  className={classes.tableTitle}
-                  classes={{ stickyHeader: classes.stickyHeaderCell }}
+                  sx={[sx.tableTitle, sx.stickyHeaderCell]}
                   style={{ top: "54px" }}
                 >
                   Address
                 </TableCell>
                 <TableCell
-                  className={classes.tableTitle}
-                  classes={{ stickyHeader: classes.stickyHeaderCell }}
+                  sx={[sx.tableTitle, sx.stickyHeaderCell]}
                   style={{ top: "54px" }}
                 >
                   Value
@@ -1019,11 +998,7 @@ export default function MicroserviceDetails({
             </TableHead>
             <TableBody>
               {extraHosts.map((p) => (
-                <TableRow
-                  key={p.name}
-                  hover
-                  classes={{ hover: classes.tableRowHover }}
-                >
+                <TableRow key={p.name} hover sx={sx.tableRowHover}>
                   <TableCell component="th" scope="row">
                     {p.name}
                   </TableCell>
@@ -1040,23 +1015,16 @@ export default function MicroserviceDetails({
         style={{ maxHeight: "800px", paddingBottom: "15px" }}
       >
         <div
-          className={[
-            classes.section,
-            "paper-container-left",
-            "paper-container-right",
-          ].join(" ")}
+          className="paper-container-left paper-container-right"
+          sx={sx.section}
         >
-          <Typography
-            variant="subtitle2"
-            className={classes.title}
-            style={{ zIndex: 5 }}
-          >
+          <Typography variant="subtitle2" sx={sx.title} style={{ zIndex: 5 }}>
             Microservice YAML
           </Typography>
 
-          <div className={classes.container}>
+          <Box sx={sx.container}>
             {editorIsChanged ? (
-              <div className={classes.copyButton}>
+              <Box sx={sx.copyButton}>
                 <Button
                   onClick={() => {
                     setOpenChangeYamlMicroserviceDialog(true);
@@ -1064,9 +1032,9 @@ export default function MicroserviceDetails({
                 >
                   {`Save Changes`}
                 </Button>
-              </div>
+              </Box>
             ) : null}
-            <div className={classes.copyButton}>
+            <Box sx={sx.copyButton}>
               <Button
                 autoFocus
                 onClick={() => {
@@ -1078,8 +1046,8 @@ export default function MicroserviceDetails({
               >
                 {copyText}
               </Button>
-            </div>
-          </div>
+            </Box>
+          </Box>
           <AceEditor
             setOptions={{ useWorker: false, tabSize: 2 }}
             mode="yaml"

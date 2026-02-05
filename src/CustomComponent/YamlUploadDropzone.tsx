@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from "react";
-import CloudUploadRounded from "@material-ui/icons/CloudUploadRounded";
+import { CloudUpload as CloudUploadRounded } from "lucide-react";
 
 type Props = {
   onUpload?: (file: File) => void;

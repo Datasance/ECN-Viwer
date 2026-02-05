@@ -18,6 +18,9 @@ export interface TerminalSession {
   onClose?: () => void;
   isActive: boolean;
   createdAt: number;
+  nodeUuid?: string; // For node exec sessions
+  waitingForDebugger?: boolean; // Indicates we're waiting for debug microservice
+  debuggerStatus?: "waiting" | "starting" | "running" | "error";
 }
 
 export interface YamlEditorSession {
@@ -98,13 +101,7 @@ export const TerminalProvider: React.FC<TerminalProviderProps> = ({
 
   const addTerminalSession = useCallback(
     (sessionData: Omit<TerminalSession, "id" | "isActive" | "createdAt">) => {
-      const id = `terminal-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      const newSession: TerminalSession = {
-        ...sessionData,
-        id,
-        isActive: true,
-        createdAt: Date.now(),
-      };
+      let sessionId: string = "";
 
       setSessions((prev) => {
         // Check if a session with the same microserviceUuid already exists
@@ -113,22 +110,30 @@ export const TerminalProvider: React.FC<TerminalProviderProps> = ({
         );
 
         if (existingIndex >= 0) {
-          // Update existing session
-          const updated = [...prev];
-          updated[existingIndex] = {
-            ...newSession,
-            id: prev[existingIndex].id,
-          };
-          return updated;
+          // Session already exists - just switch to it without updating
+          const existingSession = prev[existingIndex];
+          sessionId = existingSession.id;
+          setActiveSessionId(existingSession.id);
+          setIsDrawerOpen(true);
+          return prev; // Return unchanged sessions
         } else {
           // Add new session
+          const id = `terminal-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          const newSession: TerminalSession = {
+            ...sessionData,
+            id,
+            isActive: true,
+            createdAt: Date.now(),
+          };
+
+          sessionId = id;
+          setActiveSessionId(id);
+          setIsDrawerOpen(true);
           return [...prev, newSession];
         }
       });
 
-      setActiveSessionId(id);
-      setIsDrawerOpen(true);
-      return id;
+      return sessionId;
     },
     [],
   );

@@ -14,6 +14,7 @@ import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import yaml from "js-yaml";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 import { parseVolumeMount } from "../../Utils/parseVolumeMountsYaml";
+import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
 
 function VolumeMounts() {
   const { data } = useData();
@@ -101,6 +102,31 @@ function VolumeMounts() {
     }
   }
 
+  const handleRefreshVolumeMount = async () => {
+    if (!selectedVolume?.name) return;
+    try {
+      const itemResponse = await request(
+        `/api/v3/volumeMounts/${selectedVolume.name}`,
+      );
+      if (itemResponse.ok) {
+        const responseItem = await itemResponse.json();
+        setselectedVolume(responseItem);
+        // Also refresh linked agents
+        if (responseItem.agents && Array.isArray(responseItem.agents)) {
+          const linkedAgents = responseItem.agents
+            .map((agentUuid: string) => {
+              const agent = data?.reducedAgents?.byUUID[agentUuid];
+              return agent ? { value: agentUuid, label: agent.name } : null;
+            })
+            .filter(Boolean);
+          setLinkedAgentItems(linkedAgents);
+        }
+      }
+    } catch (e) {
+      console.error("Error refreshing volume mount data:", e);
+    }
+  };
+
   async function fetchVolumeMountItem(volumeName: string) {
     try {
       setFetching(true);
@@ -148,6 +174,22 @@ function VolumeMounts() {
     fetchVolumeMounts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Unified YAML upload hook
+  const refreshFunctions = React.useMemo(() => {
+    const map = new Map();
+    map.set("VolumeMount", async () => {
+      await fetchVolumeMounts();
+    });
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const { processYamlFile: processUnifiedYaml } = useUnifiedYamlUpload({
+    request,
+    pushFeedback,
+    refreshFunctions,
+  });
 
   const attachVolumeMount = async () => {
     try {
@@ -275,58 +317,6 @@ function VolumeMounts() {
         }
       },
     });
-  };
-
-  const handleYamlParse = async (item: any) => {
-    const file = item;
-    if (file) {
-      const reader = new window.FileReader();
-
-      reader.onload = async function (evt: any) {
-        try {
-          const docs = yaml.loadAll(evt.target.result);
-
-          if (!Array.isArray(docs)) {
-            pushFeedback({
-              message: "Could not parse the file: Invalid YAML format",
-              type: "error",
-            });
-            return;
-          }
-
-          for (const doc of docs) {
-            if (!doc) {
-              continue;
-            }
-
-            const [volumeMountItem, err] = await parseVolumeMount(doc);
-
-            if (err) {
-              console.error("Error parsing a document:", err);
-              pushFeedback({
-                message: `Error processing item: ${err}`,
-                type: "error",
-              });
-            } else {
-              try {
-                await handleYamlUpdate(volumeMountItem, "POST");
-              } catch (e) {
-                console.error("Error updating a document:", e);
-              }
-            }
-          }
-        } catch (e) {
-          console.error({ e });
-          pushFeedback({ message: "Could not parse the file", type: "error" });
-        }
-      };
-
-      reader.onerror = function (evt) {
-        pushFeedback({ message: evt, type: "error" });
-      };
-
-      reader.readAsText(file, "UTF-8");
-    }
   };
 
   async function handleYamlUpdate(parsed: any, method?: string) {
@@ -602,7 +592,7 @@ function VolumeMounts() {
               data={volumeMounts || []}
               getRowKey={(row: any) => row.uuid || row.id || Math.random()}
               uploadDropzone
-              uploadFunction={handleYamlParse}
+              uploadFunction={processUnifiedYaml}
             />
 
             <SlideOver
@@ -619,6 +609,8 @@ function VolumeMounts() {
               data={selectedVolume}
               fields={slideOverFields}
               customWidth={600}
+              enablePolling={true}
+              onRefresh={handleRefreshVolumeMount}
             />
           </div>
 
