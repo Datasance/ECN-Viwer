@@ -1365,6 +1365,16 @@ function NodesList() {
     },
   ];
 
+  const sortedAgents = React.useMemo(() => {
+    const agents = Object.values(data?.reducedAgents?.byName || []) as any[];
+    return [...agents].sort((a: any, b: any) => {
+      if (Boolean(a.isSystem) !== Boolean(b.isSystem)) {
+        return a.isSystem ? -1 : 1;
+      }
+      return (a.name || "").localeCompare(b.name || "");
+    });
+  }, [data?.reducedAgents?.byName]);
+
   return (
     <div className=" bg-gray-900 text-white overflow-auto p-4">
       <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">
@@ -1372,7 +1382,7 @@ function NodesList() {
       </h1>
       <CustomDataTable
         columns={columns}
-        data={Object.values(data?.reducedAgents?.byName || [])}
+        data={sortedAgents}
         getRowKey={(row: any) => row.uuid}
         uploadDropzone
         uploadFunction={processUnifiedYaml}
