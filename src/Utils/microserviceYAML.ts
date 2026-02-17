@@ -116,9 +116,12 @@ export const getMicroserviceYAMLFromJSON = ({
           roleRef: microservice.serviceAccount.roleRef,
         },
       }),
-      msRoutes: {
-        pubTags: microservice?.pubTags ?? [],
-        subTags: microservice?.subTags ?? [],
+      natsConfig: {
+        natsAccess:
+          microservice?.natsConfig?.natsAccess ?? microservice?.natsAccess,
+        ...(microservice?.natsConfig?.natsRule && {
+          natsRule: microservice.natsConfig.natsRule,
+        }),
       },
       config: parsedConfig,
       application: microservice?.application,

@@ -70,6 +70,11 @@ export const parseMicroservice = async (microservice) => {
     }
   }
 
+  const resolvedNatsAccess =
+    microservice?.natsConfig?.natsAccess ?? microservice?.natsAccess;
+  const resolvedNatsRule =
+    microservice?.natsConfig?.natsRule ?? microservice?.natsRule;
+
   const microserviceData = {
     config: microservice.config
       ? JSON.stringify(microservice.config)
@@ -163,20 +168,18 @@ export const parseMicroservice = async (microservice) => {
           ? microservice.capDrop
           : microservice?.container?.capDrop
         : "",
-    ...microservice.msroutes,
-    pubTags:
-      microservice.pubTags !== null || microservice?.msRoutes?.pubTags !== null
-        ? microservice.pubTags !== undefined
-          ? microservice.pubTags
-          : microservice?.msRoutes?.pubTags
-        : "",
-    subTags:
-      microservice.subTags !== null || microservice?.msRoutes?.subTags !== null
-        ? microservice.subTags !== undefined
-          ? microservice.subTags
-          : microservice?.msRoutes?.subTags
-        : "",
     ...(serviceAccount !== undefined && { serviceAccount }),
+    ...(resolvedNatsAccess !== undefined || resolvedNatsRule
+      ? {
+          natsConfig: {
+            ...(resolvedNatsAccess !== undefined && {
+              natsAccess: resolvedNatsAccess,
+            }),
+            ...(resolvedNatsRule && { natsRule: resolvedNatsRule }),
+          },
+        }
+      : {}),
+    schedule: microservice.schedule,
   };
   _deleteUndefinedFields(microserviceData);
   return microserviceData;

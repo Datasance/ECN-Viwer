@@ -19,6 +19,7 @@ import {
   Calendar as EventIcon,
   SlidersHorizontal as TuneIcon,
   ShieldCheck as AccessControlIcon,
+  Waypoints as MessageBusIcon,
 } from "lucide-react";
 
 import { useData } from "../providers/Data";
@@ -52,6 +53,11 @@ import Events from "../Events";
 import Roles from "../AccessControl/roles";
 import RoleBindings from "../AccessControl/rolebindings";
 import ServiceAccounts from "../AccessControl/serviceaccounts";
+import NatsAccountRules from "../AccessControl/natsAccountRules";
+import NatsUserRules from "../AccessControl/natsUserRules";
+import Operators from "../MessageBus/Operators";
+import Accounts from "../MessageBus/Accounts";
+import Users from "../MessageBus/Users";
 
 const controllerJson = window.controllerConfig || null;
 
@@ -75,10 +81,11 @@ function RouteWatcher() {
 export default function Layout() {
   const auth = useAuth();
   const returnHomeCbRef = React.useRef<(() => void) | null>(null);
-  const { status, updateController } = useController();
+  const { status, updateController, request } = useController();
   const { isDrawerOpen } = useTerminal();
   const [collapsed, setCollapsed] = React.useState(true);
   const [isPinned, setIsPinned] = React.useState(false);
+  const [isNatsEnabled, setIsNatsEnabled] = React.useState(false);
   const sidebarRef = React.useRef<HTMLDivElement>(null);
   const [sidebarWidth, setSidebarWidth] = React.useState(80);
   const returnHome = () => {
@@ -131,6 +138,33 @@ export default function Layout() {
       window.removeEventListener("resize", measureSidebar);
     };
   }, [collapsed, isPinned]);
+
+  React.useEffect(() => {
+    let mounted = true;
+    const checkNatsCapability = async () => {
+      try {
+        const response = await request("/api/v3/capabilities/nats", {
+          method: "HEAD",
+        });
+        if (mounted) {
+          setIsNatsEnabled(Boolean(response?.ok));
+        }
+      } catch (e) {
+        if (mounted) {
+          setIsNatsEnabled(false);
+        }
+      }
+    };
+
+    if (auth?.isAuthenticated) {
+      checkNatsCapability();
+    }
+
+    return () => {
+      mounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth?.isAuthenticated, auth?.user?.access_token]);
 
   if (auth.isLoading) {
     return null;
@@ -292,6 +326,29 @@ export default function Layout() {
                       </NavLink>
                     </SubMenu>
 
+                    {isNatsEnabled && (
+                      <SubMenu
+                        label="MessageBus"
+                        icon={<MessageBusIcon size={18} />}
+                      >
+                        <NavLink to="/messagebus/operators">
+                          {({ isActive }) => (
+                            <MenuItem active={isActive}>Operators</MenuItem>
+                          )}
+                        </NavLink>
+                        <NavLink to="/messagebus/accounts">
+                          {({ isActive }) => (
+                            <MenuItem active={isActive}>Accounts</MenuItem>
+                          )}
+                        </NavLink>
+                        <NavLink to="/messagebus/users">
+                          {({ isActive }) => (
+                            <MenuItem active={isActive}>Users</MenuItem>
+                          )}
+                        </NavLink>
+                      </SubMenu>
+                    )}
+
                     <SubMenu
                       label="Access Control"
                       icon={<AccessControlIcon size={18} />}
@@ -311,6 +368,16 @@ export default function Layout() {
                           <MenuItem active={isActive}>
                             Service Accounts
                           </MenuItem>
+                        )}
+                      </NavLink>
+                      <NavLink to="/access-control/nats-account-rules">
+                        {({ isActive }) => (
+                          <MenuItem active={isActive}>NATs Account Rules</MenuItem>
+                        )}
+                      </NavLink>
+                      <NavLink to="/access-control/nats-user-rules">
+                        {({ isActive }) => (
+                          <MenuItem active={isActive}>NATs User Rules</MenuItem>
                         )}
                       </NavLink>
                       {auth && (
@@ -502,6 +569,17 @@ export default function Layout() {
                 path="/access-control/serviceaccounts"
                 Component={ServiceAccounts}
               />
+              <Route
+                path="/access-control/nats-account-rules"
+                Component={NatsAccountRules}
+              />
+              <Route
+                path="/access-control/nats-user-rules"
+                Component={NatsUserRules}
+              />
+              <Route path="/messagebus/operators" Component={Operators} />
+              <Route path="/messagebus/accounts" Component={Accounts} />
+              <Route path="/messagebus/users" Component={Users} />
               <Route Component={() => <Navigate to="/dashboard" />} />
             </Routes>
           </div>

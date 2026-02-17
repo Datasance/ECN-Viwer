@@ -344,19 +344,13 @@ function AppTemplates() {
           healthCheck: ms?.healthCheck ?? {},
         },
         schedule: ms?.schedule ?? 50,
-        msRoutes: {
-          pubTags: ms.pubTags ?? [],
-          subTags: ms.subTags ?? [],
+        natsConfig: {
+          natsAccess: ms?.natsConfig?.natsAccess ?? ms?.natsAccess ?? false,
+          ...(ms?.natsConfig?.natsRule && { natsRule: ms.natsConfig.natsRule }),
         },
         config: parsedConfig,
       };
     });
-
-    const routes = application.routes?.map((r: any) => ({
-      name: r.name,
-      from: r.from,
-      to: r.to,
-    }));
 
     const yamlDump = {
       apiVersion: "datasance.com/v3",
@@ -372,8 +366,15 @@ function AppTemplates() {
           defaultValue: v.defaultValue,
         })),
         application: {
+          ...(application?.natsConfig && {
+            natsConfig: {
+              natsAccess: Boolean(application.natsConfig.natsAccess),
+              ...(application.natsConfig.natsRule && {
+                natsRule: application.natsConfig.natsRule,
+              }),
+            },
+          }),
           microservices: microservices,
-          routes: routes,
         },
       },
     };
@@ -474,11 +475,9 @@ function AppTemplates() {
           );
         }
 
-        const tableData = microservices.map((route: any, index: number) => ({
-          name: route.name || "-",
-          from: route.from || "-",
-          to: route.to || "-",
-          key: `${route.name || "route"}-${index}`,
+        const tableData = microservices.map((ms: any, index: number) => ({
+          name: ms.name || "-",
+          key: `${ms.name || "microservice"}-${index}`,
         }));
 
         const columns = [

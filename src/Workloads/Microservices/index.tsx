@@ -56,6 +56,20 @@ function MicroservicesList() {
       appCreatedAt: app.createdAt,
     })),
   );
+  const sortedMicroservices = React.useMemo(() => {
+    const list = flattenedMicroservices ?? [];
+    const byUUID = data?.reducedAgents?.byUUID ?? {};
+    return [...list].sort((a: any, b: any) => {
+      const aSystem = Boolean(byUUID[a.iofogUuid]?.isSystem);
+      const bSystem = Boolean(byUUID[b.iofogUuid]?.isSystem);
+      if (aSystem !== bSystem) return aSystem ? -1 : 1;
+      const aAgent = (a.agentName ?? byUUID[a.iofogUuid]?.name) ?? "";
+      const bAgent = (b.agentName ?? byUUID[b.iofogUuid]?.name) ?? "";
+      const byAgent = (aAgent as string).localeCompare(bAgent as string);
+      if (byAgent !== 0) return byAgent;
+      return ((a.name ?? "") as string).localeCompare((b.name ?? "") as string);
+    });
+  }, [flattenedMicroservices, data?.reducedAgents?.byUUID]);
   const [showStartStopConfirmModal, setShowStartStopConfirmModal] =
     useState(false);
   const location = useLocation();
@@ -805,6 +819,56 @@ function MicroservicesList() {
       },
     },
     {
+      label: "NATs Config",
+      render: () => "",
+      isSectionHeader: true,
+    },
+    {
+      label: "",
+      isFullSection: true,
+      render: (row: any) => {
+        const natsAccess = row?.natsConfig?.natsAccess ?? row?.natsAccess;
+        const natsRule = row?.natsConfig?.natsRule ?? row?.natsRule;
+        const natsRuleId = row?.natsRuleId;
+        const hasNatsConfig =
+          natsAccess !== undefined ||
+          Boolean(natsRule) ||
+          (natsRuleId !== undefined && natsRuleId !== null);
+
+        if (!hasNatsConfig) {
+          return <div className="text-sm text-gray-400">No NATs config.</div>;
+        }
+
+        return (
+          <div className="rounded-md border border-gray-700 bg-gray-800/40 p-3">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <span className="text-xs text-gray-400">Access</span>
+              <span
+                className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
+                  natsAccess === true
+                    ? "bg-emerald-600/30 text-emerald-300"
+                    : natsAccess === false
+                      ? "bg-red-600/30 text-red-300"
+                      : "bg-gray-600/40 text-gray-300"
+                }`}
+              >
+                {natsAccess === undefined ? "N/A" : natsAccess ? "ENABLED" : "DISABLED"}
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-gray-400">Rule</span>
+              <span className="text-sm font-medium break-all">
+                {natsRule ||
+                  (natsRuleId !== undefined && natsRuleId !== null
+                    ? `${natsRuleId}`
+                    : "N/A")}
+              </span>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
       label: "Status",
       render: () => "",
       isSectionHeader: true,
@@ -1266,7 +1330,7 @@ function MicroservicesList() {
       </h1>
       <CustomDataTable
         columns={columns}
-        data={flattenedMicroservices || []}
+        data={sortedMicroservices}
         getRowKey={(row: any) => row.uuid}
         uploadDropzone
         uploadFunction={processUnifiedYaml}
