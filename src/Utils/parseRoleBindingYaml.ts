@@ -24,7 +24,6 @@ export const parseRoleBinding = async (
     return [null, "Invalid YAML format (missing metadata.name)"];
   }
 
-  const apiVersion = doc.apiVersion || "datasance.com/api/v3";
   const kind = doc.kind;
   const roleRef = doc.roleRef;
   const subjects = doc.subjects || [];

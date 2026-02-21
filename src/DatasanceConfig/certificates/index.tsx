@@ -27,10 +27,8 @@ function Certificates() {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const certificateName = params.get("name");
-  const [loading, setLoading] = React.useState(false);
-  const [loadingMessage, setLoadingMessage] = React.useState(
-    "Certificate Adding...",
-  );
+  const [loading] = React.useState(false);
+  const [loadingMessage] = React.useState("Certificate Adding...");
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
 
   const handleRowClick = (row: any) => {

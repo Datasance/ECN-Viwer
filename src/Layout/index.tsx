@@ -372,7 +372,9 @@ export default function Layout() {
                       </NavLink>
                       <NavLink to="/access-control/nats-account-rules">
                         {({ isActive }) => (
-                          <MenuItem active={isActive}>NATs Account Rules</MenuItem>
+                          <MenuItem active={isActive}>
+                            NATs Account Rules
+                          </MenuItem>
                         )}
                       </NavLink>
                       <NavLink to="/access-control/nats-user-rules">

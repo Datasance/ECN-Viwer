@@ -374,6 +374,8 @@ export function useUnifiedYamlUpload({
         setIsProcessing(false);
       }
     },
+    // deployResource is stable in practice (defined in same scope); listing it would change deps every render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [request, pushFeedback, onComplete, refreshFunctions],
   );
 

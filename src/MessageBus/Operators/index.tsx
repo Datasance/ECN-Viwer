@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { RotateCcw as RotateIcon } from "lucide-react";
+// import { RotateCcw as RotateIcon } from "lucide-react";
 import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import { ControllerContext } from "../../ControllerProvider";
 import { FeedbackContext } from "../../Utils/FeedbackContext";
@@ -11,7 +11,7 @@ function Operators() {
   const { request } = React.useContext(ControllerContext);
   const { pushFeedback } = React.useContext(FeedbackContext);
   const [operator, setOperator] = useState<any | null>(null);
-  const [showRotateModal, setShowRotateModal] = useState(false);
+  // const [showRotateModal, setShowRotateModal] = useState(false);
   const [hub, setHub] = useState<any | null>(null);
 
   const fetchData = async () => {
@@ -47,24 +47,24 @@ function Operators() {
     refreshFunctions,
   });
 
-  const handleRotate = async () => {
-    const res = await request("/api/v3/nats/operator/rotate", {
-      method: "POST",
-    });
-    if (!res?.ok) {
-      pushFeedback({
-        message: res?.message || "Failed to rotate operator",
-        type: "error",
-      });
-      return;
-    }
-    pushFeedback({
-      message: "NATs operator rotation has been scheduled.",
-      type: "success",
-    });
-    setShowRotateModal(false);
-    fetchData();
-  };
+  // const handleRotate = async () => {
+  //   const res = await request("/api/v3/nats/operator/rotate", {
+  //     method: "POST",
+  //   });
+  //   if (!res?.ok) {
+  //     pushFeedback({
+  //       message: res?.message || "Failed to rotate operator",
+  //       type: "error",
+  //     });
+  //     return;
+  //   }
+  //   pushFeedback({
+  //     message: "NATs operator rotation has been scheduled.",
+  //     type: "success",
+  //   });
+  //   setShowRotateModal(false);
+  //   fetchData();
+  // };
 
   return (
     <div className="bg-gray-900 text-white overflow-auto p-4">
@@ -73,13 +73,13 @@ function Operators() {
       </h1>
 
       <div className="flex gap-2 mb-4 items-center">
-        <button
+        {/* <button
           className="px-3 py-2 rounded bg-yellow-600 hover:bg-yellow-700 text-white text-sm flex items-center gap-2"
           onClick={() => setShowRotateModal(true)}
         >
           <RotateIcon size={14} />
           Rotate Operator
-        </button>
+        </button> */}
         <YamlUploadDropzone onUpload={processUnifiedYaml} />
       </div>
 
@@ -108,7 +108,7 @@ function Operators() {
         </div>
       </div>
 
-      <UnsavedChangesModal
+      {/* <UnsavedChangesModal
         open={showRotateModal}
         onCancel={() => setShowRotateModal(false)}
         onConfirm={handleRotate}
@@ -116,7 +116,7 @@ function Operators() {
         message="Rotating the operator key re-signs NATs accounts/users and can impact messaging authentication cluster-wide. During reconciliation, clients may see temporary auth failures and require reconnects. Proceed only in a planned maintenance window with rollback readiness."
         cancelLabel="Cancel"
         confirmLabel="Rotate"
-      />
+      /> */}
     </div>
   );
 }

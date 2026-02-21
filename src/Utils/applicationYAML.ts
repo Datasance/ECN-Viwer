@@ -133,7 +133,6 @@ export const getApplicationYAMLFromJSON = ({
     };
   });
 
-
   return {
     apiVersion: "datasance.com/v3",
     kind: "Application",

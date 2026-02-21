@@ -58,11 +58,14 @@ function Accounts() {
     const body: { natsRule?: string } = {};
     if (ensureNatsRule?.trim()) body.natsRule = ensureNatsRule.trim();
 
-    const res = await request(`/api/v3/nats/accounts/${encodeURIComponent(appName)}`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: Object.keys(body).length ? JSON.stringify(body) : undefined,
-    });
+    const res = await request(
+      `/api/v3/nats/accounts/${encodeURIComponent(appName)}`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: Object.keys(body).length ? JSON.stringify(body) : undefined,
+      },
+    );
 
     if (!res?.ok) {
       pushFeedback({
@@ -112,16 +115,22 @@ function Accounts() {
     {
       key: "isLeafSystem",
       header: "Leaf System",
-      render: (row: any) => row.isLeafSystem ? "Yes" : "No",
+      render: (row: any) => (row.isLeafSystem ? "Yes" : "No"),
     },
   ];
 
   const fields = [
     { label: "Name", render: (row: any) => row?.name || "N/A" },
     { label: "Public Key", render: (row: any) => row?.publicKey || "N/A" },
-    { label: "Application ID", render: (row: any) => row?.applicationId ?? "N/A" },
+    {
+      label: "Application ID",
+      render: (row: any) => row?.applicationId ?? "N/A",
+    },
     { label: "System", render: (row: any) => (row?.isSystem ? "Yes" : "No") },
-    { label: "Leaf System", render: (row: any) => (row?.isLeafSystem ? "Yes" : "No") },
+    {
+      label: "Leaf System",
+      render: (row: any) => (row?.isLeafSystem ? "Yes" : "No"),
+    },
     {
       label: "JWT",
       render: () => "",
@@ -130,9 +139,7 @@ function Accounts() {
     {
       label: "",
       isFullSection: true,
-      render: (row: any) => (
-        <CopyableBlock value={row?.jwt} canDecodeJwt />
-      ),
+      render: (row: any) => <CopyableBlock value={row?.jwt} canDecodeJwt />,
     },
   ];
 
@@ -181,7 +188,9 @@ function Accounts() {
               className="border rounded px-2 py-1 text-sm"
               placeholder="my-application"
             />
-            <label className="text-sm text-gray-700">NATS Account Rule (optional)</label>
+            <label className="text-sm text-gray-700">
+              NATS Account Rule (optional)
+            </label>
             <input
               value={ensureNatsRule}
               onChange={(e) => setEnsureNatsRule(e.target.value)}

@@ -45,20 +45,17 @@ function _natsAccountRuleSpecToModel(spec: any): any {
         : limits.disallow_bearer,
     respMax: spec.respMax != null ? spec.respMax : resp.max,
     respTtl: spec.respTtl != null ? spec.respTtl : resp.ttl,
-    imports:
-      Array.isArray(spec.imports)
+    imports: Array.isArray(spec.imports)
+      ? spec.imports
+      : spec.imports != null
         ? spec.imports
-        : spec.imports != null
-          ? spec.imports
-          : undefined,
-    exports:
-      Array.isArray(spec.exports)
+        : undefined,
+    exports: Array.isArray(spec.exports)
+      ? spec.exports
+      : spec.exports != null
         ? spec.exports
-        : spec.exports != null
-          ? spec.exports
-          : undefined,
-    memStorage:
-      spec.memStorage != null ? spec.memStorage : limits.mem_storage,
+        : undefined,
+    memStorage: spec.memStorage != null ? spec.memStorage : limits.mem_storage,
     diskStorage:
       spec.diskStorage != null ? spec.diskStorage : limits.disk_storage,
     streams: spec.streams != null ? spec.streams : limits.streams,

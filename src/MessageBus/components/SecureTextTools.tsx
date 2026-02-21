@@ -1,5 +1,9 @@
 import React, { useMemo, useState } from "react";
-import { Copy as CopyIcon, Check as CheckIcon, Braces as DecodeIcon } from "lucide-react";
+import {
+  Copy as CopyIcon,
+  Check as CheckIcon,
+  Braces as DecodeIcon,
+} from "lucide-react";
 import CustomActionModal from "../../CustomComponent/CustomActionModal";
 
 const decodeJwtPayload = (jwt: string) => {

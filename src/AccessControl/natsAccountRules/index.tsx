@@ -14,92 +14,133 @@ import { isReservedNatsRule } from "../../Utils/natsRules";
 
 const getRuleSpec = (rule: any) => {
   if (!rule) return {};
-  const {
-    id,
-    createdAt,
-    updatedAt,
-    isSystem,
-    name,
-    ...rest
-  } = rule;
-  
+  const { id, createdAt, updatedAt, isSystem, name, ...rest } = rule;
+
   // Convert JSON strings back to arrays/objects for YAML
   const spec: any = {};
-  
+
   // Simple fields
-  if (rest.description !== undefined && rest.description !== null) spec.description = rest.description;
-  if (rest.infoUrl !== undefined && rest.infoUrl !== null) spec.infoUrl = rest.infoUrl;
-  if (rest.maxConnections !== undefined && rest.maxConnections !== null) spec.maxConnections = rest.maxConnections;
-  if (rest.maxLeafNodeConnections !== undefined && rest.maxLeafNodeConnections !== null) spec.maxLeafNodeConnections = rest.maxLeafNodeConnections;
-  if (rest.maxData !== undefined && rest.maxData !== null) spec.maxData = rest.maxData;
-  if (rest.maxExports !== undefined && rest.maxExports !== null) spec.maxExports = rest.maxExports;
-  if (rest.maxImports !== undefined && rest.maxImports !== null) spec.maxImports = rest.maxImports;
-  if (rest.maxMsgPayload !== undefined && rest.maxMsgPayload !== null) spec.maxMsgPayload = rest.maxMsgPayload;
-  if (rest.maxSubscriptions !== undefined && rest.maxSubscriptions !== null) spec.maxSubscriptions = rest.maxSubscriptions;
-  if (rest.exportsAllowWildcards !== undefined && rest.exportsAllowWildcards !== null) spec.exportsAllowWildcards = rest.exportsAllowWildcards;
-  if (rest.disallowBearer !== undefined && rest.disallowBearer !== null) spec.disallowBearer = rest.disallowBearer;
-  if (rest.respMax !== undefined && rest.respMax !== null) spec.respMax = rest.respMax;
-  if (rest.respTtl !== undefined && rest.respTtl !== null) spec.respTtl = rest.respTtl;
-  if (rest.memStorage !== undefined && rest.memStorage !== null) spec.memStorage = rest.memStorage;
-  if (rest.diskStorage !== undefined && rest.diskStorage !== null) spec.diskStorage = rest.diskStorage;
-  if (rest.streams !== undefined && rest.streams !== null) spec.streams = rest.streams;
-  if (rest.consumer !== undefined && rest.consumer !== null) spec.consumer = rest.consumer;
-  if (rest.maxAckPending !== undefined && rest.maxAckPending !== null) spec.maxAckPending = rest.maxAckPending;
-  if (rest.memMaxStreamBytes !== undefined && rest.memMaxStreamBytes !== null) spec.memMaxStreamBytes = rest.memMaxStreamBytes;
-  if (rest.diskMaxStreamBytes !== undefined && rest.diskMaxStreamBytes !== null) spec.diskMaxStreamBytes = rest.diskMaxStreamBytes;
-  if (rest.maxBytesRequired !== undefined && rest.maxBytesRequired !== null) spec.maxBytesRequired = rest.maxBytesRequired;
-  
+  if (rest.description !== undefined && rest.description !== null)
+    spec.description = rest.description;
+  if (rest.infoUrl !== undefined && rest.infoUrl !== null)
+    spec.infoUrl = rest.infoUrl;
+  if (rest.maxConnections !== undefined && rest.maxConnections !== null)
+    spec.maxConnections = rest.maxConnections;
+  if (
+    rest.maxLeafNodeConnections !== undefined &&
+    rest.maxLeafNodeConnections !== null
+  )
+    spec.maxLeafNodeConnections = rest.maxLeafNodeConnections;
+  if (rest.maxData !== undefined && rest.maxData !== null)
+    spec.maxData = rest.maxData;
+  if (rest.maxExports !== undefined && rest.maxExports !== null)
+    spec.maxExports = rest.maxExports;
+  if (rest.maxImports !== undefined && rest.maxImports !== null)
+    spec.maxImports = rest.maxImports;
+  if (rest.maxMsgPayload !== undefined && rest.maxMsgPayload !== null)
+    spec.maxMsgPayload = rest.maxMsgPayload;
+  if (rest.maxSubscriptions !== undefined && rest.maxSubscriptions !== null)
+    spec.maxSubscriptions = rest.maxSubscriptions;
+  if (
+    rest.exportsAllowWildcards !== undefined &&
+    rest.exportsAllowWildcards !== null
+  )
+    spec.exportsAllowWildcards = rest.exportsAllowWildcards;
+  if (rest.disallowBearer !== undefined && rest.disallowBearer !== null)
+    spec.disallowBearer = rest.disallowBearer;
+  if (rest.respMax !== undefined && rest.respMax !== null)
+    spec.respMax = rest.respMax;
+  if (rest.respTtl !== undefined && rest.respTtl !== null)
+    spec.respTtl = rest.respTtl;
+  if (rest.memStorage !== undefined && rest.memStorage !== null)
+    spec.memStorage = rest.memStorage;
+  if (rest.diskStorage !== undefined && rest.diskStorage !== null)
+    spec.diskStorage = rest.diskStorage;
+  if (rest.streams !== undefined && rest.streams !== null)
+    spec.streams = rest.streams;
+  if (rest.consumer !== undefined && rest.consumer !== null)
+    spec.consumer = rest.consumer;
+  if (rest.maxAckPending !== undefined && rest.maxAckPending !== null)
+    spec.maxAckPending = rest.maxAckPending;
+  if (rest.memMaxStreamBytes !== undefined && rest.memMaxStreamBytes !== null)
+    spec.memMaxStreamBytes = rest.memMaxStreamBytes;
+  if (rest.diskMaxStreamBytes !== undefined && rest.diskMaxStreamBytes !== null)
+    spec.diskMaxStreamBytes = rest.diskMaxStreamBytes;
+  if (rest.maxBytesRequired !== undefined && rest.maxBytesRequired !== null)
+    spec.maxBytesRequired = rest.maxBytesRequired;
+
   // Parse JSON string fields
   if (rest.imports !== undefined && rest.imports !== null) {
     try {
-      spec.imports = typeof rest.imports === 'string' ? JSON.parse(rest.imports) : rest.imports;
+      spec.imports =
+        typeof rest.imports === "string"
+          ? JSON.parse(rest.imports)
+          : rest.imports;
     } catch {
       spec.imports = rest.imports;
     }
   }
   if (rest.exports !== undefined && rest.exports !== null) {
     try {
-      spec.exports = typeof rest.exports === 'string' ? JSON.parse(rest.exports) : rest.exports;
+      spec.exports =
+        typeof rest.exports === "string"
+          ? JSON.parse(rest.exports)
+          : rest.exports;
     } catch {
       spec.exports = rest.exports;
     }
   }
   if (rest.tieredLimits !== undefined && rest.tieredLimits !== null) {
     try {
-      spec.tieredLimits = typeof rest.tieredLimits === 'string' ? JSON.parse(rest.tieredLimits) : rest.tieredLimits;
+      spec.tieredLimits =
+        typeof rest.tieredLimits === "string"
+          ? JSON.parse(rest.tieredLimits)
+          : rest.tieredLimits;
     } catch {
       spec.tieredLimits = rest.tieredLimits;
     }
   }
   if (rest.pubAllow !== undefined && rest.pubAllow !== null) {
     try {
-      spec.pubAllow = typeof rest.pubAllow === 'string' ? JSON.parse(rest.pubAllow) : rest.pubAllow;
+      spec.pubAllow =
+        typeof rest.pubAllow === "string"
+          ? JSON.parse(rest.pubAllow)
+          : rest.pubAllow;
     } catch {
       spec.pubAllow = rest.pubAllow;
     }
   }
   if (rest.pubDeny !== undefined && rest.pubDeny !== null) {
     try {
-      spec.pubDeny = typeof rest.pubDeny === 'string' ? JSON.parse(rest.pubDeny) : rest.pubDeny;
+      spec.pubDeny =
+        typeof rest.pubDeny === "string"
+          ? JSON.parse(rest.pubDeny)
+          : rest.pubDeny;
     } catch {
       spec.pubDeny = rest.pubDeny;
     }
   }
   if (rest.subAllow !== undefined && rest.subAllow !== null) {
     try {
-      spec.subAllow = typeof rest.subAllow === 'string' ? JSON.parse(rest.subAllow) : rest.subAllow;
+      spec.subAllow =
+        typeof rest.subAllow === "string"
+          ? JSON.parse(rest.subAllow)
+          : rest.subAllow;
     } catch {
       spec.subAllow = rest.subAllow;
     }
   }
   if (rest.subDeny !== undefined && rest.subDeny !== null) {
     try {
-      spec.subDeny = typeof rest.subDeny === 'string' ? JSON.parse(rest.subDeny) : rest.subDeny;
+      spec.subDeny =
+        typeof rest.subDeny === "string"
+          ? JSON.parse(rest.subDeny)
+          : rest.subDeny;
     } catch {
       spec.subDeny = rest.subDeny;
     }
   }
-  
+
   return spec;
 };
 
@@ -228,7 +269,10 @@ function NatsAccountRules() {
       );
 
       if (!res?.ok) {
-        pushFeedback({ message: res?.message || "Request failed", type: "error" });
+        pushFeedback({
+          message: res?.message || "Request failed",
+          type: "error",
+        });
       } else {
         pushFeedback({
           message: `${name} ${method === "POST" ? "Added" : "Updated"}`,
@@ -249,9 +293,12 @@ function NatsAccountRules() {
         return;
       }
 
-      const res = await request(`/api/v3/nats/account-rules/${selectedRule.name}`, {
-        method: "DELETE",
-      });
+      const res = await request(
+        `/api/v3/nats/account-rules/${selectedRule.name}`,
+        {
+          method: "DELETE",
+        },
+      );
 
       if (!res?.ok) {
         pushFeedback({
@@ -360,7 +407,11 @@ function NatsAccountRules() {
           <SlideOver
             open={isOpen}
             onClose={() => setIsOpen(false)}
-            onDelete={!deleteDisabled ? () => setShowDeleteConfirmModal(true) : undefined}
+            onDelete={
+              !deleteDisabled
+                ? () => setShowDeleteConfirmModal(true)
+                : undefined
+            }
             onEditYaml={handleEditYaml}
             title={selectedRule?.name || "NATs Account Rule Details"}
             data={selectedRule}

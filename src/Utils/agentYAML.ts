@@ -65,6 +65,8 @@ export const buildAgentYamlObject = (agent: any) => {
       natsClusterPort: agent?.natsClusterPort,
       natsMqttPort: agent?.natsMqttPort,
       natsHttpPort: agent?.natsHttpPort,
+      jsStorageSize: agent?.jsStorageSize,
+      jsMemoryStoreSize: agent?.jsMemoryStoreSize,
     },
     logLevel: agent?.logLevel,
     dockerPruningFrequency: agent?.dockerPruningFrequency,
@@ -129,6 +131,8 @@ export const parseAgentYamlDocument = async (
     natsClusterPort: natsConfig.natsClusterPort,
     natsMqttPort: natsConfig.natsMqttPort,
     natsHttpPort: natsConfig.natsHttpPort,
+    jsStorageSize: natsConfig.jsStorageSize,
+    jsMemoryStoreSize: natsConfig.jsMemoryStoreSize,
     upstreamRouters: config.upstreamRouters ?? [],
     upstreamNatsServers: config.upstreamNatsServers ?? [],
   };
@@ -175,6 +179,12 @@ export const buildAgentPatchBodyFromYamlContent = (content: string) => {
     patchBody.natsClusterPort = config.natsConfig.natsClusterPort;
     patchBody.natsMqttPort = config.natsConfig.natsMqttPort;
     patchBody.natsHttpPort = config.natsConfig.natsHttpPort;
+    if (config.natsConfig.jsStorageSize !== undefined) {
+      patchBody.jsStorageSize = config.natsConfig.jsStorageSize;
+    }
+    if (config.natsConfig.jsMemoryStoreSize !== undefined) {
+      patchBody.jsMemoryStoreSize = config.natsConfig.jsMemoryStoreSize;
+    }
   }
 
   patchBody.fogType = toFogTypeValue(config.fogType);

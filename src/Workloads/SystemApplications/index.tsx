@@ -155,7 +155,11 @@ function SystemApplicationList() {
         "spec.isActivated",
         selectedApplication?.isActivated ?? true,
       ),
-      isSystem: lget(doc, "spec.isSystem", selectedApplication?.isSystem ?? true),
+      isSystem: lget(
+        doc,
+        "spec.isSystem",
+        selectedApplication?.isSystem ?? true,
+      ),
       microservices: await Promise.all(
         (doc.spec.microservices || []).map(async (m: any) =>
           parseMicroservice(m),
@@ -208,7 +212,9 @@ function SystemApplicationList() {
       ...(application?.isActivated !== undefined && {
         isActivated: application.isActivated,
       }),
-      ...(application?.isSystem !== undefined && { isSystem: application.isSystem }),
+      ...(application?.isSystem !== undefined && {
+        isSystem: application.isSystem,
+      }),
       ...(application?.natsConfig && {
         natsConfig: {
           ...(application.natsConfig.natsAccess !== undefined && {
@@ -521,7 +527,11 @@ function SystemApplicationList() {
                       : "bg-gray-600/40 text-gray-300"
                 }`}
               >
-                {natsAccess === undefined ? "N/A" : natsAccess ? "ENABLED" : "DISABLED"}
+                {natsAccess === undefined
+                  ? "N/A"
+                  : natsAccess
+                    ? "ENABLED"
+                    : "DISABLED"}
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-2">

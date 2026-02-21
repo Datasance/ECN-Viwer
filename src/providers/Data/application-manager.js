@@ -31,7 +31,8 @@ const listApplicationsWithMicroservices = (request) => async () => {
     );
     if (!microservicesResponse?.ok) {
       throw new Error({
-        message: microservicesResponse?.statusText || "Failed to fetch microservices",
+        message:
+          microservicesResponse?.statusText || "Failed to fetch microservices",
       });
     }
     const { microservices } = await microservicesResponse.json();

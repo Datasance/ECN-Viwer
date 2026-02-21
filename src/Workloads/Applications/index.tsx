@@ -192,7 +192,9 @@ function ApplicationList() {
       ...(application?.isActivated !== undefined && {
         isActivated: application.isActivated,
       }),
-      ...(application?.isSystem !== undefined && { isSystem: application.isSystem }),
+      ...(application?.isSystem !== undefined && {
+        isSystem: application.isSystem,
+      }),
       ...(application?.natsConfig && {
         natsConfig: {
           ...(application.natsConfig.natsAccess !== undefined && {
@@ -558,7 +560,11 @@ function ApplicationList() {
                       : "bg-gray-600/40 text-gray-300"
                 }`}
               >
-                {natsAccess === undefined ? "N/A" : natsAccess ? "ENABLED" : "DISABLED"}
+                {natsAccess === undefined
+                  ? "N/A"
+                  : natsAccess
+                    ? "ENABLED"
+                    : "DISABLED"}
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-2">

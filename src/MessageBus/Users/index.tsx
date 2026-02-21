@@ -51,7 +51,9 @@ function Users() {
   const { pushFeedback } = React.useContext(FeedbackContext);
   const { data, refreshData } = useData();
   const [users, setUsers] = useState<NatsUser[]>([]);
-  const [selectedApplications, setSelectedApplications] = useState<string[]>([]);
+  const [selectedApplications, setSelectedApplications] = useState<string[]>(
+    [],
+  );
   const [selectedUser, setSelectedUser] = useState<NatsUser | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [credsBase64, setCredsBase64] = useState<string | null>(null);
@@ -137,7 +139,9 @@ function Users() {
   );
   const createSelectedOption = React.useMemo(() => {
     if (!draft.targetApp) return null;
-    const app = applicationOptions.find((item) => item.name === draft.targetApp);
+    const app = applicationOptions.find(
+      (item) => item.name === draft.targetApp,
+    );
     if (!app) return null;
     return {
       value: app.name,
@@ -161,7 +165,9 @@ function Users() {
 
   useEffect(() => {
     setSelectedApplications((prev) =>
-      prev.filter((name) => applicationOptions.some((app) => app.name === name)),
+      prev.filter((name) =>
+        applicationOptions.some((app) => app.name === name),
+      ),
     );
     setDraft((prev) => ({
       ...prev,
@@ -343,7 +349,10 @@ function Users() {
     if (!selectedUser) return;
     const app = appNameForUser(selectedUser);
     if (!app) {
-      pushFeedback({ message: "Application name missing for user", type: "error" });
+      pushFeedback({
+        message: "Application name missing for user",
+        type: "error",
+      });
       return;
     }
     setDeleting(true);
@@ -360,7 +369,9 @@ function Users() {
         return;
       }
       pushFeedback({
-        message: selectedUser.isBearer ? "MQTT bearer user deleted" : "User deleted",
+        message: selectedUser.isBearer
+          ? "MQTT bearer user deleted"
+          : "User deleted",
         type: "success",
       });
       setShowDeleteModal(false);
@@ -381,8 +392,7 @@ function Users() {
     {
       key: "application",
       header: "Application",
-      render: (row: NatsUser) =>
-        row.applicationName ?? row.application ?? "-",
+      render: (row: NatsUser) => row.applicationName ?? row.application ?? "-",
     },
     {
       key: "name",
@@ -414,7 +424,10 @@ function Users() {
   ];
 
   const fields = [
-    { label: "Application", render: (row: NatsUser) => row?.application || "N/A" },
+    {
+      label: "Application",
+      render: (row: NatsUser) => row?.application || "N/A",
+    },
     { label: "Name", render: (row: NatsUser) => row?.name || "N/A" },
     { label: "Public Key", render: (row: NatsUser) => row?.publicKey || "N/A" },
     {
@@ -429,7 +442,9 @@ function Users() {
     {
       label: "",
       isFullSection: true,
-      render: (row: NatsUser) => <CopyableBlock value={row?.jwt} canDecodeJwt />,
+      render: (row: NatsUser) => (
+        <CopyableBlock value={row?.jwt} canDecodeJwt />
+      ),
     },
     {
       label: "Creds",
@@ -578,7 +593,9 @@ function Users() {
       <CustomDataTable
         columns={columns}
         data={users}
-        getRowKey={(row) => row.id || `${row.application}-${row.name}-${row.publicKey}`}
+        getRowKey={(row) =>
+          row.id || `${row.application}-${row.name}-${row.publicKey}`
+        }
         uploadDropzone
         uploadFunction={processUnifiedYaml}
       />
@@ -594,7 +611,9 @@ function Users() {
 
       <CustomActionModal
         open={showDeleteModal}
-        title={selectedUser?.isBearer ? "Delete MQTT Bearer User" : "Delete User"}
+        title={
+          selectedUser?.isBearer ? "Delete MQTT Bearer User" : "Delete User"
+        }
         onCancel={() => setShowDeleteModal(false)}
         onConfirm={handleDeleteUser}
         confirmLabel={deleting ? "Deleting..." : "Delete"}
@@ -602,7 +621,8 @@ function Users() {
           <p className="text-sm text-gray-700">
             Are you sure you want to delete{" "}
             <strong>{selectedUser?.name}</strong>
-            {selectedUser?.isBearer ? " (MQTT bearer user)" : ""}? This cannot be undone.
+            {selectedUser?.isBearer ? " (MQTT bearer user)" : ""}? This cannot
+            be undone.
           </p>
         }
       />
@@ -647,19 +667,25 @@ function Users() {
             />
             <input
               value={draft.name}
-              onChange={(e) => setDraft((p) => ({ ...p, name: e.target.value }))}
+              onChange={(e) =>
+                setDraft((p) => ({ ...p, name: e.target.value }))
+              }
               className="border rounded px-2 py-1 text-sm"
               placeholder="name"
             />
             <input
               value={draft.expiresIn}
-              onChange={(e) => setDraft((p) => ({ ...p, expiresIn: e.target.value }))}
+              onChange={(e) =>
+                setDraft((p) => ({ ...p, expiresIn: e.target.value }))
+              }
               className="border rounded px-2 py-1 text-sm"
               placeholder="expiresIn (e.g. 7d)"
             />
             <input
               value={draft.natsRule}
-              onChange={(e) => setDraft((p) => ({ ...p, natsRule: e.target.value }))}
+              onChange={(e) =>
+                setDraft((p) => ({ ...p, natsRule: e.target.value }))
+              }
               className="border rounded px-2 py-1 text-sm"
               placeholder="natsRule"
             />
@@ -707,19 +733,25 @@ function Users() {
             />
             <input
               value={draft.name}
-              onChange={(e) => setDraft((p) => ({ ...p, name: e.target.value }))}
+              onChange={(e) =>
+                setDraft((p) => ({ ...p, name: e.target.value }))
+              }
               className="border rounded px-2 py-1 text-sm"
               placeholder="name"
             />
             <input
               value={draft.expiresIn}
-              onChange={(e) => setDraft((p) => ({ ...p, expiresIn: e.target.value }))}
+              onChange={(e) =>
+                setDraft((p) => ({ ...p, expiresIn: e.target.value }))
+              }
               className="border rounded px-2 py-1 text-sm"
               placeholder="expiresIn (optional)"
             />
             <input
               value={draft.natsRule}
-              onChange={(e) => setDraft((p) => ({ ...p, natsRule: e.target.value }))}
+              onChange={(e) =>
+                setDraft((p) => ({ ...p, natsRule: e.target.value }))
+              }
               className="border rounded px-2 py-1 text-sm"
               placeholder="natsRule (optional)"
             />

@@ -18,7 +18,6 @@ export const parseRole = async (doc: any): Promise<[any, string | null]> => {
     return [null, "Invalid YAML format (missing metadata.name)"];
   }
 
-  const apiVersion = doc.apiVersion || "datasance.com/api/v3";
   const kind = doc.kind;
   const rules = doc.rules || [];
 

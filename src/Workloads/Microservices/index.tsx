@@ -63,8 +63,8 @@ function MicroservicesList() {
       const aSystem = Boolean(byUUID[a.iofogUuid]?.isSystem);
       const bSystem = Boolean(byUUID[b.iofogUuid]?.isSystem);
       if (aSystem !== bSystem) return aSystem ? -1 : 1;
-      const aAgent = (a.agentName ?? byUUID[a.iofogUuid]?.name) ?? "";
-      const bAgent = (b.agentName ?? byUUID[b.iofogUuid]?.name) ?? "";
+      const aAgent = a.agentName ?? byUUID[a.iofogUuid]?.name ?? "";
+      const bAgent = b.agentName ?? byUUID[b.iofogUuid]?.name ?? "";
       const byAgent = (aAgent as string).localeCompare(bAgent as string);
       if (byAgent !== 0) return byAgent;
       return ((a.name ?? "") as string).localeCompare((b.name ?? "") as string);
@@ -117,9 +117,7 @@ function MicroservicesList() {
           appCreatedAt: app.createdAt,
         })),
       );
-      const updatedMs = flattened.find(
-        (m: any) => m.uuid === selectedMs.uuid,
-      );
+      const updatedMs = flattened.find((m: any) => m.uuid === selectedMs.uuid);
       if (updatedMs) {
         setSelectedMs(updatedMs);
       }
@@ -852,7 +850,11 @@ function MicroservicesList() {
                       : "bg-gray-600/40 text-gray-300"
                 }`}
               >
-                {natsAccess === undefined ? "N/A" : natsAccess ? "ENABLED" : "DISABLED"}
+                {natsAccess === undefined
+                  ? "N/A"
+                  : natsAccess
+                    ? "ENABLED"
+                    : "DISABLED"}
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-2">

@@ -14,87 +14,109 @@ import { isReservedNatsRule } from "../../Utils/natsRules";
 
 const getRuleSpec = (rule: any) => {
   if (!rule) return {};
-  const {
-    id,
-    createdAt,
-    updatedAt,
-    isSystem,
-    name,
-    ...rest
-  } = rule;
-  
+  const { id, createdAt, updatedAt, isSystem, name, ...rest } = rule;
+
   // Convert JSON strings back to arrays/objects for YAML
   const spec: any = {};
-  
+
   // Simple fields
-  if (rest.description !== undefined && rest.description !== null) spec.description = rest.description;
-  if (rest.maxSubscriptions !== undefined && rest.maxSubscriptions !== null) spec.maxSubscriptions = rest.maxSubscriptions;
-  if (rest.maxPayload !== undefined && rest.maxPayload !== null) spec.maxPayload = rest.maxPayload;
-  if (rest.maxData !== undefined && rest.maxData !== null) spec.maxData = rest.maxData;
-  if (rest.bearerToken !== undefined && rest.bearerToken !== null) spec.bearerToken = rest.bearerToken;
-  if (rest.proxyRequired !== undefined && rest.proxyRequired !== null) spec.proxyRequired = rest.proxyRequired;
-  if (rest.respMax !== undefined && rest.respMax !== null) spec.respMax = rest.respMax;
-  if (rest.respTtl !== undefined && rest.respTtl !== null) spec.respTtl = rest.respTtl;
-  if (rest.timesLocation !== undefined && rest.timesLocation !== null) spec.timesLocation = rest.timesLocation;
-  
+  if (rest.description !== undefined && rest.description !== null)
+    spec.description = rest.description;
+  if (rest.maxSubscriptions !== undefined && rest.maxSubscriptions !== null)
+    spec.maxSubscriptions = rest.maxSubscriptions;
+  if (rest.maxPayload !== undefined && rest.maxPayload !== null)
+    spec.maxPayload = rest.maxPayload;
+  if (rest.maxData !== undefined && rest.maxData !== null)
+    spec.maxData = rest.maxData;
+  if (rest.bearerToken !== undefined && rest.bearerToken !== null)
+    spec.bearerToken = rest.bearerToken;
+  if (rest.proxyRequired !== undefined && rest.proxyRequired !== null)
+    spec.proxyRequired = rest.proxyRequired;
+  if (rest.respMax !== undefined && rest.respMax !== null)
+    spec.respMax = rest.respMax;
+  if (rest.respTtl !== undefined && rest.respTtl !== null)
+    spec.respTtl = rest.respTtl;
+  if (rest.timesLocation !== undefined && rest.timesLocation !== null)
+    spec.timesLocation = rest.timesLocation;
+
   // Parse JSON string fields
-  if (rest.allowedConnectionTypes !== undefined && rest.allowedConnectionTypes !== null) {
+  if (
+    rest.allowedConnectionTypes !== undefined &&
+    rest.allowedConnectionTypes !== null
+  ) {
     try {
-      spec.allowedConnectionTypes = typeof rest.allowedConnectionTypes === 'string' ? JSON.parse(rest.allowedConnectionTypes) : rest.allowedConnectionTypes;
+      spec.allowedConnectionTypes =
+        typeof rest.allowedConnectionTypes === "string"
+          ? JSON.parse(rest.allowedConnectionTypes)
+          : rest.allowedConnectionTypes;
     } catch {
       spec.allowedConnectionTypes = rest.allowedConnectionTypes;
     }
   }
   if (rest.src !== undefined && rest.src !== null) {
     try {
-      spec.src = typeof rest.src === 'string' ? JSON.parse(rest.src) : rest.src;
+      spec.src = typeof rest.src === "string" ? JSON.parse(rest.src) : rest.src;
     } catch {
       spec.src = rest.src;
     }
   }
   if (rest.times !== undefined && rest.times !== null) {
     try {
-      spec.times = typeof rest.times === 'string' ? JSON.parse(rest.times) : rest.times;
+      spec.times =
+        typeof rest.times === "string" ? JSON.parse(rest.times) : rest.times;
     } catch {
       spec.times = rest.times;
     }
   }
   if (rest.pubAllow !== undefined && rest.pubAllow !== null) {
     try {
-      spec.pubAllow = typeof rest.pubAllow === 'string' ? JSON.parse(rest.pubAllow) : rest.pubAllow;
+      spec.pubAllow =
+        typeof rest.pubAllow === "string"
+          ? JSON.parse(rest.pubAllow)
+          : rest.pubAllow;
     } catch {
       spec.pubAllow = rest.pubAllow;
     }
   }
   if (rest.pubDeny !== undefined && rest.pubDeny !== null) {
     try {
-      spec.pubDeny = typeof rest.pubDeny === 'string' ? JSON.parse(rest.pubDeny) : rest.pubDeny;
+      spec.pubDeny =
+        typeof rest.pubDeny === "string"
+          ? JSON.parse(rest.pubDeny)
+          : rest.pubDeny;
     } catch {
       spec.pubDeny = rest.pubDeny;
     }
   }
   if (rest.subAllow !== undefined && rest.subAllow !== null) {
     try {
-      spec.subAllow = typeof rest.subAllow === 'string' ? JSON.parse(rest.subAllow) : rest.subAllow;
+      spec.subAllow =
+        typeof rest.subAllow === "string"
+          ? JSON.parse(rest.subAllow)
+          : rest.subAllow;
     } catch {
       spec.subAllow = rest.subAllow;
     }
   }
   if (rest.subDeny !== undefined && rest.subDeny !== null) {
     try {
-      spec.subDeny = typeof rest.subDeny === 'string' ? JSON.parse(rest.subDeny) : rest.subDeny;
+      spec.subDeny =
+        typeof rest.subDeny === "string"
+          ? JSON.parse(rest.subDeny)
+          : rest.subDeny;
     } catch {
       spec.subDeny = rest.subDeny;
     }
   }
   if (rest.tags !== undefined && rest.tags !== null) {
     try {
-      spec.tags = typeof rest.tags === 'string' ? JSON.parse(rest.tags) : rest.tags;
+      spec.tags =
+        typeof rest.tags === "string" ? JSON.parse(rest.tags) : rest.tags;
     } catch {
       spec.tags = rest.tags;
     }
   }
-  
+
   return spec;
 };
 
@@ -223,7 +245,10 @@ function NatsUserRules() {
       );
 
       if (!res?.ok) {
-        pushFeedback({ message: res?.message || "Request failed", type: "error" });
+        pushFeedback({
+          message: res?.message || "Request failed",
+          type: "error",
+        });
       } else {
         pushFeedback({
           message: `${name} ${method === "POST" ? "Added" : "Updated"}`,
@@ -244,9 +269,12 @@ function NatsUserRules() {
         return;
       }
 
-      const res = await request(`/api/v3/nats/user-rules/${selectedRule.name}`, {
-        method: "DELETE",
-      });
+      const res = await request(
+        `/api/v3/nats/user-rules/${selectedRule.name}`,
+        {
+          method: "DELETE",
+        },
+      );
 
       if (!res?.ok) {
         pushFeedback({
@@ -355,7 +383,11 @@ function NatsUserRules() {
           <SlideOver
             open={isOpen}
             onClose={() => setIsOpen(false)}
-            onDelete={!deleteDisabled ? () => setShowDeleteConfirmModal(true) : undefined}
+            onDelete={
+              !deleteDisabled
+                ? () => setShowDeleteConfirmModal(true)
+                : undefined
+            }
             onEditYaml={handleEditYaml}
             title={selectedRule?.name || "NATs User Rule Details"}
             data={selectedRule}

@@ -20,7 +20,6 @@ const LogViewerDrawer = ({
     setActiveSession,
     closeDrawer,
     updateLogs,
-    appendLog,
   } = useLogViewer();
 
   // Use refs to store stable tab components

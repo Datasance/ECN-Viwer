@@ -193,7 +193,6 @@ export default function MicroserviceDetails({
     internal: 0,
     external: 0,
     protocol: "tcp",
-    },
   };
   const [PortManipulatedData, setPortManipulatedData] =
     React.useState(newPortArray);
@@ -421,7 +420,9 @@ export default function MicroserviceDetails({
         },
         natsConfig: {
           natsAccess: app?.natsConfig?.natsAccess ?? app?.natsAccess,
-          ...(app?.natsConfig?.natsRule && { natsRule: app.natsConfig.natsRule }),
+          ...(app?.natsConfig?.natsRule && {
+            natsRule: app.natsConfig.natsRule,
+          }),
         },
         config: JSON.parse(app?.config),
         application: app?.application,
