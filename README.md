@@ -33,15 +33,18 @@ This set up will get you going with an Express server that will proxy your reque
 
 ## Requirements
 
-* [Node](https://nodejs.org/en/) >= 10.X
+* [Node](https://nodejs.org/en/) 24.x LTS (>= 24.0.0)
 * [NPM](https://www.npmjs.com/) (It will be installed alongside node)
 
-`./bootstrap.sh` will install Node.js and NPM using [Node Version Manager (nvm)](https://github.com/nvm-sh/nvm)
-Note: NVM being a sourced script, a few extra commands are needed in order to be able to use nvm in your current shell session
+Use [Node Version Manager (nvm)](https://github.com/nvm-sh/nvm) to install and select Node 24: run `nvm use 24` in the project directory (see `.nvmrc`). To install nvm and Node 24, follow the [nvm documentation](https://github.com/nvm-sh/nvm#installing-and-updating).  
+Note: NVM is a sourced script; you may need to load it in your shell session:
 ```sh
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+nvm use 24
 ```
+
+**Platform notes:** Node 24 prebuilt binaries require macOS 13.5 or newer; 32-bit Linux (armv7) and 32-bit Windows (x86) are no longer supported.
 
 ## Usage
 
