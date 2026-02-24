@@ -46,14 +46,7 @@ export function MapContainer(props) {
       layers: [streets, cities],
       zoomControl: false,
     });
-    var baseMaps = {
-      OSM: streets,
-      //"Google": grayscale,
-      //"Geoq": Geoq
-    };
-    var overlayMaps = {
-      //"Cities": cities
-    };
+    // Layers control (baseMaps/overlayMaps) commented out - uncomment if needed
     //var newcontrol= L.control.layers(baseMaps, overlayMaps).setPosition('bottomleft').addTo(map);
     // console.log(newcontrol.getContainer())
     const navEl = document.querySelector(".latnav");
@@ -69,6 +62,7 @@ export function MapContainer(props) {
     props.mcstate(true);
     setInitFlag(false);
     map.invalidateSize();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- init once on mount (replacing componentDidMount)
   }, []);
   return (
     <div id="map" style={mymapcss}>

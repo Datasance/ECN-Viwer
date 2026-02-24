@@ -20,6 +20,8 @@ import ApplicationManager from "../../providers/Data/application-manager";
 import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
 
 function ApplicationList() {
+  const applicationPatchWarning =
+    "Application YAML save uses PATCH and only supports app-level fields such as spec.natsConfig, description, activation, and system flag. Microservice changes in this YAML (including spec.microservices[].natsConfig) will not be applied. To update microservices, please go to Microservice List and edit each microservice there.\n\nDo you want to continue?";
   const { data } = useData();
   const { request } = useController();
   const { pushFeedback } = useFeedback();
@@ -183,13 +185,34 @@ function ApplicationList() {
   };
   const deployApplication = async (application: any, newApplication: any) => {
     const url = `/api/v3/application${newApplication ? "" : `/${application.name}`}`;
+    const patchPayload = {
+      ...(application?.description !== undefined && {
+        description: application.description,
+      }),
+      ...(application?.isActivated !== undefined && {
+        isActivated: application.isActivated,
+      }),
+      ...(application?.isSystem !== undefined && {
+        isSystem: application.isSystem,
+      }),
+      ...(application?.natsConfig && {
+        natsConfig: {
+          ...(application.natsConfig.natsAccess !== undefined && {
+            natsAccess: application.natsConfig.natsAccess,
+          }),
+          ...(application.natsConfig.natsRule && {
+            natsRule: application.natsConfig.natsRule,
+          }),
+        },
+      }),
+    };
     try {
       const res = await request(url, {
-        method: newApplication ? "POST" : "PUT",
+        method: newApplication ? "POST" : "PATCH",
         headers: {
           "content-type": "application/json",
         },
-        body: JSON.stringify(application),
+        body: JSON.stringify(newApplication ? application : patchPayload),
       });
       return res;
     } catch (e: any) {
@@ -212,6 +235,10 @@ function ApplicationList() {
       content: yamlDump,
       isDirty: false,
       onSave: async (content: string) => {
+        const shouldContinue = window.confirm(applicationPatchWarning);
+        if (!shouldContinue) {
+          return;
+        }
         await handleYamlUpdate(content);
       },
     });
@@ -230,10 +257,52 @@ function ApplicationList() {
     if (!doc.metadata || !doc.spec) {
       return [{}, "Invalid YAML format"];
     }
+    const hasTopLevelNatsConfig = Object.prototype.hasOwnProperty.call(
+      doc.spec,
+      "natsConfig",
+    );
+    const hasMicroserviceLevelNatsConfig = (doc.spec.microservices || []).some(
+      (m: any) =>
+        m?.natsConfig !== undefined ||
+        m?.natsAccess !== undefined ||
+        m?.natsRule !== undefined,
+    );
+    if (!hasTopLevelNatsConfig && hasMicroserviceLevelNatsConfig) {
+      return [
+        {},
+        "Application YAML edit only PATCHes app-level fields. Put NATs config under spec.natsConfig (not spec.microservices[].natsConfig).",
+      ];
+    }
+    const resolvedNatsAccess = lget(
+      doc,
+      "spec.natsConfig.natsAccess",
+      selectedApplication?.natsConfig?.natsAccess,
+    );
+    const resolvedNatsRule = lget(
+      doc,
+      "spec.natsConfig.natsRule",
+      selectedApplication?.natsConfig?.natsRule,
+    );
+
     const application = {
       name: lget(doc, "metadata.name", undefined),
       ...doc.spec,
-      isActivated: true,
+      isActivated: lget(
+        doc,
+        "spec.isActivated",
+        selectedApplication?.isActivated ?? true,
+      ),
+      isSystem: lget(doc, "spec.isSystem", selectedApplication?.isSystem),
+      ...(resolvedNatsAccess !== undefined || resolvedNatsRule
+        ? {
+            natsConfig: {
+              ...(resolvedNatsAccess !== undefined && {
+                natsAccess: resolvedNatsAccess,
+              }),
+              ...(resolvedNatsRule && { natsRule: resolvedNatsRule }),
+            },
+          }
+        : {}),
       microservices: await Promise.all(
         (doc.spec.microservices || []).map(async (m: any) =>
           parseMicroservice(m),
@@ -458,59 +527,56 @@ function ApplicationList() {
       },
     },
     {
-      label: "Routes",
+      label: "NATs Config",
       render: () => "",
       isSectionHeader: true,
     },
     {
       label: "",
       isFullSection: true,
-      render: (node: any) => {
-        const routes = node?.routes || [];
+      render: (row: any) => {
+        const natsAccess = row?.natsConfig?.natsAccess ?? row?.natsAccess;
+        const natsRule = row?.natsConfig?.natsRule ?? row?.natsRule;
+        const natsRuleId = row?.natsRuleId;
+        const hasNatsConfig =
+          natsAccess !== undefined ||
+          Boolean(natsRule) ||
+          (natsRuleId !== undefined && natsRuleId !== null);
 
-        if (!Array.isArray(routes) || routes.length === 0) {
-          return (
-            <div className="text-sm text-gray-400">No routes available.</div>
-          );
+        if (!hasNatsConfig) {
+          return <div className="text-sm text-gray-400">No NATs config.</div>;
         }
 
-        const tableData = routes.map((route: any, index: number) => ({
-          name: route.name || "-",
-          from: route.from || "-",
-          to: route.to || "-",
-          key: `${route.name || "route"}-${index}`,
-        }));
-
-        const columns = [
-          {
-            key: "name",
-            header: "Name",
-            formatter: ({ row }: any) => (
-              <span className="text-white">{row.name}</span>
-            ),
-          },
-          {
-            key: "from",
-            header: "From",
-            formatter: ({ row }: any) => (
-              <span className="text-white">{row.from}</span>
-            ),
-          },
-          {
-            key: "to",
-            header: "To",
-            formatter: ({ row }: any) => (
-              <span className="text-white">{row.to}</span>
-            ),
-          },
-        ];
-
         return (
-          <CustomDataTable
-            columns={columns}
-            data={tableData}
-            getRowKey={(row: any) => row.key}
-          />
+          <div className="rounded-md border border-gray-700 bg-gray-800/40 p-3">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <span className="text-xs text-gray-400">Access</span>
+              <span
+                className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
+                  natsAccess === true
+                    ? "bg-emerald-600/30 text-emerald-300"
+                    : natsAccess === false
+                      ? "bg-red-600/30 text-red-300"
+                      : "bg-gray-600/40 text-gray-300"
+                }`}
+              >
+                {natsAccess === undefined
+                  ? "N/A"
+                  : natsAccess
+                    ? "ENABLED"
+                    : "DISABLED"}
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-gray-400">Rule</span>
+              <span className="text-sm font-medium break-all">
+                {natsRule ||
+                  (natsRuleId !== undefined && natsRuleId !== null
+                    ? `${natsRuleId}`
+                    : "N/A")}
+              </span>
+            </div>
+          </div>
         );
       },
     },

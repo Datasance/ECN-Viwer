@@ -155,7 +155,8 @@ export function useUnifiedYamlUpload({
       if (kind === "ConfigMap") {
         finalBody = {
           name: parsed.name,
-          immutable: parsed.spec?.immutable || false,
+          immutable: parsed.spec?.immutable ?? false,
+          useVault: parsed.spec?.useVault ?? false,
           data: parsed.data || {},
         };
       }
@@ -175,6 +176,17 @@ export function useUnifiedYamlUpload({
       ) {
         // Use standard JSON endpoints - body is already correctly formatted by parser
         finalBody = parsed;
+      }
+
+      // Handle NATS Account/User Rules - clean null values
+      if (kind === "NatsAccountRule" || kind === "NatsUserRule") {
+        const cleanedPayload: any = {};
+        for (const [key, value] of Object.entries(parsed)) {
+          if (value !== null && value !== undefined) {
+            cleanedPayload[key] = value;
+          }
+        }
+        finalBody = cleanedPayload;
       }
 
       const response = await request(finalEndpoint, {
@@ -362,6 +374,8 @@ export function useUnifiedYamlUpload({
         setIsProcessing(false);
       }
     },
+    // deployResource is stable in practice (defined in same scope); listing it would change deps every render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [request, pushFeedback, onComplete, refreshFunctions],
   );
 

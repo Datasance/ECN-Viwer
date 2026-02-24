@@ -12,7 +12,12 @@ interface ReducedAgents {
 interface Application {
   name: string;
   microservices: any[];
-  routes: any[];
+  natsAccess?: boolean;
+  natsRule?: string;
+  natsConfig?: {
+    natsAccess?: boolean;
+    natsRule?: string;
+  };
 }
 
 interface GetApplicationYAMLParams {
@@ -27,6 +32,11 @@ export const getApplicationYAMLFromJSON = ({
   reducedAgents = { byUUID: {} },
 }: GetApplicationYAMLParams): any => {
   if (!application) return {};
+
+  const resolvedApplicationNatsAccess =
+    application?.natsConfig?.natsAccess ?? application?.natsAccess;
+  const resolvedApplicationNatsRule =
+    application?.natsConfig?.natsRule ?? application?.natsRule;
 
   const microservices = application.microservices?.map((ms: any) => {
     let parsedConfig: any = {};
@@ -115,19 +125,13 @@ export const getApplicationYAMLFromJSON = ({
         healthCheck: ms?.healthCheck ?? {},
       },
       schedule: ms?.schedule ?? 50,
-      msRoutes: {
-        pubTags: ms.pubTags ?? [],
-        subTags: ms.subTags ?? [],
+      natsConfig: {
+        natsAccess: ms?.natsConfig?.natsAccess ?? ms?.natsAccess ?? false,
+        ...(ms?.natsConfig?.natsRule && { natsRule: ms.natsConfig.natsRule }),
       },
       config: parsedConfig,
     };
   });
-
-  const routes = application.routes?.map((r: any) => ({
-    name: r.name,
-    from: r.from,
-    to: r.to,
-  }));
 
   return {
     apiVersion: "datasance.com/v3",
@@ -136,8 +140,20 @@ export const getApplicationYAMLFromJSON = ({
       name: application.name,
     },
     spec: {
+      ...(resolvedApplicationNatsAccess !== undefined ||
+      resolvedApplicationNatsRule
+        ? {
+            natsConfig: {
+              ...(resolvedApplicationNatsAccess !== undefined && {
+                natsAccess: Boolean(resolvedApplicationNatsAccess),
+              }),
+              ...(resolvedApplicationNatsRule && {
+                natsRule: resolvedApplicationNatsRule,
+              }),
+            },
+          }
+        : {}),
       microservices,
-      routes,
     },
   };
 };

@@ -193,14 +193,6 @@ export default function MicroserviceDetails({
     internal: 0,
     external: 0,
     protocol: "tcp",
-    public: {
-      schemes: ["http"],
-      protocol: "http",
-      router: {
-        host: "string",
-        port: 0,
-      },
-    },
   };
   const [PortManipulatedData, setPortManipulatedData] =
     React.useState(newPortArray);
@@ -426,9 +418,11 @@ export default function MicroserviceDetails({
             return cmd;
           }),
         },
-        msRoutes: {
-          pubTags: app?.pubTags !== undefined ? app?.pubTags : [],
-          subTags: app?.subTags !== undefined ? app?.subTags : [],
+        natsConfig: {
+          natsAccess: app?.natsConfig?.natsAccess ?? app?.natsAccess,
+          ...(app?.natsConfig?.natsRule && {
+            natsRule: app.natsConfig.natsRule,
+          }),
         },
         config: JSON.parse(app?.config),
         application: app?.application,

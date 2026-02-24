@@ -134,13 +134,13 @@ function ConfigMaps() {
   });
 
   const handleEditYaml = () => {
-    const { name, immutable, data = {} } = selectedConfigMap || {};
+    const { name, immutable, useVault, data = {} } = selectedConfigMap || {};
 
     const yamlObj = {
       apiVersion: "datasance.com/v3",
       kind: "ConfigMap",
       metadata: { name },
-      spec: { immutable },
+      spec: { immutable, useVault },
     };
     let yamlHeader = yaml
       .dump(yamlObj, {
@@ -232,6 +232,7 @@ function ConfigMaps() {
     const configMap = {
       name: lget(doc, "metadata.name", lget(doc, "spec.name", undefined)),
       immutable: lget(doc, "spec.immutable", false),
+      useVault: lget(doc, "spec.useVault", false),
       data: lget(doc, "data", {}),
     };
 
@@ -240,13 +241,13 @@ function ConfigMaps() {
 
   const handleSave = async (key: string, updatedYamlString: string) => {
     try {
-      const { name, immutable, data = {} } = selectedConfigMap || {};
+      const { name, immutable, useVault, data = {} } = selectedConfigMap || {};
 
       const yamlObj = {
         apiVersion: "datasance.com/v3",
         kind: "ConfigMap",
         metadata: { name },
-        spec: { immutable },
+        spec: { immutable, useVault },
       };
 
       const yamlHeader = yaml
@@ -317,13 +318,13 @@ function ConfigMaps() {
 
   const handleDelete = async (key: string) => {
     try {
-      const { name, immutable, data = {} } = selectedConfigMap || {};
+      const { name, immutable, useVault, data = {} } = selectedConfigMap || {};
 
       const yamlObj = {
         apiVersion: "datasance.com/v3",
         kind: "ConfigMap",
         metadata: { name },
-        spec: { immutable },
+        spec: { immutable, useVault },
       };
 
       const yamlHeader = yaml
@@ -455,6 +456,10 @@ function ConfigMaps() {
     {
       label: "Immutable",
       render: (row: any) => row.immutable.toString() || "N/A",
+    },
+    {
+      label: "Use Vault",
+      render: (row: any) => row.useVault.toString() || "N/A",
     },
     {
       label: "Data",

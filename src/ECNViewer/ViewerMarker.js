@@ -1,4 +1,3 @@
-import React from "react";
 import L from "leaflet";
 L.Icon.Default.imagePath = "/";
 
@@ -78,7 +77,7 @@ MarkerIcon.prototype.getStatus = function () {
  */
 export default function ViewerMarker(props) {
   const mIcon = new MarkerIcon(props);
-  const iconInstance = L.icon({
+  L.icon({
     iconUrl: mIcon.getIconUrl(),
     iconSize: [25, 41],
   });

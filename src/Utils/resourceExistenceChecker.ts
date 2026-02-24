@@ -136,6 +136,24 @@ export async function fetchExistingResources(
         }
         return [];
       }
+      case "NatsAccountRule": {
+        const response = await request("/api/v3/nats/account-rules");
+        if (response?.ok) {
+          const data = await response.json();
+          const rules = data.rules || data;
+          return Array.isArray(rules) ? rules : [];
+        }
+        return [];
+      }
+      case "NatsUserRule": {
+        const response = await request("/api/v3/nats/user-rules");
+        if (response?.ok) {
+          const data = await response.json();
+          const rules = data.rules || data;
+          return Array.isArray(rules) ? rules : [];
+        }
+        return [];
+      }
       default:
         return [];
     }
@@ -170,6 +188,8 @@ function resourceExists(
     case "Role":
     case "RoleBinding":
     case "ServiceAccount":
+    case "NatsAccountRule":
+    case "NatsUserRule":
       return existingResources.some((r) => r.name === identifier);
     case "Registry":
       return existingResources.some(
@@ -283,6 +303,14 @@ export function getResourceEndpoint(
       return exists
         ? `/api/v3/serviceaccounts/${identifier}`
         : `/api/v3/serviceaccounts`;
+    case "NatsAccountRule":
+      return exists
+        ? `/api/v3/nats/account-rules/${identifier}`
+        : `/api/v3/nats/account-rules`;
+    case "NatsUserRule":
+      return exists
+        ? `/api/v3/nats/user-rules/${identifier}`
+        : `/api/v3/nats/user-rules`;
     default:
       return "";
   }
@@ -312,6 +340,8 @@ export function getResourceMethod(
     case "Role":
     case "RoleBinding":
     case "ServiceAccount":
+    case "NatsAccountRule":
+    case "NatsUserRule":
       return "PATCH";
     case "CatalogItem":
     case "ApplicationTemplate":
@@ -365,6 +395,8 @@ export async function preloadResourceCache(
         case "Role":
         case "RoleBinding":
         case "ServiceAccount":
+        case "NatsAccountRule":
+        case "NatsUserRule":
           identifier = resource.name;
           break;
         case "Registry":

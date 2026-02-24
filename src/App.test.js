@@ -4,8 +4,6 @@ import { render, wait } from "@testing-library/react";
 import App from "./App";
 import { act } from "react-dom/test-utils";
 
-/* globals it, expect, jest, beforeAll */
-
 const getUrl = (path) => `/api/controllerApi${path}`;
 
 beforeAll(() => {

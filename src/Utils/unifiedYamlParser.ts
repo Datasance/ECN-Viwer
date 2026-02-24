@@ -15,6 +15,9 @@ import { parseServiceAccount } from "./parseServiceAccountYaml";
 import lget from "lodash/get";
 import { API_VERSIONS } from "./constants";
 import { parseMicroservice } from "./ApplicationParser";
+import { parseAgentYamlDocument } from "./agentYAML";
+import { parseNatsAccountRule } from "./parseNatsAccountRuleYaml";
+import { parseNatsUserRule } from "./parseNatsUserRuleYaml";
 
 export type ResourceKind =
   | "Service"
@@ -31,7 +34,9 @@ export type ResourceKind =
   | "Agent"
   | "Role"
   | "RoleBinding"
-  | "ServiceAccount";
+  | "ServiceAccount"
+  | "NatsAccountRule"
+  | "NatsUserRule";
 
 export interface ParsedResource {
   kind: ResourceKind;
@@ -75,6 +80,8 @@ export function getResourceKind(doc: any): ResourceKind | null {
     "Role",
     "RoleBinding",
     "ServiceAccount",
+    "NatsAccountRule",
+    "NatsUserRule",
   ];
 
   if (validKinds.includes(kind as ResourceKind)) {
@@ -104,6 +111,8 @@ export function getResourceIdentifier(
     case "Role":
     case "RoleBinding":
     case "ServiceAccount":
+    case "NatsAccountRule":
+    case "NatsUserRule":
       return parsedResource?.name || originalDoc?.metadata?.name || null;
     case "Registry":
       return parsedResource?.url || originalDoc?.spec?.url || null;
@@ -177,11 +186,18 @@ async function routeToParser(
         if (!doc.metadata || !doc.spec) {
           return [{}, "Invalid YAML format"] as [any, string | null];
         }
-        // Note: This is a simplified version - full implementation would need parseApplication
+        const application = {
+          ...lget(doc, "spec.application", {}),
+          microservices: await Promise.all(
+            (lget(doc, "spec.application.microservices", []) || []).map(
+              async (m: any) => parseMicroservice(m),
+            ),
+          ),
+        };
         const applicationTemplate = {
           name: lget(doc, "metadata.name", lget(doc, "spec.name", undefined)),
           description: lget(doc, "spec.description", ""),
-          application: lget(doc, "spec.application", {}),
+          application,
           variables: lget(doc, "spec.variables", []),
         };
         return [applicationTemplate, null] as [any, string | null];
@@ -234,59 +250,7 @@ async function routeToParser(
         return [microserviceData, null] as [any, string | null];
       }
       case "Agent": {
-        // Inline parser from Nodes/List/index.tsx
-        if (doc.apiVersion !== "datasance.com/v3") {
-          return [
-            null,
-            `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v3`,
-          ] as [any, string | null];
-        }
-        if (doc.kind !== "Agent") {
-          return [null, `Invalid kind ${doc.kind}, expected Agent`] as [
-            any,
-            string | null,
-          ];
-        }
-        if (!doc.metadata || !doc.spec) {
-          return [null, "Invalid YAML format (missing metadata or spec)"] as [
-            any,
-            string | null,
-          ];
-        }
-
-        const spec = doc.spec ?? {};
-        const metadata = doc.metadata ?? {};
-        const config = spec.config ?? {};
-
-        const agentData: any = {
-          name: spec.name || metadata.name,
-          host: spec.host,
-          ...config,
-        };
-
-        agentData.tags = metadata.tags;
-
-        if (config.routerConfig) {
-          agentData.routerMode = config.routerConfig.routerMode;
-          agentData.messagingPort = config.routerConfig.messagingPort;
-
-          if (config.routerConfig.edgeRouterPort !== undefined) {
-            agentData.edgeRouterPort = config.routerConfig.edgeRouterPort;
-          }
-          if (config.routerConfig.interRouterPort !== undefined) {
-            agentData.interRouterPort = config.routerConfig.interRouterPort;
-          }
-        }
-
-        if (config.agentType !== undefined) {
-          agentData.fogType = config.agentType;
-        } else if (config.fogType !== undefined) {
-          const fogType =
-            config.fogType === "Auto" ? 0 : config.fogType === "x86" ? 1 : 2;
-          agentData.fogType = fogType;
-        }
-
-        return [agentData, null] as [any, string | null];
+        return parseAgentYamlDocument(doc);
       }
       case "Role":
         result = await parseRole(doc);
@@ -296,6 +260,12 @@ async function routeToParser(
         break;
       case "ServiceAccount":
         result = await parseServiceAccount(doc);
+        break;
+      case "NatsAccountRule":
+        result = await parseNatsAccountRule(doc);
+        break;
+      case "NatsUserRule":
+        result = await parseNatsUserRule(doc);
         break;
       default:
         return [null, `Unsupported resource kind: ${kind}`] as [
@@ -338,6 +308,8 @@ function sortByDependencies(docs: any[]): any[] {
     "Role",
     "RoleBinding",
     "ServiceAccount",
+    "NatsAccountRule",
+    "NatsUserRule",
     "Registry",
     "CatalogItem",
     "Application",

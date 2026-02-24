@@ -210,9 +210,7 @@ export const DataProvider = ({ children }) => {
       let applications = [];
       try {
         applications =
-          await ApplicationManager.listApplicationsWithMicroservices(
-            request,
-          )();
+          await ApplicationManager.listApplicationsWithMicroservices(request)();
       } catch (e) {
         setError(e);
         return;

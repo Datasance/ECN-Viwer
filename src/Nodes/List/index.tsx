@@ -12,7 +12,6 @@ import CryptoTextBox from "../../CustomComponent/CustomCryptoTextBox";
 import "ace-builds/src-noconflict/ace";
 import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/mode-yaml";
-import yaml from "js-yaml";
 import { getTextColor, MiBFactor, prettyBytes } from "../../ECNViewer/utils";
 import { StatusColor, StatusType } from "../../Utils/Enums/StatusColor";
 import { NavLink } from "react-router-dom";
@@ -34,6 +33,10 @@ import {
 } from "lucide-react";
 import AgentManager from "../../providers/Data/agent-manager";
 import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
+import {
+  buildAgentPatchBodyFromYamlContent,
+  dumpAgentYAML,
+} from "../../Utils/agentYAML";
 
 const formatDuration = (milliseconds: number): string => {
   if (!milliseconds || milliseconds <= 0) return "N/A";
@@ -433,63 +436,7 @@ function NodesList() {
   };
 
   const handleEditYaml = () => {
-    const fogType =
-      selectedNode?.fogTypeId === 0
-        ? "Auto"
-        : selectedNode?.fogTypeId === 1
-          ? "x86"
-          : "arm";
-    const yamlDump = {
-      apiVersion: "datasance.com/v3",
-      kind: "AgentConfig",
-      metadata: {
-        name: selectedNode?.name,
-        tags: selectedNode?.tags,
-      },
-      spec: {
-        name: selectedNode?.name,
-        host: selectedNode?.host,
-        location: selectedNode?.location,
-        latitude: selectedNode?.latitude,
-        longitude: selectedNode?.longitude,
-        description: selectedNode?.description,
-        fogType: fogType,
-        networkInterface: selectedNode?.networkInterface,
-        dockerUrl: selectedNode?.dockerUrl,
-        containerEngine: selectedNode?.containerEngine,
-        deploymentType: selectedNode?.deploymentType,
-        diskLimit: selectedNode?.diskLimit,
-        diskDirectory: selectedNode?.diskDirectory,
-        memoryLimit: selectedNode?.memoryLimit,
-        cpuLimit: selectedNode?.cpuLimit,
-        logLimit: selectedNode?.logLimit,
-        logDirectory: selectedNode?.logDirectory,
-        logFileCount: selectedNode?.logFileCount,
-        statusFrequency: selectedNode?.statusFrequency,
-        changeFrequency: selectedNode?.changeFrequency,
-        deviceScanFrequency: selectedNode?.deviceScanFrequency,
-        bluetoothEnabled: selectedNode?.bluetoothEnabled,
-        watchdogEnabled: selectedNode?.watchdogEnabled,
-        gpsMode: selectedNode?.gpsMode,
-        gpsScanFrequency: selectedNode?.gpsScanFrequency,
-        gpsDevice: selectedNode?.gpsDevice,
-        edgeGuardFrequency: selectedNode?.edgeGuardFrequency,
-        abstractedHardwareEnabled: selectedNode?.abstractedHardwareEnabled,
-        upstreamRouters: selectedNode?.upstreamRouters ?? [],
-        routerConfig: {
-          routerMode: selectedNode?.routerMode,
-          messagingPort: selectedNode?.messagingPort,
-          edgeRouterPort: selectedNode?.edgeRouterPort,
-          interRouterPort: selectedNode?.interRouterPort,
-        },
-        logLevel: selectedNode?.logLevel,
-        dockerPruningFrequency: selectedNode?.dockerPruningFrequency,
-        availableDiskThreshold: selectedNode?.availableDiskThreshold,
-        timeZone: selectedNode?.timeZone,
-      },
-    };
-
-    const yamlString = yaml.dump(yamlDump, { noRefs: true, indent: 2 });
+    const yamlString = dumpAgentYAML(selectedNode);
 
     // Add YAML editor session to global state
     addYamlSession({
@@ -500,59 +447,6 @@ function NodesList() {
         await handleYamlUpdate(content);
       },
     });
-  };
-
-  const parseAgentYaml = async (doc: any) => {
-    if (doc.apiVersion !== "datasance.com/v3") {
-      return [
-        null,
-        `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v3`,
-      ];
-    }
-    if (doc.kind !== "Agent") {
-      return [null, `Invalid kind ${doc.kind}, expected Agent`];
-    }
-    if (!doc.metadata || !doc.spec) {
-      return [null, "Invalid YAML format (missing metadata or spec)"];
-    }
-
-    const spec = doc.spec ?? {};
-    const metadata = doc.metadata ?? {};
-    const config = spec.config ?? {};
-
-    // For Agent YAML, config fields are nested under spec.config
-    // If spec.config exists, merge its fields with top-level spec fields
-    const agentData: any = {
-      name: spec.name || metadata.name,
-      host: spec.host,
-      ...config, // All config fields go here
-    };
-
-    agentData.tags = metadata.tags;
-
-    // Handle routerConfig if it exists in config
-    if (config.routerConfig) {
-      agentData.routerMode = config.routerConfig.routerMode;
-      agentData.messagingPort = config.routerConfig.messagingPort;
-
-      if (config.routerConfig.edgeRouterPort !== undefined) {
-        agentData.edgeRouterPort = config.routerConfig.edgeRouterPort;
-      }
-      if (config.routerConfig.interRouterPort !== undefined) {
-        agentData.interRouterPort = config.routerConfig.interRouterPort;
-      }
-    }
-
-    // Handle fogType/agentType conversion
-    if (config.agentType !== undefined) {
-      agentData.fogType = config.agentType;
-    } else if (config.fogType !== undefined) {
-      const fogType =
-        config.fogType === "Auto" ? 0 : config.fogType === "x86" ? 1 : 2;
-      agentData.fogType = fogType;
-    }
-
-    return [agentData, null];
   };
 
   // Unified YAML upload hook
@@ -574,31 +468,7 @@ function NodesList() {
   async function handleYamlUpdate(content?: string) {
     try {
       const yamlContent = content || editorDataChanged;
-      const parsed = yaml.load(yamlContent) as any;
-      const spec = parsed?.spec ?? {};
-      const metadata = parsed?.metadata ?? {};
-
-      const patchBody = { ...spec };
-
-      patchBody.tags = metadata.tags;
-
-      if (spec.routerConfig) {
-        patchBody.routerMode = spec.routerConfig.routerMode;
-        patchBody.messagingPort = spec.routerConfig.messagingPort;
-
-        if (spec.routerConfig.edgeRouterPort !== undefined) {
-          patchBody.edgeRouterPort = spec.routerConfig.edgeRouterPort;
-        }
-        if (spec.routerConfig.interRouterPort !== undefined) {
-          patchBody.interRouterPort = spec.routerConfig.interRouterPort;
-        }
-
-        delete patchBody.routerConfig;
-      }
-
-      const fogType =
-        spec?.fogType === "Auto" ? 0 : spec?.fogType === "x86" ? 1 : 2;
-      patchBody.fogType = fogType;
+      const patchBody = buildAgentPatchBodyFromYamlContent(yamlContent);
 
       const res = await request(`/api/v3/iofog/${selectedNode?.uuid}`, {
         method: "PATCH",

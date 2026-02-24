@@ -41,6 +41,7 @@ export default function Alert(props) {
       const filtered = Array.from(prev).filter((id) => currentAlertIds.has(id));
       return filtered.length !== prev.size ? new Set(filtered) : prev;
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally only run when alerts/open change to avoid loops
   }, [alerts, open]);
 
   const handleClose = (alert) => {
