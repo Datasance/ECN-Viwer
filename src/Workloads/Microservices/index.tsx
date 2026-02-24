@@ -34,7 +34,7 @@ import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
 
 function MicroservicesList() {
   const { data } = useData();
-  const { request } = useController();
+  const { request, controllerConfig } = useController();
   const { pushFeedback } = useFeedback();
   const [selectedMs, setSelectedMs] = useState<any | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -460,10 +460,10 @@ function MicroservicesList() {
 
       // Create socket URL
       const socketUrl = (() => {
-        if (!window.controllerConfig?.url) {
-          return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/microservices/exec/${microserviceUuid}`;
+        if (!controllerConfig?.url) {
+          return `ws://${window.location.hostname}:${controllerConfig?.port ?? 51121}/api/v3/microservices/exec/${microserviceUuid}`;
         }
-        const u = new URL(window.controllerConfig.url);
+        const u = new URL(controllerConfig.url);
         const protocol = u.protocol === "https:" ? "wss:" : "ws:";
         return `${protocol}//${u.host}/api/v3/microservices/exec/${microserviceUuid}`;
       })();
@@ -495,10 +495,10 @@ function MicroservicesList() {
     try {
       // Create websocket URL with tail config
       const baseUrl = (() => {
-        if (!window.controllerConfig?.url) {
-          return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/microservices/${selectedMs.uuid}/logs`;
+        if (!controllerConfig?.url) {
+          return `ws://${window.location.hostname}:${controllerConfig?.port ?? 51121}/api/v3/microservices/${selectedMs.uuid}/logs`;
         }
-        const u = new URL(window.controllerConfig.url);
+        const u = new URL(controllerConfig.url);
         const protocol = u.protocol === "https:" ? "wss:" : "ws:";
         return `${protocol}//${u.host}/api/v3/microservices/${selectedMs.uuid}/logs`;
       })();

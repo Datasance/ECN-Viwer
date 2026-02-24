@@ -1,4 +1,5 @@
 import React from "react";
+import { useControllerConfig } from "../../contexts/ActiveContextProvider";
 
 export const PollingConfigContext = React.createContext<{
   mainPollingInterval: number;
@@ -21,32 +22,28 @@ export const usePollingConfig = () => React.useContext(PollingConfigContext);
 
 const STORAGE_KEY = "ecn-viewer-polling-config";
 
-const getDefaultConfig = () => {
-  // Check for backward compatibility with controller-config.js
-  const controllerRefresh = (window as any).controllerConfig?.refresh || null;
-  return {
-    mainPollingInterval: controllerRefresh ? +controllerRefresh : 3000,
-    slideoverPollingInterval: 2000,
-  };
-};
+const getDefaultConfig = (controllerRefresh: number | null) => ({
+  mainPollingInterval: controllerRefresh ?? 3000,
+  slideoverPollingInterval: 2000,
+});
 
-const loadConfigFromStorage = () => {
+const loadConfigFromStorage = (controllerRefresh: number | null) => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
+      const defaults = getDefaultConfig(controllerRefresh);
       return {
         mainPollingInterval:
-          parsed.mainPollingInterval || getDefaultConfig().mainPollingInterval,
+          parsed.mainPollingInterval ?? defaults.mainPollingInterval,
         slideoverPollingInterval:
-          parsed.slideoverPollingInterval ||
-          getDefaultConfig().slideoverPollingInterval,
+          parsed.slideoverPollingInterval ?? defaults.slideoverPollingInterval,
       };
     }
   } catch (e) {
     console.error("Error loading polling config from localStorage:", e);
   }
-  return getDefaultConfig();
+  return getDefaultConfig(controllerRefresh);
 };
 
 export const PollingConfigProvider = ({
@@ -54,21 +51,26 @@ export const PollingConfigProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const [config, setConfig] = React.useState(loadConfigFromStorage);
+  const controllerConfig = useControllerConfig();
+  const controllerRefresh =
+    controllerConfig?.refresh != null ? +controllerConfig.refresh : null;
+  const [config, setConfig] = React.useState(() =>
+    loadConfigFromStorage(controllerRefresh),
+  );
 
   // Listen for storage changes (for cross-tab synchronization)
   React.useEffect(() => {
+    const defaults = getDefaultConfig(controllerRefresh);
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY && e.newValue) {
         try {
           const newConfig = JSON.parse(e.newValue);
           setConfig({
             mainPollingInterval:
-              newConfig.mainPollingInterval ||
-              getDefaultConfig().mainPollingInterval,
+              newConfig.mainPollingInterval ?? defaults.mainPollingInterval,
             slideoverPollingInterval:
-              newConfig.slideoverPollingInterval ||
-              getDefaultConfig().slideoverPollingInterval,
+              newConfig.slideoverPollingInterval ??
+              defaults.slideoverPollingInterval,
           });
         } catch (error) {
           console.error("Error parsing storage change:", error);
@@ -78,7 +80,7 @@ export const PollingConfigProvider = ({
 
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
-  }, []);
+  }, [controllerRefresh]);
 
   const updatePollingConfig = React.useCallback(
     (newConfig: {

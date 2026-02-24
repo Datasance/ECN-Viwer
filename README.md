@@ -46,6 +46,17 @@ nvm use 24
 
 **Platform notes:** Node 24 prebuilt binaries require macOS 13.5 or newer; 32-bit Linux (armv7) and 32-bit Windows (x86) are no longer supported.
 
+## Electron desktop build (Keycloak)
+
+The packaged Electron app uses a **fixed custom-scheme redirect URI** for OIDC. This repo does not deploy or manage Keycloak; an admin must configure the client manually.
+
+For the **Electron desktop build**, add these **Valid redirect URIs** (and **Valid post logout redirect URIs** if you use logout redirects) for the Keycloak client:
+
+- `com.datasance.ecn-viewer://callback`
+- `com.datasance.ecn-viewer://silent-renew` (optional; for silent token renewal)
+
+The OIDC client in the app is fixed to these URIs when running in Electron and will not change without notice.
+
 ## Usage
 
 `npm run start-dev`

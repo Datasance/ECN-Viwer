@@ -14,6 +14,7 @@ import {
   ChevronLeft as ChevronLeftSharp,
   ChevronRight as ChevronRightSharp,
   Network as Hub,
+  Server as ServerIcon,
   Database as StorageRounded,
   Layers as LayersRounded,
   Calendar as EventIcon,
@@ -58,8 +59,7 @@ import NatsUserRules from "../AccessControl/natsUserRules";
 import Operators from "../MessageBus/Operators";
 import Accounts from "../MessageBus/Accounts";
 import Users from "../MessageBus/Users";
-
-const controllerJson = window.controllerConfig || null;
+import ContextsPage from "../contexts/ContextsPage";
 
 function RouteWatcher() {
   const { refreshData } = useData();
@@ -78,10 +78,11 @@ function RouteWatcher() {
   return null;
 }
 
-export default function Layout() {
+function LayoutContent() {
+  const location = useLocation();
   const auth = useAuth();
   const returnHomeCbRef = React.useRef<(() => void) | null>(null);
-  const { status, updateController, request } = useController();
+  const { status, updateController, request, controllerConfig } = useController();
   const { isDrawerOpen } = useTerminal();
   const [collapsed, setCollapsed] = React.useState(true);
   const [isPinned, setIsPinned] = React.useState(false);
@@ -100,7 +101,7 @@ export default function Layout() {
         await auth.signoutRedirect();
       } else {
         updateController({ user: null });
-        window.location.href = "/dashboard";
+        window.location.hash = "#/contexts";
       }
     } catch (error) {
       console.error("Error during logout:", error);
@@ -170,8 +171,18 @@ export default function Layout() {
     return null;
   }
 
+  if (location.pathname === "/contexts") {
+    return (
+      <ContextsPage
+        onSignOutBeforeSwitch={async () => {
+          if (auth?.signoutRedirect) await auth.signoutRedirect();
+        }}
+      />
+    );
+  }
+
   return (
-    <HashRouter>
+    <>
       <RouteWatcher />
       <div className="min-h-screen flex flex-col text-gray-900 dark:bg-gray-900 dark:text-white">
         <div className="flex">
@@ -188,7 +199,7 @@ export default function Layout() {
                 className="h-full flex flex-col border-r border-gray-500"
               >
                 <div className="flex justify-center py-4">
-                  <NavLink to="/dashboard" onClick={returnHome}>
+                  <NavLink to="/contexts" onClick={returnHome}>
                     <img src={logomark} className="w-7 mt-2" alt="Datasance" />
                   </NavLink>
                 </div>
@@ -227,9 +238,16 @@ export default function Layout() {
                       }),
                     }}
                   >
+                    <NavLink to="/contexts">
+                      {({ isActive }) => (
+                        <MenuItem component="div" icon={<ServerIcon size={18} />} active={isActive}>
+                          Cluster Contexts
+                        </MenuItem>
+                      )}
+                    </NavLink>
                     <NavLink to="/dashboard">
                       {({ isActive }) => (
-                        <MenuItem icon={<DashboardIcon />} active={isActive}>
+                        <MenuItem component="div" icon={<DashboardIcon />} active={isActive}>
                           Overview
                         </MenuItem>
                       )}
@@ -238,12 +256,12 @@ export default function Layout() {
                     <SubMenu label="Nodes" icon={<StorageRounded size={18} />}>
                       <NavLink to="/nodes/list">
                         {({ isActive }) => (
-                          <MenuItem active={isActive}>List</MenuItem>
+                          <MenuItem component="div" active={isActive}>List</MenuItem>
                         )}
                       </NavLink>
                       <NavLink to="/nodes/Map">
                         {({ isActive }) => (
-                          <MenuItem active={isActive}>Map</MenuItem>
+                          <MenuItem component="div" active={isActive}>Map</MenuItem>
                         )}
                       </NavLink>
                     </SubMenu>
@@ -251,26 +269,22 @@ export default function Layout() {
                     <SubMenu label="Workloads" icon={<LayersRounded />}>
                       <NavLink to="/Workloads/MicroservicesList">
                         {({ isActive }) => (
-                          <MenuItem active={isActive}>Microservices</MenuItem>
+                          <MenuItem component="div" active={isActive}>Microservices</MenuItem>
                         )}
                       </NavLink>
                       <NavLink to="/Workloads/SystemMicroservicesList">
                         {({ isActive }) => (
-                          <MenuItem active={isActive}>
-                            System Microservices
-                          </MenuItem>
+                          <MenuItem component="div" active={isActive}>System Microservices</MenuItem>
                         )}
                       </NavLink>
                       <NavLink to="/Workloads/ApplicationList">
                         {({ isActive }) => (
-                          <MenuItem active={isActive}>Application</MenuItem>
+                          <MenuItem component="div" active={isActive}>Application</MenuItem>
                         )}
                       </NavLink>
                       <NavLink to="/Workloads/SystemApplicationList">
                         {({ isActive }) => (
-                          <MenuItem active={isActive}>
-                            System Application
-                          </MenuItem>
+                          <MenuItem component="div" active={isActive}>System Application</MenuItem>
                         )}
                       </NavLink>
                     </SubMenu>
@@ -281,39 +295,37 @@ export default function Layout() {
                     >
                       <NavLink to="/config/AppTemplates">
                         {({ isActive }) => (
-                          <MenuItem active={isActive}>App Templates</MenuItem>
+                          <MenuItem component="div" active={isActive}>App Templates</MenuItem>
                         )}
                       </NavLink>
                       <NavLink to="/config/CatalogMicroservices">
                         {({ isActive }) => (
-                          <MenuItem active={isActive}>
-                            Catalog Microservices
-                          </MenuItem>
+                          <MenuItem component="div" active={isActive}>Catalog Microservices</MenuItem>
                         )}
                       </NavLink>
                       <NavLink to="/config/Registries">
                         {({ isActive }) => (
-                          <MenuItem active={isActive}>Registries</MenuItem>
+                          <MenuItem component="div" active={isActive}>Registries</MenuItem>
                         )}
                       </NavLink>
                       <NavLink to="/config/ConfigMaps">
                         {({ isActive }) => (
-                          <MenuItem active={isActive}>Config Maps</MenuItem>
+                          <MenuItem component="div" active={isActive}>Config Maps</MenuItem>
                         )}
                       </NavLink>
                       <NavLink to="/config/secret">
                         {({ isActive }) => (
-                          <MenuItem active={isActive}>Secrets</MenuItem>
+                          <MenuItem component="div" active={isActive}>Secrets</MenuItem>
                         )}
                       </NavLink>
                       <NavLink to="/config/VolumeMounts">
                         {({ isActive }) => (
-                          <MenuItem active={isActive}>Volume Mounts</MenuItem>
+                          <MenuItem component="div" active={isActive}>Volume Mounts</MenuItem>
                         )}
                       </NavLink>
                       <NavLink to="/config/certificates">
                         {({ isActive }) => (
-                          <MenuItem active={isActive}>Certificates</MenuItem>
+                          <MenuItem component="div" active={isActive}>Certificates</MenuItem>
                         )}
                       </NavLink>
                     </SubMenu>
@@ -321,7 +333,7 @@ export default function Layout() {
                     <SubMenu label="Network" icon={<Hub />}>
                       <NavLink to="/config/services">
                         {({ isActive }) => (
-                          <MenuItem active={isActive}>Services</MenuItem>
+                          <MenuItem component="div" active={isActive}>Services</MenuItem>
                         )}
                       </NavLink>
                     </SubMenu>
@@ -333,17 +345,17 @@ export default function Layout() {
                       >
                         <NavLink to="/messagebus/operators">
                           {({ isActive }) => (
-                            <MenuItem active={isActive}>Operators</MenuItem>
+                            <MenuItem component="div" active={isActive}>Operators</MenuItem>
                           )}
                         </NavLink>
                         <NavLink to="/messagebus/accounts">
                           {({ isActive }) => (
-                            <MenuItem active={isActive}>Accounts</MenuItem>
+                            <MenuItem component="div" active={isActive}>Accounts</MenuItem>
                           )}
                         </NavLink>
                         <NavLink to="/messagebus/users">
                           {({ isActive }) => (
-                            <MenuItem active={isActive}>Users</MenuItem>
+                            <MenuItem component="div" active={isActive}>Users</MenuItem>
                           )}
                         </NavLink>
                       </SubMenu>
@@ -355,38 +367,34 @@ export default function Layout() {
                     >
                       <NavLink to="/access-control/roles">
                         {({ isActive }) => (
-                          <MenuItem active={isActive}>Roles</MenuItem>
+                          <MenuItem component="div" active={isActive}>Roles</MenuItem>
                         )}
                       </NavLink>
                       <NavLink to="/access-control/rolebindings">
                         {({ isActive }) => (
-                          <MenuItem active={isActive}>Role Bindings</MenuItem>
+                          <MenuItem component="div" active={isActive}>Role Bindings</MenuItem>
                         )}
                       </NavLink>
                       <NavLink to="/access-control/serviceaccounts">
                         {({ isActive }) => (
-                          <MenuItem active={isActive}>
-                            Service Accounts
-                          </MenuItem>
+                          <MenuItem component="div" active={isActive}>Service Accounts</MenuItem>
                         )}
                       </NavLink>
                       <NavLink to="/access-control/nats-account-rules">
                         {({ isActive }) => (
-                          <MenuItem active={isActive}>
-                            NATs Account Rules
-                          </MenuItem>
+                          <MenuItem component="div" active={isActive}>NATs Account Rules</MenuItem>
                         )}
                       </NavLink>
                       <NavLink to="/access-control/nats-user-rules">
                         {({ isActive }) => (
-                          <MenuItem active={isActive}>NATs User Rules</MenuItem>
+                          <MenuItem component="div" active={isActive}>NATs User Rules</MenuItem>
                         )}
                       </NavLink>
                       {auth && (
                         <MenuItem
                           onClick={() =>
                             window.open(
-                              `${controllerJson?.keycloakURL}admin/${controllerJson?.keycloakRealm}/console`,
+                              `${controllerConfig?.keycloakUrl}admin/${controllerConfig?.keycloakRealm}/console`,
                               "_blank",
                             )
                           }
@@ -398,7 +406,7 @@ export default function Layout() {
 
                     <NavLink to="/events">
                       {({ isActive }) => (
-                        <MenuItem icon={<EventIcon />} active={isActive}>
+                        <MenuItem component="div" icon={<EventIcon />} active={isActive}>
                           Events
                         </MenuItem>
                       )}
@@ -406,10 +414,7 @@ export default function Layout() {
 
                     <NavLink to="/config/pollingSettings">
                       {({ isActive }) => (
-                        <MenuItem
-                          icon={<TuneIcon size={18} />}
-                          active={isActive}
-                        >
+                        <MenuItem component="div" icon={<TuneIcon size={18} />} active={isActive}>
                           Viewer Config
                         </MenuItem>
                       )}
@@ -469,9 +474,9 @@ export default function Layout() {
                         <a
                           className="underline underline-offset-2"
                           href={`/#/api?authToken=${auth?.user?.access_token}&baseUrl=${
-                            window.controllerConfig?.url === undefined
-                              ? `${window.location.protocol}//${window.location.hostname}:${window?.controllerConfig?.port}/api/v3`
-                              : `${window.location.origin}/api/v3`
+                            controllerConfig?.url
+                              ? `${controllerConfig.url.replace(/\/$/, "")}/api/v3`
+                              : `${window.location.protocol}//${window.location.hostname}:${controllerConfig?.port ?? 51121}/api/v3`
                           }`}
                           target="_parent"
                         >
@@ -521,7 +526,7 @@ export default function Layout() {
             }}
           >
             <Routes>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/" element={<Navigate to="/contexts" replace />} />
               <Route path="/dashboard" Component={Dashboard} />
 
               <Route path="/api" Component={SwaggerDoc} />
@@ -582,7 +587,7 @@ export default function Layout() {
               <Route path="/messagebus/operators" Component={Operators} />
               <Route path="/messagebus/accounts" Component={Accounts} />
               <Route path="/messagebus/users" Component={Users} />
-              <Route Component={() => <Navigate to="/dashboard" />} />
+              <Route Component={() => <Navigate to="/contexts" />} />
             </Routes>
           </div>
         </div>
@@ -591,6 +596,14 @@ export default function Layout() {
           sidebarWidth={sidebarWidth}
         />
       </div>
+    </>
+  );
+}
+
+export default function Layout() {
+  return (
+    <HashRouter>
+      <LayoutContent />
     </HashRouter>
   );
 }

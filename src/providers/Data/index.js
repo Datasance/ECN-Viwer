@@ -146,7 +146,7 @@ export const DataProvider = ({ children }) => {
   const [loading, setLoading] = React.useState(true);
   const { getPollingInterval } = usePollingConfig();
   const [error, setError] = React.useState(false);
-  const { keycloak, initialized } = useAuth();
+  const { keycloak, initialized, isAuthenticated } = useAuth();
 
   // Get polling interval from config, fallback to controller config or default
   const [timeout, setTimeout] = React.useState(() => {
@@ -195,8 +195,8 @@ export const DataProvider = ({ children }) => {
   }, [getPollingInterval, timeout]);
 
   const update = async () => {
-    // Only update if we're initialized or not using auth
-    if (!keycloak || initialized) {
+    // Only update when not using auth, or when initialized and authenticated (avoid 401s while popup is open).
+    if (!keycloak || (initialized && isAuthenticated)) {
       // List fogs
       let agents = [];
       try {

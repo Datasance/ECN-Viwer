@@ -72,7 +72,7 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
   const [selectedNode, setSelectedNode] = useState<any | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const { pushFeedback } = useFeedback();
-  const { request } = useController();
+  const { request, controllerConfig } = useController();
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [showCleanConfirmModal, setShowCleanConfirmModal] = useState(false);
@@ -288,10 +288,10 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
 
         // Create a placeholder socket URL (will be updated when debugger is ready)
         const socketUrl = (() => {
-          if (!window.controllerConfig?.url) {
-            return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/microservices/system/exec/placeholder`;
+          if (!controllerConfig?.url) {
+            return `ws://${window.location.hostname}:${controllerConfig?.port ?? 51121}/api/v3/microservices/system/exec/placeholder`;
           }
-          const u = new URL(window.controllerConfig.url);
+          const u = new URL(controllerConfig.url);
           const protocol = u.protocol === "https:" ? "wss:" : "ws:";
           return `${protocol}//${u.host}/api/v3/microservices/system/exec/placeholder`;
         })();
@@ -348,10 +348,10 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
     try {
       // Create websocket URL with tail config
       const baseUrl = (() => {
-        if (!window.controllerConfig?.url) {
-          return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/iofog/${selectedNode.uuid}/logs`;
+        if (!controllerConfig?.url) {
+          return `ws://${window.location.hostname}:${controllerConfig?.port ?? 51121}/api/v3/iofog/${selectedNode.uuid}/logs`;
         }
-        const u = new URL(window.controllerConfig.url);
+        const u = new URL(controllerConfig.url);
         const protocol = u.protocol === "https:" ? "wss:" : "ws:";
         return `${protocol}//${u.host}/api/v3/iofog/${selectedNode.uuid}/logs`;
       })();
@@ -482,11 +482,11 @@ const Map: React.FC<CustomLeafletProps> = ({ collapsed }) => {
   };
 
   const getApiEndpointUrl = (): string => {
-    if (window.controllerConfig?.url) {
-      const u = new URL(window.controllerConfig.url);
+    if (controllerConfig?.url) {
+      const u = new URL(controllerConfig.url);
       return `${u.protocol}//${u.host}/api/v3`;
     }
-    return `http://${window.location.hostname}:${window?.controllerConfig?.port || 51121}/api/v3`;
+    return `http://${window.location.hostname}:${controllerConfig?.port ?? 51121}/api/v3`;
   };
 
   const generateProvisionCommands = (): string[] => {

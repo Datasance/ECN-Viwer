@@ -4,6 +4,7 @@ import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 import * as msgpack from "@msgpack/msgpack";
 import { useDebuggerStatus } from "../hooks/useDebuggerStatus";
+import { useController } from "../ControllerProvider";
 
 type ExecSessionTerminalProps = {
   socketUrl: string;
@@ -171,6 +172,7 @@ const ExecSessionTerminal: React.FC<ExecSessionTerminalProps> = ({
   const [actualMicroserviceUuid, setActualMicroserviceUuid] =
     useState<string>(microserviceUuid);
   const [statusMessageShown, setStatusMessageShown] = useState(false);
+  const { controllerConfig } = useController();
 
   // Use debugger status hook when waiting for debugger
   const { debugUuid, status: debuggerStatus } = useDebuggerStatus(
@@ -182,10 +184,10 @@ const ExecSessionTerminal: React.FC<ExecSessionTerminalProps> = ({
   useEffect(() => {
     if (waitingForDebugger && debugUuid && debuggerStatus === "running") {
       const newSocketUrl = (() => {
-        if (!window.controllerConfig?.url) {
-          return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/microservices/system/exec/${debugUuid}`;
+        if (!controllerConfig?.url) {
+          return `ws://${window.location.hostname}:${controllerConfig?.port ?? 51121}/api/v3/microservices/system/exec/${debugUuid}`;
         }
-        const u = new URL(window.controllerConfig.url);
+        const u = new URL(controllerConfig.url);
         const protocol = u.protocol === "https:" ? "wss:" : "ws:";
         return `${protocol}//${u.host}/api/v3/microservices/system/exec/${debugUuid}`;
       })();
@@ -202,7 +204,7 @@ const ExecSessionTerminal: React.FC<ExecSessionTerminalProps> = ({
         );
       }
     }
-  }, [waitingForDebugger, debugUuid, debuggerStatus]);
+  }, [waitingForDebugger, debugUuid, debuggerStatus, controllerConfig]);
 
   const startPingMechanism = (ws: WebSocket) => {
     // Clear any existing ping interval

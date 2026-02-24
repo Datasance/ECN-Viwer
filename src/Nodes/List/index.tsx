@@ -65,7 +65,7 @@ const formatDuration = (milliseconds: number): string => {
 
 function NodesList() {
   const { data } = useData();
-  const { request } = useController();
+  const { request, controllerConfig } = useController();
   const { pushFeedback } = useFeedback();
   const [selectedNode, setSelectedNode] = useState<any | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -246,11 +246,11 @@ function NodesList() {
   };
 
   const getApiEndpointUrl = (): string => {
-    if (window.controllerConfig?.url) {
-      const u = new URL(window.controllerConfig.url);
+    if (controllerConfig?.url) {
+      const u = new URL(controllerConfig.url);
       return `${u.protocol}//${u.host}/api/v3`;
     }
-    return `http://${window.location.hostname}:${window?.controllerConfig?.port || 51121}/api/v3`;
+    return `http://${window.location.hostname}:${controllerConfig?.port ?? 51121}/api/v3`;
   };
 
   const generateProvisionCommands = (): string[] => {
@@ -333,10 +333,10 @@ function NodesList() {
 
         // Create a placeholder socket URL (will be updated when debugger is ready)
         const socketUrl = (() => {
-          if (!window.controllerConfig?.url) {
-            return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/microservices/system/exec/placeholder`;
+          if (!controllerConfig?.url) {
+            return `ws://${window.location.hostname}:${controllerConfig?.port ?? 51121}/api/v3/microservices/system/exec/placeholder`;
           }
-          const u = new URL(window.controllerConfig.url);
+          const u = new URL(controllerConfig.url);
           const protocol = u.protocol === "https:" ? "wss:" : "ws:";
           return `${protocol}//${u.host}/api/v3/microservices/system/exec/placeholder`;
         })();
@@ -396,10 +396,10 @@ function NodesList() {
     try {
       // Create websocket URL with tail config
       const baseUrl = (() => {
-        if (!window.controllerConfig?.url) {
-          return `ws://${window.location.hostname}:${window?.controllerConfig?.port}/api/v3/iofog/${selectedNode.uuid}/logs`;
+        if (!controllerConfig?.url) {
+          return `ws://${window.location.hostname}:${controllerConfig?.port ?? 51121}/api/v3/iofog/${selectedNode.uuid}/logs`;
         }
-        const u = new URL(window.controllerConfig.url);
+        const u = new URL(controllerConfig.url);
         const protocol = u.protocol === "https:" ? "wss:" : "ws:";
         return `${protocol}//${u.host}/api/v3/iofog/${selectedNode.uuid}/logs`;
       })();
