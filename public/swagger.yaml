@@ -7291,6 +7291,10 @@ components:
           type: string
         operatorSeed:
           type: string
+        systemAccountJwt:
+          type: string
+        systemAccountPublicKey:
+          type: string
         sysUserCredsBase64:
           type: string
     NatsAccountResponse:
