@@ -2,9 +2,9 @@ import { useKeycloak } from "@react-keycloak/web";
 
 // Check if we should use Keycloak
 const shouldUseKeycloak =
-  window.controllerConfig?.keycloakURL &&
+  window.controllerConfig?.keycloakUrl &&
   window.controllerConfig?.keycloakRealm &&
-  window.controllerConfig?.keycloakClientid;
+  window.controllerConfig?.keycloakClientId;
 
 export const useAuth = () => {
   // Use the real Keycloak hook

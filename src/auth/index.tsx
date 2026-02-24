@@ -11,8 +11,8 @@ import { AuthProvider as OidcProvider, useAuth } from "react-oidc-context";
 const controllerConfig = window.controllerConfig || {};
 
 const oidcConfig = {
-  authority: `${controllerConfig.keycloakURL!}realms/${controllerConfig.keycloakRealm!}`,
-  client_id: controllerConfig.keycloakClientid,
+  authority: `${controllerConfig.keycloakUrl!}realms/${controllerConfig.keycloakRealm!}`,
+  client_id: controllerConfig.keycloakClientId,
   redirect_uri: window.location.origin,
   response_type: "code",
   scope: "openid profile email",

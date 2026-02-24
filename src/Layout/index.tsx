@@ -386,7 +386,7 @@ export default function Layout() {
                         <MenuItem
                           onClick={() =>
                             window.open(
-                              `${controllerJson?.keycloakURL}admin/${controllerJson?.keycloakRealm}/console`,
+                              `${controllerJson?.keycloakUrl}admin/${controllerJson?.keycloakRealm}/console`,
                               "_blank",
                             )
                           }

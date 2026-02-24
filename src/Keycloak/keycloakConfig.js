@@ -3,17 +3,17 @@ import Keycloak from "keycloak-js";
 const controllerJson = window.controllerConfig;
 
 const shouldUseKeycloak =
-  controllerJson?.keycloakURL &&
+  controllerJson?.keycloakUrl &&
   controllerJson?.keycloakRealm &&
-  controllerJson?.keycloakClientid;
+  controllerJson?.keycloakClientId;
 
 let keycloak;
 
 if (shouldUseKeycloak) {
   const initOptions = {
-    url: controllerJson.keycloakURL,
+    url: controllerJson.keycloakUrl,
     realm: controllerJson.keycloakRealm,
-    clientId: controllerJson.keycloakClientid,
+    clientId: controllerJson.keycloakClientId,
     initOptions: {
       KeycloakResponseType: "code",
       pkceMethod: "S256",

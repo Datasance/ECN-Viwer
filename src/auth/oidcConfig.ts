@@ -1,10 +1,10 @@
 const controllerJson = (window as any).controllerConfig || {};
 
 export const oidcConfig = {
-  authority: controllerJson.keycloakURL
-    ? `${controllerJson.keycloakURL.replace(/\/+$/, "")}/realms/${controllerJson.keycloakRealm}`
+  authority: controllerJson.keycloakUrl
+    ? `${controllerJson.keycloakUrl.replace(/\/+$/, "")}/realms/${controllerJson.keycloakRealm}`
     : "",
-  client_id: controllerJson.keycloakClientid || "",
+  client_id: controllerJson.keycloakClientId || "",
   redirect_uri: `${window.location.origin}${window.location.hash || "/#/"}`,
   response_type: "code",
   scope: "openid profile email",
