@@ -71,6 +71,11 @@ export const ControllerProvider = ({ children }) => {
   const feedbackContext = useFeedback();
   const pushFeedback = feedbackContext?.pushFeedback;
 
+  // Keep a ref so request() always uses the latest token at call time (e.g. YAML/Deploy
+  // save after the drawer has been open and the token was refreshed).
+  const authRef = React.useRef(auth);
+  authRef.current = auth;
+
   const updateController = (data) => {
     dispatch({ type: "UPDATE", data });
   };
@@ -79,7 +84,7 @@ export const ControllerProvider = ({ children }) => {
     const headers = {
       ...options.headers,
     };
-    const token = auth?.token;
+    const token = authRef.current?.token;
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
