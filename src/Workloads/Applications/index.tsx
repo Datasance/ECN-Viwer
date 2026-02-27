@@ -21,7 +21,7 @@ import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
 
 function ApplicationList() {
   const applicationPatchWarning =
-    "Application YAML save uses PATCH and only supports app-level fields such as spec.natsConfig, description, activation, and system flag. Microservice changes in this YAML (including spec.microservices[].natsConfig) will not be applied. To update microservices, please go to Microservice List and edit each microservice there.\n\nDo you want to continue?";
+    "Application YAML Editor save uses PATCH and only supports app-level fields such as spec.natsConfig, description, activation, and system flag. Microservice changes in this YAML (including spec.microservices[].natsConfig) will not be applied. To update microservices, please go to Microservice List and edit each microservice there. Or you can upload an updated Application YAML file to update the whole application.\n\nDo you want to continue?";
   const { data } = useData();
   const { request } = useController();
   const { pushFeedback } = useFeedback();
