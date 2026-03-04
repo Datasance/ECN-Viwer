@@ -30,19 +30,23 @@ function ServiceAccounts() {
   const serviceAccountName = params.get("serviceAccountName");
 
   const handleRowClick = (row: any) => {
-    if (row.name) {
-      fetchServiceAccountItem(row.name);
+    const appName = row?.applicationName ?? row?.application?.name;
+    if (row.name && appName) {
+      fetchServiceAccountItem(appName, row.name);
     }
   };
 
   useEffect(() => {
-    if (serviceAccountName && serviceAccounts) {
+    if (serviceAccountName && serviceAccounts?.length) {
       const found = serviceAccounts.find(
         (sa: any) => sa.name === serviceAccountName,
       );
       if (found) {
-        handleRowClick(found);
-        setIsOpen(true);
+        const appName = found.applicationName ?? found.application?.name;
+        if (appName) {
+          fetchServiceAccountItem(appName, found.name);
+          setIsOpen(true);
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,11 +74,11 @@ function ServiceAccounts() {
     }
   }
 
-  async function fetchServiceAccountItem(serviceAccountName: string) {
+  async function fetchServiceAccountItem(appName: string, name: string) {
     try {
       setFetching(true);
       const itemResponse = await request(
-        `/api/v3/serviceaccounts/${serviceAccountName}`,
+        `/api/v3/serviceaccounts/${appName}/${name}`,
       );
       if (!itemResponse.ok) {
         pushFeedback({ message: itemResponse.message, type: "error" });
@@ -82,7 +86,6 @@ function ServiceAccounts() {
         return;
       }
       const responseItem = await itemResponse.json();
-      // Handle nested response structure
       const serviceAccount = responseItem.serviceAccount || responseItem;
       setSelectedServiceAccount(serviceAccount);
       setIsOpen(true);
@@ -94,10 +97,13 @@ function ServiceAccounts() {
   }
 
   const handleRefreshServiceAccount = async () => {
-    if (!selectedServiceAccount?.name) return;
+    const appName =
+      selectedServiceAccount?.applicationName ??
+      selectedServiceAccount?.application?.name;
+    if (!appName || !selectedServiceAccount?.name) return;
     try {
       const itemResponse = await request(
-        `/api/v3/serviceaccounts/${selectedServiceAccount.name}`,
+        `/api/v3/serviceaccounts/${appName}/${selectedServiceAccount.name}`,
       );
       if (itemResponse.ok) {
         const responseItem = await itemResponse.json();
@@ -132,13 +138,14 @@ function ServiceAccounts() {
 
   const handleEditYaml = () => {
     if (!selectedServiceAccount) return;
-    // Handle nested structure
     const sa = selectedServiceAccount?.serviceAccount || selectedServiceAccount;
+    const appName = sa?.applicationName ?? sa?.application?.name;
     const yamlObj: any = {
       apiVersion: "datasance.com/api/v3",
       kind: "ServiceAccount",
       metadata: {
         name: sa?.name,
+        ...(appName && { applicationName: appName }),
       },
     };
 
@@ -149,7 +156,7 @@ function ServiceAccounts() {
     const yamlString = yaml.dump(yamlObj, { noRefs: true, indent: 2 });
 
     addYamlSession({
-      title: `ServiceAccount YAML: ${selectedServiceAccount.name}`,
+      title: `ServiceAccount YAML: ${sa?.name}`,
       content: yamlString,
       isDirty: false,
       onSave: async (content: string) => {
@@ -173,17 +180,20 @@ function ServiceAccounts() {
   async function handleYamlUpdate(serviceAccount: any, method?: string) {
     try {
       const name = serviceAccount.name;
+      const appName = serviceAccount.applicationName;
 
-      const res = await request(
-        `/api/v3/serviceaccounts${method === "PATCH" ? `/${name}` : ""}`,
-        {
-          method: method || "POST",
-          headers: {
-            "content-type": "application/json",
-          },
-          body: JSON.stringify(serviceAccount),
+      const path =
+        method === "PATCH" && appName
+          ? `/api/v3/serviceaccounts/${appName}/${name}`
+          : "/api/v3/serviceaccounts";
+
+      const res = await request(path, {
+        method: method === "PATCH" ? "PATCH" : "POST",
+        headers: {
+          "content-type": "application/json",
         },
-      );
+        body: JSON.stringify(serviceAccount),
+      });
 
       if (!res.ok) {
         pushFeedback({ message: res.message, type: "error" });
@@ -202,13 +212,16 @@ function ServiceAccounts() {
 
   const handleDeleteServiceAccount = async () => {
     try {
-      if (!selectedServiceAccount?.name) {
+      const appName =
+        selectedServiceAccount?.applicationName ??
+        selectedServiceAccount?.application?.name;
+      if (!appName || !selectedServiceAccount?.name) {
         pushFeedback({ message: "No service account selected", type: "error" });
         return;
       }
 
       const res = await request(
-        `/api/v3/serviceaccounts/${selectedServiceAccount.name}`,
+        `/api/v3/serviceaccounts/${appName}/${selectedServiceAccount.name}`,
         {
           method: "DELETE",
         },
@@ -236,6 +249,22 @@ function ServiceAccounts() {
 
   const columns = [
     {
+      key: "applicationName",
+      header: "Application",
+      render: (row: any) => {
+        const appName =
+          row?.applicationName ?? row?.application?.name ?? "-";
+        return (
+          <span
+            className="cursor-pointer text-blue-400 hover:underline"
+            onClick={() => handleRowClick(row)}
+          >
+            {appName}
+          </span>
+        );
+      },
+    },
+    {
       key: "name",
       header: "Name",
       render: (row: any) => (
@@ -262,6 +291,15 @@ function ServiceAccounts() {
       label: "ServiceAccount Details",
       render: () => "",
       isSectionHeader: true,
+    },
+    {
+      label: "Application",
+      render: (row: any) => {
+        const sa = row?.serviceAccount || row;
+        return (
+          sa?.applicationName ?? sa?.application?.name ?? "N/A"
+        );
+      },
     },
     {
       label: "Name",
@@ -335,7 +373,11 @@ function ServiceAccounts() {
             <CustomDataTable
               columns={columns}
               data={serviceAccounts}
-              getRowKey={(row: any) => row.name}
+              getRowKey={(row: any) =>
+                row.applicationName && row.name
+                  ? `${row.applicationName}/${row.name}`
+                  : row.name
+              }
               uploadDropzone
               uploadFunction={processUnifiedYaml}
             />
@@ -344,7 +386,17 @@ function ServiceAccounts() {
               onClose={() => setIsOpen(false)}
               onDelete={() => setShowDeleteConfirmModal(true)}
               onEditYaml={handleEditYaml}
-              title={selectedServiceAccount?.name || "ServiceAccount Details"}
+              title={
+                selectedServiceAccount?.name
+                  ? [
+                      selectedServiceAccount.applicationName ??
+                        selectedServiceAccount.application?.name,
+                      selectedServiceAccount.name,
+                    ]
+                      .filter(Boolean)
+                      .join(" / ") || selectedServiceAccount.name
+                  : "ServiceAccount Details"
+              }
               data={selectedServiceAccount}
               fields={slideOverFields}
               customWidth={600}

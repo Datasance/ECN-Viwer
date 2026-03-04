@@ -188,6 +188,13 @@ function resourceExists(
     case "Role":
     case "RoleBinding":
     case "ServiceAccount":
+      // Identifier is "applicationName/name"
+      return existingResources.some(
+        (r) =>
+          r.name === identifier ||
+          (r.applicationName && r.name &&
+            `${r.applicationName}/${r.name}` === identifier),
+      );
     case "NatsAccountRule":
     case "NatsUserRule":
       return existingResources.some((r) => r.name === identifier);
@@ -300,6 +307,7 @@ export function getResourceEndpoint(
         ? `/api/v3/rolebindings/${identifier}`
         : `/api/v3/rolebindings`;
     case "ServiceAccount":
+      // identifier is "appName/name" when exists; path is /api/v3/serviceaccounts/:appName/:name
       return exists
         ? `/api/v3/serviceaccounts/${identifier}`
         : `/api/v3/serviceaccounts`;
@@ -395,6 +403,11 @@ export async function preloadResourceCache(
         case "Role":
         case "RoleBinding":
         case "ServiceAccount":
+          identifier =
+            resource.applicationName && resource.name
+              ? `${resource.applicationName}/${resource.name}`
+              : resource.name;
+          break;
         case "NatsAccountRule":
         case "NatsUserRule":
           identifier = resource.name;
