@@ -1,5 +1,12 @@
 import lget from "lodash/get";
 
+/**
+ * Parses ServiceAccount YAML to match Controller yaml-parser-service:
+ * - kind: ServiceAccount
+ * - metadata.name (required)
+ * - metadata.applicationName (required)
+ * - roleRef with name (required)
+ */
 export const parseServiceAccount = async (
   doc: any,
 ): Promise<[any, string | null]> => {
@@ -20,21 +27,27 @@ export const parseServiceAccount = async (
     return [null, "Invalid YAML format (missing metadata.name)"];
   }
 
-  const roleRef = doc.roleRef;
+  const applicationName = lget(doc, "metadata.applicationName");
+  if (!applicationName) {
+    return [
+      null,
+      "ServiceAccount YAML must have metadata.applicationName",
+    ];
+  }
 
-  if (roleRef !== undefined && roleRef !== null) {
-    if (!roleRef.kind || !roleRef.name) {
-      return [null, "Invalid roleRef: kind and name are required"];
-    }
+  const roleRef = doc.roleRef;
+  if (!roleRef || !roleRef.name) {
+    return [
+      null,
+      "ServiceAccount must have a roleRef with a name",
+    ];
   }
 
   const apiObject: any = {
-    name: name,
+    name,
+    applicationName,
+    roleRef,
   };
-
-  if (roleRef !== undefined) {
-    apiObject.roleRef = roleRef;
-  }
 
   return [apiObject, null];
 };

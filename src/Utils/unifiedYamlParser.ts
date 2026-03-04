@@ -110,7 +110,18 @@ export function getResourceIdentifier(
     case "Application":
     case "Role":
     case "RoleBinding":
-    case "ServiceAccount":
+    case "ServiceAccount": {
+      // Controller uses path /api/v3/serviceaccounts/:appName/:name
+      const appName =
+        parsedResource?.applicationName ||
+        originalDoc?.metadata?.applicationName;
+      const saName =
+        parsedResource?.name || originalDoc?.metadata?.name || null;
+      if (appName && saName) {
+        return `${appName}/${saName}`;
+      }
+      return saName;
+    }
     case "NatsAccountRule":
     case "NatsUserRule":
       return parsedResource?.name || originalDoc?.metadata?.name || null;

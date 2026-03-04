@@ -4915,6 +4915,13 @@ paths:
         - ServiceAccounts
       summary: Lists all service accounts
       operationId: listServiceAccounts
+      parameters:
+        - in: query
+          name: applicationName
+          description: Filter by application name
+          required: false
+          schema:
+            type: string
       security:
         - authToken: []
       responses:
@@ -4971,6 +4978,16 @@ paths:
       tags:
         - ServiceAccounts
       summary: Create a service account from YAML file
+      description: |
+        The YAML file must include metadata.applicationName (application name this service account belongs to),
+        metadata.name (service account name), and roleRef with a name. Example:
+        kind: ServiceAccount
+        metadata:
+          name: my-sa
+          applicationName: my-app
+        roleRef:
+          kind: Role
+          name: microservice
       operationId: createServiceAccountFromYAML
       security:
         - authToken: []
@@ -5004,13 +5021,19 @@ paths:
           description: ServiceAccount Already Exists
         "500":
           description: Internal Server Error
-  "/serviceaccounts/{name}":
+  "/serviceaccounts/{appName}/{name}":
     get:
       tags:
         - ServiceAccounts
-      summary: Gets a service account by name
+      summary: Gets a service account by application name and service account name
       operationId: getServiceAccount
       parameters:
+        - in: path
+          name: appName
+          description: Application name
+          required: true
+          schema:
+            type: string
         - in: path
           name: name
           description: ServiceAccount name
@@ -5043,6 +5066,12 @@ paths:
       summary: Updates an existing service account
       operationId: updateServiceAccount
       parameters:
+        - in: path
+          name: appName
+          description: Application name
+          required: true
+          schema:
+            type: string
         - in: path
           name: name
           description: ServiceAccount name
@@ -5084,6 +5113,12 @@ paths:
       operationId: deleteServiceAccount
       parameters:
         - in: path
+          name: appName
+          description: Application name
+          required: true
+          schema:
+            type: string
+        - in: path
           name: name
           description: ServiceAccount name
           required: true
@@ -5103,15 +5138,23 @@ paths:
           description: Not Authorized
         "404":
           description: ServiceAccount Not Found
+        "409":
+          description: Conflict - ServiceAccount is referenced by a microservice
         "500":
           description: Internal Server Error
-  "/serviceaccounts/yaml/{name}":
+  "/serviceaccounts/yaml/{appName}/{name}":
     patch:
       tags:
         - ServiceAccounts
       summary: Updates an existing service account using YAML
       operationId: updateServiceAccountFromYAML
       parameters:
+        - in: path
+          name: appName
+          description: Application name
+          required: true
+          schema:
+            type: string
         - in: path
           name: name
           description: ServiceAccount name
@@ -8415,6 +8458,9 @@ components:
           type: integer
         name:
           type: string
+        applicationName:
+          type: string
+          description: Application name this service account belongs to
         roleRef:
           $ref: "#/components/schemas/RoleRef"
       required:
@@ -8425,10 +8471,14 @@ components:
       properties:
         name:
           type: string
+        applicationName:
+          type: string
+          description: Application name this service account belongs to
         roleRef:
           $ref: "#/components/schemas/RoleRef"
       required:
         - name
+        - applicationName
         - roleRef
     ServiceAccountResponse:
       type: object
@@ -8437,6 +8487,9 @@ components:
           type: integer
         name:
           type: string
+        applicationName:
+          type: string
+          description: Application name this service account belongs to
         roleRef:
           $ref: "#/components/schemas/RoleRef"
       required:
