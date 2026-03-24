@@ -15,6 +15,7 @@ import yaml from "js-yaml";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 import { parseVolumeMount } from "../../Utils/parseVolumeMountsYaml";
 import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
+import { CANONICAL_DISPLAY_CONTROLLER_API_VERSION } from "../../Utils/constants";
 
 function VolumeMounts() {
   const { data } = useData();
@@ -283,7 +284,7 @@ function VolumeMounts() {
 
   const handleEditYaml = () => {
     const yamlDump = {
-      apiVersion: "datasance.com/v3",
+      apiVersion: CANONICAL_DISPLAY_CONTROLLER_API_VERSION,
       kind: "VolumeMount",
       metadata: {
         name: selectedVolume?.name,

@@ -192,7 +192,8 @@ function resourceExists(
       return existingResources.some(
         (r) =>
           r.name === identifier ||
-          (r.applicationName && r.name &&
+          (r.applicationName &&
+            r.name &&
             `${r.applicationName}/${r.name}` === identifier),
       );
     case "NatsAccountRule":

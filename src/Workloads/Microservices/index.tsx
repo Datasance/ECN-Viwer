@@ -15,7 +15,10 @@ import { dumpMicroserviceYAML } from "../../Utils/microserviceYAML";
 import { Trash2 as DeleteOutlineIcon } from "lucide-react";
 import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import yaml from "js-yaml";
-import { API_VERSIONS } from "../../Utils/constants";
+import {
+  isAllowedControllerApiVersion,
+  invalidControllerApiVersionMessage,
+} from "../../Utils/constants";
 import { parseMicroservice } from "../../Utils/ApplicationParser";
 import lget from "lodash/get";
 import CryptoTextBox from "../../CustomComponent/CustomCryptoTextBox";
@@ -319,11 +322,8 @@ function MicroservicesList() {
   };
 
   const parseMicroserviceFile = async (doc: any) => {
-    if (API_VERSIONS.indexOf(doc.apiVersion) === -1) {
-      return [
-        {},
-        `Invalid API Version ${doc.apiVersion}, current version is ${API_VERSIONS.slice(-1)[0]}`,
-      ];
+    if (!isAllowedControllerApiVersion(doc.apiVersion)) {
+      return [{}, invalidControllerApiVersionMessage(doc.apiVersion)];
     }
     if (doc.kind !== "Microservice") {
       return [{}, `Invalid kind ${doc.kind}`];

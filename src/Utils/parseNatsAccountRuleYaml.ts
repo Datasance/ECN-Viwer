@@ -1,6 +1,8 @@
 import lget from "lodash/get";
-
-const API_VERSIONS = ["datasance.com/v3", "datasance.com/api/v3"];
+import {
+  isAllowedControllerApiVersion,
+  invalidControllerApiVersionMessage,
+} from "./constants";
 
 function _pickDefined(obj: any): any {
   const out: any = {};
@@ -113,8 +115,8 @@ export const parseNatsAccountRule = async (
     return [null, "Invalid YAML: document is empty"];
   }
 
-  if (!API_VERSIONS.includes(doc.apiVersion)) {
-    return [null, `Invalid API Version ${doc.apiVersion}`];
+  if (!isAllowedControllerApiVersion(doc.apiVersion)) {
+    return [null, invalidControllerApiVersionMessage(doc.apiVersion)];
   }
 
   if (doc.kind !== "NatsAccountRule") {

@@ -1,4 +1,5 @@
 import yaml from "js-yaml";
+import { CANONICAL_DISPLAY_CONTROLLER_API_VERSION } from "./constants";
 
 interface Agent {
   uuid: string;
@@ -35,7 +36,7 @@ export const getMicroserviceYAMLFromJSON = ({
   }
 
   return {
-    apiVersion: "datasance.com/v3",
+    apiVersion: CANONICAL_DISPLAY_CONTROLLER_API_VERSION,
     kind: "Microservice",
     metadata: {
       name: microservice.name,

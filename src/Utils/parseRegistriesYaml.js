@@ -1,15 +1,16 @@
 import lget from "lodash/get";
+import {
+  isAllowedControllerApiVersion,
+  invalidControllerApiVersionMessage,
+} from "./constants";
 
 export const parseRegistries = async (doc) => {
   if (!doc) {
     return [null, "Invalid YAML: Document is empty or null"];
   }
 
-  if (doc.apiVersion !== "datasance.com/v3") {
-    return [
-      null,
-      `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v3`,
-    ];
+  if (!isAllowedControllerApiVersion(doc.apiVersion)) {
+    return [null, invalidControllerApiVersionMessage(doc.apiVersion)];
   }
 
   if (doc.kind !== "Registry") {

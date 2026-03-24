@@ -15,7 +15,10 @@ import "ace-builds/src-noconflict/ace";
 import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/mode-yaml";
 import { parseMicroservice } from "../../Utils/ApplicationParser";
-import { API_VERSIONS } from "../../Utils/constants";
+import {
+  isAllowedControllerApiVersion,
+  invalidControllerApiVersionMessage,
+} from "../../Utils/constants";
 import lget from "lodash/get";
 import yaml from "js-yaml";
 import CryptoTextBox from "../../CustomComponent/CustomCryptoTextBox";
@@ -328,11 +331,8 @@ function SystemMicroserviceList() {
   };
 
   const parseMicroserviceFile = async (doc: any) => {
-    if (API_VERSIONS.indexOf(doc.apiVersion) === -1) {
-      return [
-        {},
-        `Invalid API Version ${doc.apiVersion}, current version is ${API_VERSIONS.slice(-1)[0]}`,
-      ];
+    if (!isAllowedControllerApiVersion(doc.apiVersion)) {
+      return [{}, invalidControllerApiVersionMessage(doc.apiVersion)];
     }
     if (doc.kind !== "Microservice") {
       return [{}, `Invalid kind ${doc.kind}`];

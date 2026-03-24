@@ -14,6 +14,7 @@ import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 import { parseRoleBinding } from "../../Utils/parseRoleBindingYaml";
 import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
 import { SubjectBadge } from "../utils/badgeHelpers";
+import { CANONICAL_DISPLAY_CONTROLLER_API_VERSION } from "../../Utils/constants";
 
 function RoleBindings() {
   const [fetching, setFetching] = React.useState(true);
@@ -138,7 +139,7 @@ function RoleBindings() {
     const binding = selectedRoleBinding?.binding || {};
     const roleBinding = { ...selectedRoleBinding, ...binding };
     const yamlObj = {
-      apiVersion: "datasance.com/api/v3",
+      apiVersion: CANONICAL_DISPLAY_CONTROLLER_API_VERSION,
       kind: "RoleBinding",
       metadata: {
         name: roleBinding?.name,

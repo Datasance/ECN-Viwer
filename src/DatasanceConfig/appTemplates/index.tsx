@@ -16,6 +16,11 @@ import SlideOver from "../../CustomComponent/SlideOver";
 import { format, formatDistanceToNow } from "date-fns";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
+import {
+  CANONICAL_DISPLAY_CONTROLLER_API_VERSION,
+  isAllowedControllerApiVersion,
+  invalidControllerApiVersionMessage,
+} from "../../Utils/constants";
 
 function AppTemplates() {
   const [fetching, setFetching] = React.useState(true);
@@ -221,11 +226,8 @@ function AppTemplates() {
   };
 
   const parseApplicationTemplate = async (doc: any) => {
-    if (doc.apiVersion !== "datasance.com/v3") {
-      return [
-        {},
-        `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v3`,
-      ];
+    if (!isAllowedControllerApiVersion(doc.apiVersion)) {
+      return [{}, invalidControllerApiVersionMessage(doc.apiVersion)];
     }
     if (doc.kind !== "ApplicationTemplate") {
       return [{}, `Invalid kind ${doc.kind}`];
@@ -353,7 +355,7 @@ function AppTemplates() {
     });
 
     const yamlDump = {
-      apiVersion: "datasance.com/v3",
+      apiVersion: CANONICAL_DISPLAY_CONTROLLER_API_VERSION,
       kind: "ApplicationTemplate",
       metadata: {
         name: name,

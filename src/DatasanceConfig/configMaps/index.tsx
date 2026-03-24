@@ -19,6 +19,11 @@ import CustomLoadingModal from "../../CustomComponent/CustomLoadingModal";
 import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
+import {
+  CANONICAL_DISPLAY_CONTROLLER_API_VERSION,
+  isAllowedControllerApiVersion,
+  invalidControllerApiVersionMessage,
+} from "../../Utils/constants";
 
 function ConfigMaps() {
   const [fetching, setFetching] = React.useState(true);
@@ -137,7 +142,7 @@ function ConfigMaps() {
     const { name, immutable, useVault, data = {} } = selectedConfigMap || {};
 
     const yamlObj = {
-      apiVersion: "datasance.com/v3",
+      apiVersion: CANONICAL_DISPLAY_CONTROLLER_API_VERSION,
       kind: "ConfigMap",
       metadata: { name },
       spec: { immutable, useVault },
@@ -217,11 +222,8 @@ function ConfigMaps() {
   }
 
   const parseConfigMap = async (doc: any) => {
-    if (doc.apiVersion !== "datasance.com/v3") {
-      return [
-        {},
-        `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v3`,
-      ];
+    if (!isAllowedControllerApiVersion(doc.apiVersion)) {
+      return [{}, invalidControllerApiVersionMessage(doc.apiVersion)];
     }
     if (doc.kind !== "ConfigMap") {
       return [{}, `Invalid kind ${doc.kind}`];
@@ -244,7 +246,7 @@ function ConfigMaps() {
       const { name, immutable, useVault, data = {} } = selectedConfigMap || {};
 
       const yamlObj = {
-        apiVersion: "datasance.com/v3",
+        apiVersion: CANONICAL_DISPLAY_CONTROLLER_API_VERSION,
         kind: "ConfigMap",
         metadata: { name },
         spec: { immutable, useVault },
@@ -321,7 +323,7 @@ function ConfigMaps() {
       const { name, immutable, useVault, data = {} } = selectedConfigMap || {};
 
       const yamlObj = {
-        apiVersion: "datasance.com/v3",
+        apiVersion: CANONICAL_DISPLAY_CONTROLLER_API_VERSION,
         kind: "ConfigMap",
         metadata: { name },
         spec: { immutable, useVault },

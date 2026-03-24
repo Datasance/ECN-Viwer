@@ -1,6 +1,9 @@
 import yaml from "js-yaml";
-
-const AGENT_API_VERSION = "datasance.com/v3";
+import {
+  CANONICAL_DISPLAY_CONTROLLER_API_VERSION,
+  isAllowedControllerApiVersion,
+  invalidControllerApiVersionMessage,
+} from "./constants";
 
 const toFogTypeLabel = (fogTypeId: number | string | undefined) => {
   if (fogTypeId === 1 || fogTypeId === "1") {
@@ -75,7 +78,7 @@ export const buildAgentYamlObject = (agent: any) => {
   };
 
   return {
-    apiVersion: AGENT_API_VERSION,
+    apiVersion: CANONICAL_DISPLAY_CONTROLLER_API_VERSION,
     kind: "Agent",
     metadata: {
       name: agent?.name,
@@ -95,11 +98,8 @@ export const dumpAgentYAML = (agent: any) =>
 export const parseAgentYamlDocument = async (
   doc: any,
 ): Promise<[any, string | null]> => {
-  if (doc?.apiVersion !== AGENT_API_VERSION) {
-    return [
-      null,
-      `Invalid API Version ${doc?.apiVersion}, current version is ${AGENT_API_VERSION}`,
-    ];
+  if (!isAllowedControllerApiVersion(doc?.apiVersion)) {
+    return [null, invalidControllerApiVersionMessage(doc?.apiVersion)];
   }
 
   if (doc?.kind !== "Agent" && doc?.kind !== "AgentConfig") {

@@ -13,6 +13,7 @@ import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 import { parseServiceAccount } from "../../Utils/parseServiceAccountYaml";
 import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
+import { CANONICAL_DISPLAY_CONTROLLER_API_VERSION } from "../../Utils/constants";
 
 function ServiceAccounts() {
   const [fetching, setFetching] = React.useState(true);
@@ -141,7 +142,7 @@ function ServiceAccounts() {
     const sa = selectedServiceAccount?.serviceAccount || selectedServiceAccount;
     const appName = sa?.applicationName ?? sa?.application?.name;
     const yamlObj: any = {
-      apiVersion: "datasance.com/api/v3",
+      apiVersion: CANONICAL_DISPLAY_CONTROLLER_API_VERSION,
       kind: "ServiceAccount",
       metadata: {
         name: sa?.name,
@@ -252,8 +253,7 @@ function ServiceAccounts() {
       key: "applicationName",
       header: "Application",
       render: (row: any) => {
-        const appName =
-          row?.applicationName ?? row?.application?.name ?? "-";
+        const appName = row?.applicationName ?? row?.application?.name ?? "-";
         return (
           <span
             className="cursor-pointer text-blue-400 hover:underline"
@@ -296,9 +296,7 @@ function ServiceAccounts() {
       label: "Application",
       render: (row: any) => {
         const sa = row?.serviceAccount || row;
-        return (
-          sa?.applicationName ?? sa?.application?.name ?? "N/A"
-        );
+        return sa?.applicationName ?? sa?.application?.name ?? "N/A";
       },
     },
     {

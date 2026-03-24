@@ -29,18 +29,12 @@ export const parseServiceAccount = async (
 
   const applicationName = lget(doc, "metadata.applicationName");
   if (!applicationName) {
-    return [
-      null,
-      "ServiceAccount YAML must have metadata.applicationName",
-    ];
+    return [null, "ServiceAccount YAML must have metadata.applicationName"];
   }
 
   const roleRef = doc.roleRef;
   if (!roleRef || !roleRef.name) {
-    return [
-      null,
-      "ServiceAccount must have a roleRef with a name",
-    ];
+    return [null, "ServiceAccount must have a roleRef with a name"];
   }
 
   const apiObject: any = {
