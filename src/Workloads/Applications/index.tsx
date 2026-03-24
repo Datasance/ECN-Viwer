@@ -9,7 +9,10 @@ import { dumpApplicationYAML } from "../../Utils/applicationYAML";
 import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import { parseMicroservice } from "../../Utils/ApplicationParser";
 import lget from "lodash/get";
-import { API_VERSIONS } from "../../Utils/constants";
+import {
+  isAllowedControllerApiVersion,
+  invalidControllerApiVersionMessage,
+} from "../../Utils/constants";
 import yaml from "js-yaml";
 import { StatusColor, StatusType } from "../../Utils/Enums/StatusColor";
 import { getTextColor } from "../../ECNViewer/utils";
@@ -245,11 +248,8 @@ function ApplicationList() {
   };
 
   const parseApplicationFile = async (doc: any) => {
-    if (API_VERSIONS.indexOf(doc.apiVersion) === -1) {
-      return [
-        {},
-        `Invalid API Version ${doc.apiVersion}, current version is ${API_VERSIONS.slice(-1)[0]}`,
-      ];
+    if (!isAllowedControllerApiVersion(doc.apiVersion)) {
+      return [{}, invalidControllerApiVersionMessage(doc.apiVersion)];
     }
     if (doc.kind !== "Application") {
       return [{}, `Invalid kind ${doc.kind}`];

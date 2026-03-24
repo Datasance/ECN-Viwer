@@ -40,7 +40,11 @@ import "ace-builds/src-noconflict/ace";
 import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/mode-yaml";
 import yaml from "js-yaml";
-import { API_VERSIONS } from "../../Utils/constants";
+import {
+  CANONICAL_DISPLAY_CONTROLLER_API_VERSION,
+  isAllowedControllerApiVersion,
+  invalidControllerApiVersionMessage,
+} from "../../Utils/constants";
 import { parseMicroservice } from "../../Utils/ApplicationParser";
 
 export default function MicroserviceDetails({
@@ -357,7 +361,7 @@ export default function MicroserviceDetails({
 
   const _getApplicationYAMLFromJSON = (app) => {
     return {
-      apiVersion: "datasance.com/v3",
+      apiVersion: CANONICAL_DISPLAY_CONTROLLER_API_VERSION,
       kind: "Microservice",
       metadata: {
         name: app.name,
@@ -437,11 +441,8 @@ export default function MicroserviceDetails({
   );
 
   const parseMicroserviceFile = async (doc) => {
-    if (API_VERSIONS.indexOf(doc.apiVersion) === -1) {
-      return [
-        {},
-        `Invalid API Version ${doc.apiVersion}, current version is ${API_VERSIONS.slice(-1)[0]}`,
-      ];
+    if (!isAllowedControllerApiVersion(doc.apiVersion)) {
+      return [{}, invalidControllerApiVersionMessage(doc.apiVersion)];
     }
     if (doc.kind !== "Microservice") {
       return [{}, `Invalid kind ${doc.kind}`];

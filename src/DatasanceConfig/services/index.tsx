@@ -11,6 +11,7 @@ import { parseService } from "../../Utils/parseServiceYaml";
 import yaml from "js-yaml";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
+import { CANONICAL_DISPLAY_CONTROLLER_API_VERSION } from "../../Utils/constants";
 
 function Services() {
   const [fetching, setFetching] = React.useState(true);
@@ -195,7 +196,7 @@ function Services() {
     }
 
     const yamlObj = {
-      apiVersion: "datasance.com/v3",
+      apiVersion: CANONICAL_DISPLAY_CONTROLLER_API_VERSION,
       kind: "Service",
       metadata: {
         name: selectedService.name,

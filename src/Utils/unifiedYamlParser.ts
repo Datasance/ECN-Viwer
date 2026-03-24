@@ -13,7 +13,10 @@ import { parseRole } from "./parseRoleYaml";
 import { parseRoleBinding } from "./parseRoleBindingYaml";
 import { parseServiceAccount } from "./parseServiceAccountYaml";
 import lget from "lodash/get";
-import { API_VERSIONS } from "./constants";
+import {
+  isAllowedControllerApiVersion,
+  invalidControllerApiVersionMessage,
+} from "./constants";
 import { parseMicroservice } from "./ApplicationParser";
 import { parseAgentYamlDocument } from "./agentYAML";
 import { parseNatsAccountRule } from "./parseNatsAccountRuleYaml";
@@ -185,11 +188,11 @@ async function routeToParser(
         break;
       case "ApplicationTemplate": {
         // Inline parser from appTemplates/index.tsx
-        if (doc.apiVersion !== "datasance.com/v3") {
-          return [
-            {},
-            `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v3`,
-          ] as [any, string | null];
+        if (!isAllowedControllerApiVersion(doc.apiVersion)) {
+          return [{}, invalidControllerApiVersionMessage(doc.apiVersion)] as [
+            any,
+            string | null,
+          ];
         }
         if (doc.kind !== "ApplicationTemplate") {
           return [{}, `Invalid kind ${doc.kind}`] as [any, string | null];
@@ -215,11 +218,11 @@ async function routeToParser(
       }
       case "Application": {
         // Inline parser from Applications/index.tsx
-        if (API_VERSIONS.indexOf(doc.apiVersion) === -1) {
-          return [
-            {},
-            `Invalid API Version ${doc.apiVersion}, current version is ${API_VERSIONS.slice(-1)[0]}`,
-          ] as [any, string | null];
+        if (!isAllowedControllerApiVersion(doc.apiVersion)) {
+          return [{}, invalidControllerApiVersionMessage(doc.apiVersion)] as [
+            any,
+            string | null,
+          ];
         }
         if (doc.kind !== "Application") {
           return [{}, `Invalid kind ${doc.kind}`] as [any, string | null];
@@ -241,11 +244,11 @@ async function routeToParser(
       }
       case "Microservice": {
         // Inline parser from Microservices/index.tsx
-        if (API_VERSIONS.indexOf(doc.apiVersion) === -1) {
-          return [
-            {},
-            `Invalid API Version ${doc.apiVersion}, current version is ${API_VERSIONS.slice(-1)[0]}`,
-          ] as [any, string | null];
+        if (!isAllowedControllerApiVersion(doc.apiVersion)) {
+          return [{}, invalidControllerApiVersionMessage(doc.apiVersion)] as [
+            any,
+            string | null,
+          ];
         }
         if (doc.kind !== "Microservice") {
           return [{}, `Invalid kind ${doc.kind}`] as [any, string | null];

@@ -14,6 +14,7 @@ import UnsavedChangesModal from "../../CustomComponent/UnsavedChangesModal";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 import { parseSecret } from "../../Utils/parseSecretYaml";
 import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
+import { CANONICAL_DISPLAY_CONTROLLER_API_VERSION } from "../../Utils/constants";
 
 function Secrets() {
   const [fetching, setFetching] = React.useState(true);
@@ -124,7 +125,7 @@ function Secrets() {
   const handleEditYaml = () => {
     if (!selectedSecret) return;
     const yamlObj = {
-      apiVersion: "datasance.com/v3",
+      apiVersion: CANONICAL_DISPLAY_CONTROLLER_API_VERSION,
       kind: "Secret",
       metadata: {
         name: selectedSecret?.name,

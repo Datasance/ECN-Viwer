@@ -14,6 +14,7 @@ import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 import { parseRole } from "../../Utils/parseRoleYaml";
 import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
 import { BadgeList, VerbList, ResourceList } from "../utils/badgeHelpers";
+import { CANONICAL_DISPLAY_CONTROLLER_API_VERSION } from "../../Utils/constants";
 
 function Roles() {
   const [fetching, setFetching] = React.useState(true);
@@ -127,7 +128,7 @@ function Roles() {
     // Handle nested structure
     const role = selectedRole?.role || selectedRole;
     const yamlObj = {
-      apiVersion: "datasance.com/api/v3",
+      apiVersion: CANONICAL_DISPLAY_CONTROLLER_API_VERSION,
       kind: "Role",
       metadata: {
         name: role?.name,

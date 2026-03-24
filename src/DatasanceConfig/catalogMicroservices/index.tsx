@@ -10,6 +10,7 @@ import yaml from "js-yaml";
 import { parseCatalogMicroservice } from "../../Utils/parseCatalogMicroservice";
 import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
+import { CANONICAL_DISPLAY_CONTROLLER_API_VERSION } from "../../Utils/constants";
 
 function CatalogMicroservices() {
   const [fetching, setFetching] = React.useState(true);
@@ -135,7 +136,7 @@ function CatalogMicroservices() {
     if (!selectedCatalogMicroservice) return;
 
     const yamlObj = {
-      apiVersion: "datasance.com/v3",
+      apiVersion: CANONICAL_DISPLAY_CONTROLLER_API_VERSION,
       kind: "CatalogItem",
       metadata: {
         name: selectedCatalogMicroservice.name,

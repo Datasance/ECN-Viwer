@@ -1,11 +1,12 @@
 import lget from "lodash/get";
+import {
+  isAllowedControllerApiVersion,
+  invalidControllerApiVersionMessage,
+} from "./constants";
 
 export const parseCertificateAuthority = async (doc) => {
-  if (doc.apiVersion !== "datasance.com/v3") {
-    return [
-      {},
-      `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v3`,
-    ];
+  if (!isAllowedControllerApiVersion(doc.apiVersion)) {
+    return [{}, invalidControllerApiVersionMessage(doc.apiVersion)];
   }
 
   if (doc.kind !== "CertificateAuthority") {
@@ -31,11 +32,8 @@ export const parseCertificateAuthority = async (doc) => {
 };
 
 export const parseCertificate = async (doc) => {
-  if (doc.apiVersion !== "datasance.com/v3") {
-    return [
-      {},
-      `Invalid API Version ${doc.apiVersion}, current version is datasance.com/v3`,
-    ];
+  if (!isAllowedControllerApiVersion(doc.apiVersion)) {
+    return [{}, invalidControllerApiVersionMessage(doc.apiVersion)];
   }
 
   if (doc.kind !== "Certificate") {

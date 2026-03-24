@@ -11,6 +11,7 @@ import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 import { parseNatsUserRule } from "../../Utils/parseNatsUserRuleYaml";
 import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
 import { isReservedNatsRule } from "../../Utils/natsRules";
+import { CANONICAL_DISPLAY_CONTROLLER_API_VERSION } from "../../Utils/constants";
 
 const getRuleSpec = (rule: any) => {
   if (!rule) return {};
@@ -194,7 +195,7 @@ function NatsUserRules() {
   const handleEditYaml = () => {
     if (!selectedRule) return;
     const yamlObj = {
-      apiVersion: "datasance.com/v3",
+      apiVersion: CANONICAL_DISPLAY_CONTROLLER_API_VERSION,
       kind: "NatsUserRule",
       metadata: {
         name: selectedRule.name,

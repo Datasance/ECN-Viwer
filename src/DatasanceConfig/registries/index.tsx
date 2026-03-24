@@ -11,6 +11,7 @@ import yaml from "js-yaml";
 import { useTerminal } from "../../providers/Terminal/TerminalProvider";
 import { parseRegistries } from "../../Utils/parseRegistriesYaml";
 import { useUnifiedYamlUpload } from "../../hooks/useUnifiedYamlUpload";
+import { CANONICAL_DISPLAY_CONTROLLER_API_VERSION } from "../../Utils/constants";
 
 function Registries() {
   const [fetching, setFetching] = React.useState(true);
@@ -123,7 +124,7 @@ function Registries() {
     const name = selectedRegistry?.url.replace(/\./g, "-") || "untitled";
 
     const yamlObj = {
-      apiVersion: "datasance.com/v3",
+      apiVersion: CANONICAL_DISPLAY_CONTROLLER_API_VERSION,
       kind: "Registry",
       metadata: {
         name: name,
