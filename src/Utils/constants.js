@@ -11,7 +11,7 @@ export const ALLOWED_CONTROLLER_API_VERSIONS = [
 
 /** Always use for display, export, and newly generated YAML. */
 export const CANONICAL_DISPLAY_CONTROLLER_API_VERSION =
-  CONTROLLER_API_VERSION_IOFOG;
+  CONTROLLER_API_VERSION_DATASANCE;
 
 /** Alias: same as canonical display (emit Datasance only, never iofog). */
 export const DEFAULT_CONTROLLER_API_VERSION =

@@ -29,7 +29,7 @@ import { useTerminal } from "../providers/Terminal/TerminalProvider";
 
 import Dashboard from "../Dashboard";
 import SwaggerDoc from "../swagger/SwaggerDoc";
-import logomark from "../assets/logomark.svg";
+import logomark from "../assets/potLogoWithWhiteText.svg";
 
 import { Sidebar, Menu, MenuItem, SubMenu } from "react-pro-sidebar";
 import { ProSidebarProvider } from "react-pro-sidebar";
@@ -450,7 +450,7 @@ export default function Layout() {
                         <span
                           className="cursor-pointer underline"
                           onClick={() =>
-                            window.open("https://iofog.org/docs", "_blank")
+                            window.open("https://docs.datasance.com", "_blank")
                           }
                         >
                           DOCS
@@ -459,7 +459,7 @@ export default function Layout() {
                           className="cursor-pointer underline"
                           onClick={() =>
                             window.open(
-                              "https://github.com/eclipse-iofog",
+                              "https://github.com/Datasance",
                               "_blank",
                             )
                           }
@@ -477,6 +477,17 @@ export default function Layout() {
                         >
                           API
                         </a>
+                        <span
+                          className="cursor-pointer underline"
+                          onClick={() =>
+                            window.open(
+                              "https://datasance.com/EULA.pdf",
+                              "_blank",
+                            )
+                          }
+                        >
+                          EULA
+                        </span>
                       </div>
 
                       <div className="text-white text-xs text-center">
@@ -488,10 +499,10 @@ export default function Layout() {
                   <span
                     className="text-white text-xs text-center cursor-pointer"
                     onClick={() =>
-                      window.open("https://iofog.org/", "_blank")
+                      window.open("https://datasance.com/", "_blank")
                     }
                   >
-                    © {new Date().getFullYear()} Eclipse ioFog
+                    © {new Date().getFullYear()} Datasance
                   </span>
                 </div>
               </Sidebar>

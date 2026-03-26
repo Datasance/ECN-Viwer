@@ -37,7 +37,7 @@ prettyTitle() {
 #
 prettyHeader() {
 	echoInfo "## $1 ####################################################"
-	echoInfo "## Copyright (C) 223, Contributors to the Eclipse ioFog Project"
+	echoInfo "## Copyright (C) 223, Datasance Teknoloji A.S."
 	echo
 }
 

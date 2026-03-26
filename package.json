@@ -1,17 +1,17 @@
 {
-  "name": "@eclipse-iofog/ecn-viewer",
-  "version": "v3.7.0-beta.0",
-  "description": "Eclipse ioFog Edge Cloud Network Viewer project  \\nCopyright (c) 2023 Contributors to the Eclipse ioFog Project",
+  "name": "@datasance/ecn-viewer",
+  "version": "v1.4.3",
+  "description": "Datasance ioFog Edge Cloud Network Viewer project  \\nCopyright (c) 2023 Datasance Teknoloji A.S.",
   "main": "index.js",
   "author": "Emirhan Durmus",
   "contributors": [
     "Alpaslan Dogan"
   ],
   "license": "EPL-2.0",
-  "homepage": "https://www.iofog.org",
+  "homepage": "https://www.datasance.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/eclipse-iofog/ECN-viewer"
+    "url": "https://github.com/Datasance/ECN-viewer"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
@@ -85,56 +85,8 @@
   "overrides": {
     "axios": "^1.13.5",
     "prismjs": "^1.30.0",
-    "minimatch": "10.2.3",
-    "sass": {
-      "@parcel/watcher": {
-        "picomatch": "^4.0.4"
-      }
-    },
-    "react-scripts": {
-      "postcss-loader": {
-        "cosmiconfig": {
-          "yaml": "^2.8.1"
-        }
-      },
-      "css-minimizer-webpack-plugin": {
-        "cssnano": {
-          "yaml": "^2.8.1"
-        }
-      },
-      "react-dev-utils": {
-        "fork-ts-checker-webpack-plugin": {
-          "cosmiconfig": {
-            "yaml": "^2.8.1"
-          }
-        }
-      },
-      "tailwindcss": {
-        "postcss-load-config": {
-          "yaml": "^2.8.1"
-        },
-        "sucrase": {
-          "tinyglobby": {
-            "picomatch": "^4.0.4"
-          }
-        }
-      }
-    },
-    "micromatch": {
-      "picomatch": "2.3.2"
-    },
-    "jest-util": {
-      "picomatch": "2.3.2"
-    },
-    "anymatch": {
-      "picomatch": "2.3.2"
-    },
-    "readdirp": {
-      "picomatch": "2.3.2"
-    },
-    "@rollup/pluginutils": {
-      "picomatch": "2.3.2"
-    }
+    "js-yaml": "4.1.1",
+    "minimatch": "10.2.3"
   },
   "browserslist": {
     "production": [
