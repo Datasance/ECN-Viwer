@@ -44,10 +44,10 @@ jobs:
       with:
         node-version: 24
         registry-url: 'https://npm.pkg.github.com'
-        scope: '@datasance'
+        scope: '@eclipse-iofog'
     - run: sh ${GITHUB_WORKSPACE}/package.sh
       env: 
-        PAT: ${{ secrets.PAT }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   Build-Publish-NPM:
     runs-on: ubuntu-22.04
     permissions:
